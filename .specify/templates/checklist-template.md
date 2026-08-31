@@ -26,6 +26,15 @@
 - [ ] CHK002 Second checklist item
 - [ ] CHK003 Third checklist item
 
+## Constitution Gate Examples
+
+- [ ] CHKXXX Relevant Lovable screens and prompt sections were reviewed
+- [ ] CHKXXX Implemented UI preserves required prototype capabilities or documents an approved better equivalent
+- [ ] CHKXXX Sensitive data access, mutation, logging, and retention implications were reviewed
+- [ ] CHKXXX Next.js Server/Client boundaries and data fetching strategy were reviewed for performance
+- [ ] CHKXXX shadcn components, labels, focus states, dialog behavior, and responsive layout were checked
+- [ ] CHKXXX Risk-based tests or validation steps cover auth, clinical, financial, document, signature, webhook, or migration risks when touched
+
 ## [Category 2]
 
 - [ ] CHK004 Another category item

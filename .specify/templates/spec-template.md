@@ -75,6 +75,28 @@
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
+## Prototype & Constitution Alignment *(mandatory)*
+
+### Prototype References
+
+- **Lovable screens**: [List relevant files from `references/images` or state N/A]
+- **Lovable prompt sections**: [List relevant sections from `docs/lovable-prototype-prompt.md`]
+- **Required UI continuity**: [Navigation, labels, layout, state chips, dialogs, tabs, or forms that must remain recognizable]
+- **Allowed UX improvements**: [Specific improvements that preserve or replace prototype behavior]
+
+### Security, Privacy & Compliance
+
+- **Sensitive data touched**: [Clinical, identity, financial, document, signature, or N/A]
+- **Auth/authorization requirement**: [Who can access/mutate this data]
+- **LGPD requirement**: [Consent, export/delete, retention, audit, or N/A]
+- **Audit/logging requirement**: [Events to record without exposing sensitive content]
+
+### Performance & Accessibility Expectations
+
+- **Next.js rendering/data strategy**: [Server Components, Client Components, Server Actions, Route Handlers, caching]
+- **Performance risk**: [Large forms, tables, agenda grids, PDFs, uploads, external calls, or N/A]
+- **Accessibility requirement**: [Labels, keyboard/focus, dialog behavior, tooltips for icon actions, responsive behavior]
+
 ## Requirements *(mandatory)*
 
 <!--

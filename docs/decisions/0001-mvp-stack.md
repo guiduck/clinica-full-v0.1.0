@@ -123,6 +123,8 @@ Desvantagens:
 - confirmacao do paciente sera apenas `sim/nao`
 - assinatura no MVP sera `simples com evidencias`
 - assinatura sera capturada em `modal` com `react-konva` e aplicada ao documento com `react-pdf`
+- a trilha minima da assinatura guardara `IP` e `sessao`
+- a assinatura propria nao sera tratada como equivalente automatica a assinatura avancada de provider externo
 - `DSM/CID` no MVP sera apenas `campo manual`
 - auth usara `Auth.js / NextAuth`
 - login Google usara `Google Provider`

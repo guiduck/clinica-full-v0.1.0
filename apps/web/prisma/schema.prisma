@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String                    @id @default(cuid())
+  name              String
+  email             String                    @unique
+  passwordHash      String
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  patients          Patient[]
+  financialProfiles PatientFinancialProfile[]
+  appointments      Appointment[]
+  notifications     NotificationAttempt[]
+  sessions          Session[]
+  uiPreference      UserUiPreference?
+}
+
+model UserUiPreference {
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  onboardingStep        Int       @default(0)
+  onboardingCompletedAt DateTime?
+  onboardingSkippedAt   DateTime?
+  dashboardSectionOrder Json?
+  hideFinancialValues   Boolean   @default(false)
+  dismissedNewsBannerAt DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum PatientStatus {
+  ativo
+  inativo
+  arquivado
+}
+
+enum PaymentMethod {
+  pix
+  card
+  cash
+  insurance
+}
+
+enum AppointmentStatus {
+  agendada
+  confirmada
+  realizada
+  falta
+  cancelada
+  remarcada
+  pendente
+  recusada
+}
+
+enum NotificationChannel {
+  whatsapp
+}
+
+enum NotificationStatus {
+  pendente
+  enviado
+  falhou
+}
+
+model Patient {
+  id                           String                   @id @default(cuid())
+  userId                       String
+  name                         String
+  phone                        String
+  normalizedPhone              String
+  email                        String?
+  cpf                          String?
+  normalizedCpf                String?
+  birthDate                    DateTime?
+  notes                        String?
+  chiefComplaint               String?
+  whatsappConsent              Boolean                  @default(false)
+  emailConsent                 Boolean                  @default(false)
+  addressZipCode               String?
+  addressStreet                String?
+  addressNumber                String?
+  addressComplement            String?
+  addressCity                  String?
+  addressState                 String?
+  emergencyContactName         String?
+  emergencyContactPhone        String?
+  emergencyContactRelationship String?
+  status                       PatientStatus            @default(ativo)
+  createdAt                    DateTime                 @default(now())
+  updatedAt                    DateTime                 @updatedAt
+  user                         User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  financialProfile             PatientFinancialProfile?
+  appointments                 Appointment[]
+  notifications                NotificationAttempt[]
+
+  @@unique([userId, normalizedPhone])
+  @@unique([userId, normalizedCpf])
+  @@index([userId, status])
+  @@index([userId, name])
+}
+
+model PatientFinancialProfile {
+  id                         String        @id @default(cuid())
+  userId                     String
+  patientId                  String        @unique
+  preferredPaymentMethod     PaymentMethod
+  defaultSessionPriceCents   Int
+  currency                   String        @default("BRL")
+  pixKeyType                 String?
+  pixKey                     String?
+  cardProvider               String?
+  cardPaymentMethodRef       String?
+  cardBrand                  String?
+  cardLast4                  String?
+  cardHolderName             String?
+  cardInstallments           Int?
+  insuranceName              String?
+  insuranceMemberId          String?
+  insuranceAuthorizationInfo String?
+  isComplete                 Boolean       @default(false)
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  user                       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient                    Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isComplete])
+}
+
+model Appointment {
+  id            String                @id @default(cuid())
+  userId        String
+  patientId     String
+  startsAt      DateTime
+  endsAt        DateTime
+  type          String                @default("Consulta")
+  videoUrl      String?
+  status        AppointmentStatus     @default(agendada)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient       Patient               @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  notifications NotificationAttempt[]
+
+  @@index([userId, startsAt])
+  @@index([patientId, startsAt])
+}
+
+model NotificationAttempt {
+  id                String              @id @default(cuid())
+  userId            String
+  patientId         String
+  appointmentId     String
+  channel           NotificationChannel @default(whatsapp)
+  status            NotificationStatus  @default(pendente)
+  recipientPhone    String
+  provider          String              @default("twilio")
+  providerMessageId String?
+  failureReason     String?
+  sentAt            DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient           Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment       Appointment         @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([appointmentId])
+  @@index([patientId])
+}

@@ -31,11 +31,12 @@ Se tudo entrar de uma vez, o projeto vira grande demais para um time part-time. 
 ## Recomendacao de Escopo
 ### MVP 1
 Entregar o minimo vendavel para uso real:
-- autenticacao com e-mail e senha
-- reset de senha por e-mail
+- autenticacao inicial com `Google Provider` via `Auth.js / NextAuth`
+- opcao de expandir para `e-mail/senha` depois, se o fluxo exigir
 - aceite de termos e politica no primeiro acesso
 - cadastro de pacientes
 - agenda com criar, editar e remarcar consulta
+- financeiro inicial do paciente como pre-condicao para agendamento operacional
 - evolucao/prontuario simples por sessao
 - financeiro basico com status pago e pendente
 - geracao de recibo em PDF pelo proprio sistema
@@ -104,7 +105,9 @@ Essa escolha combina melhor com:
 - maior familiaridade com JavaScript/TypeScript
 
 ### Arquitetura sugerida
-- `Next.js` para frontend, rotas server-side, actions e APIs
+- `apps/web`: aplicacao `Next.js` para frontend, rotas server-side, actions e APIs
+- raiz do repositorio: documentacao, Spec Kit, regras/skills de IA e referencias do prototipo
+- estrutura preparada para monorepo futuro com novos apps, como API/bot em Python em outro pacote
 - `shadcn/ui` para componentes
 - `react-hook-form` + `zod` para formularios e validacao
 - `zustand` para estado global leve
@@ -154,6 +157,127 @@ Pontos fortes:
 - menor lock-in de auth do que uma solucao totalmente gerenciada
 - frontend e backend ficam no mesmo projeto
 - caminho limpo para extrair IA em Python depois
+
+### Estrutura atual do repositorio
+- `apps/web` contem o projeto Next.js production-ready: landing publica, auth real por e-mail/senha, cadastro, dashboard privado, pacientes, financeiro inicial do paciente, agenda, tentativa de confirmacao WhatsApp, componentes shadcn-style, SEO, testes, Prisma e configs do app web.
+- `docs`, `specs`, `.specify`, `.agents`, `.cursor` e `references` permanecem na raiz para documentacao, Spec Kit, workflow de IA e material Lovable.
+- `docs/prisma-development-guide.md` e o guia operacional curto para rodar Prisma, migrations e PostgreSQL local durante o desenvolvimento.
+- A raiz nao deve acumular codigo de produto quando novos apps surgirem; novos servicos devem entrar em `apps/<nome>` ou estrutura equivalente.
+
+### Baseline atual do produto e UX
+- O submodulo Lovable foi atualizado em 2026-08-27 para o commit
+  `226e5ab6811c5dce717fa12b404370b4fbb2663e`.
+- Esse commit e a baseline congelada da proxima spec de reconstrucao do frontend.
+- O inventario de rotas, fluxos, campos, estados e funcionalidades esta em
+  `docs/prototype-feature-inventory.md`.
+- O prompt pronto para a proxima `/speckit.specify` esta em
+  `docs/next-spec-prototype-front-reconstruction.md`.
+- A proxima entrega deve reproduzir a experiencia visual e funcional do prototipo
+  em desktop e mobile, conectando services reais progressivamente.
+- Funcionalidade ainda sem backend deve informar indisponibilidade de forma clara;
+  nao deve simular sucesso ou persistencia local.
+
+### Checkpoint da reconstrucao frontend (feature 003)
+- A rodada final de aceite visual de 2026-08-31 confirmou Dashboard, perfil do
+  paciente, Financeiro, Previsibilidade e Configurações. A lista de pacientes
+  passou a crescer conforme os registros, e a Agenda usa dropdowns com largura
+  integral e seletores controlados de horário brasileiro em 24 horas.
+- O fechamento formal ainda não acompanha toda a implementação: 78 de 384 linhas
+  da matriz estão decididas e 43 de 130 tarefas estão concluídas. As linhas e
+  tarefas restantes devem ser reconciliadas com evidência real, sem reconstruir
+  componentes equivalentes já existentes nem inferir aprovação.
+- A fundacao e a User Story 1 foram corrigidas e revalidadas em 2026-08-27,
+  cobrindo T001-T043.
+- O shell usa o rail compacto do prototipo e um Sheet shadcn sobreposto em desktop
+  e mobile; nao existe mais sidebar larga/retratil ocupando o layout.
+- O onboarding possui 16 passos declarativos em constantes, e controlado por
+  `?onboarding=<passo>`, mede alvos reais por id, recorta o overlay com
+  `clip-path`, deixa o alvo clicavel e posiciona o balao conforme o espaco.
+- Os passos de perfil abrem o menu real, navegam para
+  `/configuracoes?onboarding=10` e continuam no ponto correto. Saves de
+  Configuracoes validam CPF, telefone e CEP, mas informam explicitamente que o
+  service ainda nao existe e nao simulam persistencia.
+- E-mail/senha, sessao e logout continuam reais. Google e recuperacao de senha
+  permanecem visiveis, mas abrem aviso contextual e nao simulam sucesso.
+- O cadastro valida CPF com digitos verificadores e aceite LGPD no cliente e no
+  servidor; CPF e aceite ainda nao foram adicionados ao modelo `User`, conforme a
+  matriz de persistencia da feature.
+- Preferencias de UI usam `UserUiPreference` no PostgreSQL. O shell projeta somente
+  notificacoes e indicadores derivados de tentativas reais pertencentes ao usuario.
+- A navegacao do onboarding pode atravessar Dashboard e Configuracoes porque os
+  alvos minimos dessas rotas existem; isso nao equivale a aceitar os gates
+  completos de Dashboard, Financeiro, Agenda ou Configuracoes.
+- O atalho/indicador de WhatsApp foi removido do shell por direcao explicita do
+  produto; WhatsApp continua apenas como integracao transacional de dominio.
+- Playwright usa artefatos em `output/playwright` na raiz para evitar que o watcher
+  do Next.js recompile traces e videos gerados dentro de `apps/web`.
+- A proxima entrega incremental e o dominio Pacientes, mantendo lista, wizard e
+  perfil em componentes pequenos, schemas Zod compartilhados e services reais.
+
+### Padrao de arquitetura do app web
+- `src/app/(public)` para paginas publicas.
+- `src/app/(private)` para paginas autenticadas.
+- `src/middleware.ts` para verificar cookie de sessao e redirecionar usuario sem login.
+- `src/actions` para server actions que fazem mutacoes, setam cookies, redirecionam e chamam services.
+- `src/services` para funcoes de dominio/API.
+- `src/lib/api` para wrapper tipado de `fetch` server-side, com suporte a `next: { tags }`.
+- `src/lib/errors` para erros estruturados e mensagens de usuario.
+- `src/types` para DTOs e tipos reutilizaveis.
+- `src/utils/validators` para validadores Zod e resolvers de formulario, um arquivo por fluxo.
+- `prisma/schema.prisma` para modelo de dados com PostgreSQL.
+
+Diretriz: usar server-side por padrao. React Query/SWR so entram quando houver
+necessidade real de estado remoto client-side, polling, cache no navegador ou
+experiencia interativa que nao se encaixe bem em RSC/server actions.
+
+### Services, Prisma e Route Handlers
+Para fluxos internos do proprio app, o padrao atual e manter a regra de dominio em
+`src/services` e chamar Prisma diretamente nesses services quando eles rodam no
+servidor. Server Actions e Server Components podem chamar esses services sem criar
+um request HTTP intermediario.
+
+Route Handlers em `src/app/api` continuam uteis, mas como fronteira HTTP real:
+webhooks, integracoes externas, futuros clientes mobile/terceiros, endpoints
+publicos ou casos em que a semantica de HTTP/cache seja parte do contrato. Para
+um formulario interno do Next.js, criar uma rota so para o service fazer `fetch`
+para ela adiciona latencia e duplicacao sem trazer isolamento relevante.
+
+### Validadores
+Formularios e rotas que validam payload devem usar arquivos em
+`apps/web/src/utils/validators`. Cada fluxo deve ter seu proprio arquivo contendo:
+- `schema` Zod, por exemplo `loginSchema`
+- resolver pronto para `react-hook-form`, por exemplo `loginResolver`
+- tipos de input derivados do schema, por exemplo `LoginInput`
+
+O padrao atual esta aplicado em:
+- `apps/web/src/utils/validators/login.ts`
+- `apps/web/src/utils/validators/register.ts`
+- `apps/web/src/utils/validators/patient.ts`
+- `apps/web/src/utils/validators/patient-financial-profile.ts`
+- `apps/web/src/utils/validators/appointment.ts`
+
+### Padrao de frontend e funcoes reutilizaveis
+- Paginas devem compor e orquestrar a experiencia, sem concentrar todo o estado,
+  constantes, regras e JSX do fluxo.
+- Componentes devem ser separados por dominio/responsabilidade.
+- Hooks devem encapsular estado e comportamento interativo complexo ou reutilizavel,
+  sem transformar logica trivial em abstracao desnecessaria.
+- Listas de opcoes, labels, metadados e configuracoes fixas devem ficar em
+  `constants.ts` proximos ao dominio.
+- `formatters`, `validators` e `masks` devem viver em pastas separadas e
+  reutilizaveis.
+- Formatadores, mascaras, normalizadores e calculos devem ser funcoes puras,
+  deterministicas e imutaveis; efeitos colaterais ficam em actions, services,
+  adapters e hooks de integracao.
+- Schemas Zod sao a fonte unica de validacao no cliente e servidor, com tipos
+  derivados e resolvers exportados quando aplicavel.
+- CPF deve validar digitos verificadores; CNPJ, telefone e CEP devem ter mascaras e
+  validacoes reais conforme o campo.
+- Datas devem ser exibidas/editadas em `dd/mm/aaaa`, horarios em 24 horas e moeda
+  em `pt-BR`/BRL. Formato canonico de persistencia deve ser convertido
+  explicitamente e testado.
+- Nao copiar do prototipo sua store monolitica, mocks, persistencia em
+  `localStorage`, constantes no meio de paginas ou utils espalhadas.
 
 Riscos:
 - auth exige mais implementacao e mais cuidado do que `Clerk`
@@ -268,15 +392,17 @@ Como assinatura foi confirmada desde o inicio, a recomendacao e separar `assinat
 
 ### Recomendacao para MVP
 - assinatura simples embutida no fluxo web
-- capturar nome, timestamp, IP e aceite
+- capturar nome, timestamp, IP, sessao e aceite
 - coletar assinatura em `modal` dentro do proprio app
 - incorporar essa assinatura desenhada no PDF gerado
+- tratar isso como `assinatura eletronica simples com evidencias`, nao como assinatura avancada por padrao
 
 ### Opcao tecnica mais simples
 - formulario de aceite + evidencias de auditoria
 - desenho da assinatura com `react-konva`
 - geracao e edicao do documento com `react-pdf`
 - composicao final do PDF com a assinatura capturada no canvas
+- registrar metadata minima: `IP`, `session_id`, `user-agent`, `timestamp`, `document_version`
 
 ### O que eu deixaria para depois
 - `DocuSign`
@@ -321,6 +447,7 @@ Vocês devem registrar logo cedo:
 - a confirmacao no WhatsApp sera apenas por `sim/nao`
 - o MVP tera `assinatura simples` desde o inicio
 - a assinatura sera feita em `modal` no app com `react-konva` + `react-pdf`
+- a assinatura simples registrara `IP` e `sessao` como evidencias minimas
 - o recibo sera um `PDF interno` preenchido com dados do pagamento do proprio sistema
 - `DSM/CID` no MVP sera apenas `campo manual de input`
 - no futuro existira tambem uma `conta de paciente`
@@ -331,6 +458,7 @@ Vocês devem registrar logo cedo:
 - auth usara `Auth.js / NextAuth`
 - login Google sera feito via `Google Provider`
 - a sessao sera `database-backed` com cookie `HttpOnly`
+- o primeiro corte de auth tende a começar com `login Google`
 - `Prisma` sera o ORM oficial
 - o banco local rodara em `docker compose`
 - producao usara `Postgres` gerenciado
@@ -433,6 +561,7 @@ Como voces pretendem usar `Spec Kit`, o melhor fluxo e:
 
 ### Vertical slices ideais
 - criar paciente
+- cadastrar metodo/dados de pagamento do paciente
 - agendar consulta
 - registrar evolucao
 - preencher campo manual de `DSM/CID`
@@ -441,6 +570,18 @@ Como voces pretendem usar `Spec Kit`, o melhor fluxo e:
 - gerar recibo
 - enviar confirmacao WhatsApp
 - registrar resposta do paciente
+
+### Decisao recente sobre financeiro e planos
+- O fluxo inicial de paciente/agenda deve exigir metodo/dados de pagamento do paciente antes de criar consulta.
+- Os metodos iniciais de pagamento do paciente sao `PIX`, `cartao`, `dinheiro` e `convenio`; cada metodo deve exigir somente os dados necessarios para funcionar.
+- O cadastro de paciente deve oferecer "Salvar e ir para o financeiro" para completar os dados financeiros do paciente recem criado.
+- A implementacao atual ja entrega cadastro de paciente, pagina financeira do paciente, validacao por metodo de pagamento, bloqueio de agenda por financeiro/WhatsApp e registro de tentativa de notificacao.
+- Dados de cartao devem ser apenas referencia/token seguro do provedor e metadata nao sensivel; numero bruto e CVV nao sao persistidos.
+- Planos de atendimento/cobranca devem ficar dentro de `Financeiro`, como aba ou subsecao, porque sao modelos de cobranca e nao conteudo clinico.
+- O modal de gerar cobranca deve escolher entre consulta avulsa, plano personalizado e planos cadastrados; se faltar dado de pagamento do paciente, deve redirecionar para a aba financeira do paciente.
+- O campo `contrato terapeutico` nao pertence a anamnese; contrato/plano deve ser tratado no financeiro do paciente.
+- A tela de seguranca nao precisa de gerenciamento de sessoes no MVP; o usuario pode logar em qualquer dispositivo.
+- Em caso de duvida de produto/UX, o prototipo Lovable deve ser obedecido por padrao, exceto quando houver override explicito por seguranca, LGPD, acessibilidade, arquitetura production-ready ou escopo reduzido.
 
 ## Skills e referencias uteis
 ### Skills no Cursor
@@ -490,9 +631,30 @@ Se fosse para decidir hoje, eu seguiria com:
 - `FastAPI` apenas na fase 2
 
 ## Proximos Passos Objetivos
-1. Fechar as duvidas restantes sobre `recibo`, `assinatura` e `reset de senha`.
-2. Definir o modelo exato de `cobranca online` no primeiro corte.
-3. Desenhar o schema inicial de `Auth.js + Prisma + Postgres`.
-4. Escrever a `product spec` do MVP com escopo congelado por 6 a 8 semanas.
-5. Quebrar o trabalho em epics no Spec Kit.
-6. Comecar pelo fluxo `criar paciente -> agendar consulta -> confirmar por WhatsApp`.
+### Checkpoint da reconstrução frontend — 2026-08-31
+- A superfície principal do Lovable foi reconstruída em `apps/web`: shell,
+  onboarding, dashboard, pacientes, agenda, financeiro, previsibilidade e
+  configurações.
+- Fluxos já cobertos por services existentes continuam reais: autenticação,
+  preferências de UI, criação de paciente, perfil financeiro, consulta e
+  tentativa de WhatsApp.
+- Anamnese, evolução livre/SOAP, workspace de sessão, documentos, preview e
+  assinatura foram reconstruídos como interações transitórias. A UI não grava
+  conteúdo clínico ou documental em URL, cookie, localStorage ou mock store.
+- O financeiro apresenta uma projeção derivada de consultas e perfis reais;
+  criar ledger, recibo, cobrança, categoria ou plano permanece indisponível até
+  existir modelo e service próprios.
+- O gate automatizado usa 79 testes Vitest e uma suíte Playwright integral com
+  17 cenários aprovados e 2 mutações reais puladas intencionalmente no projeto
+  mobile, cobrindo `1440x900` e `390x844`. A matriz da feature 003 continua
+  sendo a autoridade para a aceitação formal linha a linha.
+- O próximo slice preparado pelo `specify-prompt-engineer` é persistência
+  clínica e proteção de dados sensíveis.
+
+1. Fechar as linhas `pending`, auditorias e smoke manual da feature `003`.
+2. Revisar as 10 vulnerabilidades npm sem aplicar upgrades maiores automáticos.
+3. Validar o slice operacional com o sandbox real do Twilio.
+4. Executar `/speckit.specify` com
+   `docs/next-spec-clinical-persistence-encryption.md`.
+5. Definir o modelo jurídico/contábil de recibo, assinatura e cobrança online
+   antes de habilitar essas mutações.

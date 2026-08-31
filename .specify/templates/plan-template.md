@@ -17,21 +17,31 @@
   the iteration process.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: TypeScript + Next.js [version or NEEDS CLARIFICATION]  
+**Primary Dependencies**: shadcn/ui, react-hook-form, zod, Prisma, Auth.js/NextAuth, [feature-specific dependencies]  
+**Storage**: PostgreSQL via Prisma; managed document storage if files are involved  
+**Testing**: [unit/integration/e2e tools or NEEDS CLARIFICATION]  
+**Target Platform**: Web app on Vercel-compatible runtime
+**Project Type**: Next.js modular monolith  
+**Performance Goals**: [feature-specific goals; include dashboard/list/agenda load expectations]  
+**Constraints**: Lovable-guided UI, shadcn components, LGPD/security, accessibility, mobile responsiveness  
+**Scale/Scope**: Single-professional MVP unless this feature explicitly has an approved ADR
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Lovable fidelity**: Reference the relevant `references/images` screens and
+  `docs/lovable-prototype-prompt.md` section, or document why no prototype screen
+  applies.
+- **Security/LGPD**: Identify sensitive data touched, auth/authorization checks,
+  consent/audit/logging needs, and any encryption decision.
+- **Next.js performance**: Define Server/Client Component boundaries, data fetching
+  strategy, waterfall avoidance, and dynamic loading for heavy modules.
+- **shadcn/accessibility**: Confirm shadcn-style components, labels, keyboard/focus
+  behavior, responsive layout, and tooltip/text for icon actions.
+- **Vertical slice quality**: Define independent demo path, risk-based tests,
+  lint/type/test commands, and accepted gaps.
 
 ## Project Structure
 
@@ -56,32 +66,30 @@ specs/[###-feature]/
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+# Next.js modular monolith
+app/
+├── (auth)/
+├── (app)/
+├── api/
+└── layout.tsx
+
+components/
+├── ui/
+└── [feature]/
+
+lib/
+├── auth/
+├── db/
+├── validations/
+└── [feature]/
+
+prisma/
+└── schema.prisma
 
 tests/
-├── contract/
+├── unit/
 ├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+└── e2e/
 
 # [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
 api/

@@ -4,5 +4,18 @@ alwaysApply: true
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+`specs/003-prototype-front-reconstruction/plan.md`
 <!-- SPECKIT END -->
+
+For `/speckit.specify`, `/speckit.clarify`, and `/speckit.plan`, prefer consulting the `specify-prompt-engineer` skill first whenever the user request is broad, mixed with strategy context, or likely to create ambiguous artifacts.
+
+When available, also use `docs/handoff.md` and `docs/roadmap.md` as current project context.
+
+The Lovable prototype and `docs/lovable-prototype-prompt.md` are the default product/UX source of truth. When behavior, labels, navigation, or screen flow are ambiguous, follow the prototype unless a spec, ADR, or plan explicitly overrides it for security, LGPD, accessibility, production architecture, or narrowed slice scope.
+
+After finishing any development implementation, always update project documentation so the next agent or model can understand the current state without chat history. At minimum, review and update `docs/roadmap.md`, `docs/project-overview.md`, and `docs/handoff.md` with current status, what changed, validation results, blockers, and the recommended next step.
+
+After implementation, also prepare the next Spec Kit specification prompt as a Markdown brief for the next roadmap item. Use the `specify-prompt-engineer` skill for this prompt-engineering pass, and base the brief on the current roadmap, `docs/`, `docs/handoff.md`, and the existing Lovable prototype/reference material under `references/`. The brief should be ready to feed into `/speckit.specify`.
+
+This project is not a throwaway prototype. The Lovable prototype and `references/` are UI/flow references only; production code must implement real, server-first behavior whenever feasible. The web app lives in `apps/web` and should use `src/app/(public)`, `src/app/(private)`, `src/middleware.ts`, `src/actions`, `src/services`, `src/lib/api`, `src/lib/errors`, `src/types`, and `prisma/schema.prisma`. Prefer React Server Components, server actions, route handlers, Prisma, PostgreSQL, and native Next.js cache APIs (`revalidateTag`, `revalidatePath`, `next: { tags }`) before client-side fetching. Do not use placeholder flows when a functional server-side slice can be implemented safely.

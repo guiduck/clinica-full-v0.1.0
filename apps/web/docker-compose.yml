@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: clinica-agil-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clinica_agil
+      POSTGRES_USER: clinica
+      POSTGRES_PASSWORD: clinica
+    ports:
+      - "5433:5432"
+    volumes:
+      - clinica_agil_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinica -d clinica_agil"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  clinica_agil_postgres:

@@ -77,6 +77,9 @@ Um unico sistema para:
 - registrar lancamentos
 - marcar pago ou pendente
 - registrar forma de pagamento
+- registrar metodo/dados de pagamento do paciente antes do primeiro agendamento operacional
+- suportar metodos de pagamento iniciais: PIX, cartao, dinheiro e convenio
+- configurar planos de atendimento/cobranca dentro do financeiro
 - cobranca online inicial
 - recibo em PDF gerado pelo sistema a partir dos dados do pagamento interno
 
@@ -88,6 +91,7 @@ Um unico sistema para:
 - assinatura coletada em modal no proprio app
 - uso de `react-konva` para capturar assinatura desenhada
 - uso de `react-pdf` para compor o documento final assinado
+- captura de `IP` e `sessao` como metadata minima de auditoria
 
 #### 7. Notificacoes
 
@@ -102,6 +106,8 @@ Um unico sistema para:
 - pacientes ativos
 - sessoes do mes
 - saldo pendente
+- cards e lembretes clicaveis que levam para pacientes, agenda ou financeiro com filtros adequados
+- grafico financeiro com periodos semana, mes a mes, 3 meses, 6 meses e anual
 
 ## Fora do escopo do MVP
 
@@ -119,7 +125,7 @@ Um unico sistema para:
 
 ### RF-01 Auth
 
-O profissional deve conseguir acessar a plataforma com login por e-mail e senha.
+O profissional deve conseguir acessar a plataforma com o metodo inicial de autenticacao do MVP, atualmente `Google Provider` via `Auth.js / NextAuth`.
 
 ### RF-02 Termos
 
@@ -129,9 +135,13 @@ No primeiro acesso, o sistema deve registrar aceite de termos e politica com tim
 
 O profissional deve conseguir cadastrar e editar pacientes.
 
+O cadastro deve permitir a acao "Salvar e ir para o financeiro" para completar metodo/dados de pagamento do paciente recem criado.
+
 ### RF-04 Agenda
 
 O profissional deve conseguir criar, editar, remarcar e cancelar consultas.
+
+No primeiro fluxo operacional, a criacao de consulta deve exigir metodo/dados de pagamento do paciente e configuracao de WhatsApp disponiveis.
 
 ### RF-05 Confirmacao automatica
 
@@ -161,6 +171,8 @@ O sistema deve permitir registrar `DSM/CID` apenas como campo manual, sem busca 
 
 O profissional deve registrar cobrancas, pagamentos e pendencias.
 
+O financeiro deve ser o lugar dos planos de atendimento/cobranca, com modelos reutilizaveis e plano personalizado por paciente quando aplicavel.
+
 ### RF-12 Cobranca online
 
 O sistema deve permitir gerar um fluxo de cobranca online inicial para sessoes.
@@ -175,7 +187,11 @@ O profissional deve armazenar anexos e documentos do paciente.
 
 ### RF-15 Assinatura simples
 
-O sistema deve capturar aceite/assinatura simples em documentos gerados com evidencias de auditoria.
+O sistema deve capturar aceite/assinatura simples em documentos gerados com evidencias de auditoria, incluindo no minimo `timestamp`, `IP` e identificador de `sessao`.
+
+Observacao:
+- essa feature deve ser tratada como `assinatura eletronica simples com evidencias`
+- ela nao deve ser descrita como assinatura avancada ou qualificada por padrao
 
 ### RF-16 Modal de assinatura
 
@@ -227,15 +243,17 @@ O banco local deve poder rodar em `docker compose`, enquanto a producao deve usa
 
 1. Profissional acessa cadastro.
 2. Preenche dados do paciente.
-3. Salva registro.
-4. Paciente passa a aparecer na base e agenda.
+3. Salva registro ou escolhe "Salvar e ir para o financeiro".
+4. Paciente passa a aparecer na base.
+5. Quando escolhe ir ao financeiro, o sistema abre a aba financeira do paciente para cadastro de metodo/dados de pagamento.
 
 ### Fluxo 2: agendar consulta
 
 1. Profissional seleciona paciente.
-2. Define data e horario.
-3. Salva consulta.
-4. Sistema envia mensagem de confirmacao.
+2. Sistema verifica se paciente tem metodo/dados de pagamento e se WhatsApp esta configurado.
+3. Define data e horario.
+4. Salva consulta.
+5. Sistema envia mensagem de confirmacao.
 
 ### Fluxo 3: paciente confirma
 
@@ -257,19 +275,29 @@ O banco local deve poder rodar em `docker compose`, enquanto a producao deve usa
 3. Sistema registra status.
 4. Sistema gera recibo quando aplicavel.
 
+### Fluxo 5.1: configurar plano de cobranca
+
+1. Profissional acessa Financeiro > Planos.
+2. Cria um modelo com sessoes por mes, duracao em meses e valor.
+3. Ao gerar cobranca para um paciente, escolhe consulta avulsa, plano personalizado ou plano cadastrado.
+4. Se faltar metodo/dados de pagamento do paciente, o sistema direciona para a aba financeira do paciente antes de gerar cobranca.
+
 ### Fluxo 6: documento com assinatura simples
 
 1. Sistema gera PDF.
 2. Sistema abre modal de assinatura.
 3. Cliente desenha assinatura no canvas.
 4. Sistema incorpora assinatura ao PDF.
-5. Sistema salva evidencias e documento final.
+5. Sistema salva evidencias como `timestamp`, `IP` e `sessao`.
+6. Sistema salva documento final.
 
 ## Criterios de sucesso do MVP
 
 - profissional consegue operar 100% da rotina basica em um unico sistema
 - consulta pode ser criada e confirmada sem trabalho manual repetitivo
 - pagamentos pendentes ficam visiveis
+- dados de pagamento do paciente ficam completos antes de consulta/cobranca
+- planos de cobranca podem ser reaproveitados
 - recibo pode ser gerado rapidamente
 - notificacoes automaticas reduzem faltas
 

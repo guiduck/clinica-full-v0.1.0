@@ -226,7 +226,7 @@ Critero de pronto:
 `assinatura simples`
 
 Critero de pronto:
-- fluxo registra nome, timestamp e evidencia
+- fluxo registra nome, timestamp, `IP` e `sessao`
 - assinatura desenhada em modal com `react-konva` pode ser embutida
 - documento final fica salvo
 
