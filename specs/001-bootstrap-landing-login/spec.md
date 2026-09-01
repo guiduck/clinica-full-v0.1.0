@@ -16,10 +16,10 @@
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Discover Clinica Agil from Search (Priority: P1)
+### User Story 1 - Discover clinica-full from Search (Priority: P1)
 
 An autonomous therapist, psychologist, or psychiatrist searches online for a simple
-clinic management system and finds a public Clinica Agil landing page that clearly
+clinic management system and finds a public clinica-full landing page that clearly
 explains the product, its benefits, and the next action to access or try the app.
 
 **Why this priority**: Without a public, indexable entry point, the product cannot
@@ -32,7 +32,7 @@ core modules, trust signals, and a visible login call-to-action.
 **Acceptance Scenarios**:
 
 1. **Given** a visitor lands on the public home page, **When** they scan the first
-   screen, **Then** they can understand that Clinica Agil helps autonomous mental
+   screen, **Then** they can understand that clinica-full helps autonomous mental
    health professionals manage patients, agenda, clinical records, finance, and
    documents.
 2. **Given** a visitor is comparing tools, **When** they continue through the page,
@@ -45,7 +45,7 @@ core modules, trust signals, and a visible login call-to-action.
 
 ### User Story 2 - Access the Login Page (Priority: P2)
 
-A professional who already knows Clinica Agil can open a simple login page, identify
+A professional who already knows clinica-full can open a simple login page, identify
 the product, enter their access credentials in a non-authenticating first version,
 recover a forgotten password through a placeholder path, and return to account
 creation through a placeholder path if they do not yet have access.
@@ -60,7 +60,7 @@ links, and accessible form states.
 **Acceptance Scenarios**:
 
 1. **Given** a professional opens the login page, **When** the page loads, **Then**
-   they see the Clinica Agil brand, e-mail field, password field, show/hide password
+   they see the clinica-full brand, e-mail field, password field, show/hide password
    control, remember-me option, forgot-password link, and primary login action.
 2. **Given** the professional does not have an account, **When** they inspect the
    login page, **Then** they see a clear path to account creation.
@@ -98,7 +98,7 @@ identity.
 ### Edge Cases
 
 - If search engines or link previews read the landing page, the title, description,
-  and public page text should clearly describe Clinica Agil and its audience.
+  and public page text should clearly describe clinica-full and its audience.
 - If search engines discover placeholder routes, those pages should not be included
   in sitemap or indexation for this slice.
 - If a visitor accesses the login page directly, they should still understand the
@@ -123,7 +123,7 @@ identity.
   page must use the same clinical visual direction.
 - **Lovable prompt sections**: Authentication, Main app shell identity, Design
   direction, Design tokens, UX requirements, Prototype data constraints.
-- **Required UI continuity**: Clinica Agil brand, calm healthcare tone, shield/health
+- **Required UI continuity**: clinica-full brand, calm healthcare tone, shield/health
   identity, centered authentication card, e-mail/password login pattern, show/hide
   password, remember-me, forgot-password path, create-account path, generous spacing,
   high-legibility Portuguese copy, accessible form controls.
@@ -190,7 +190,7 @@ identity.
   LGPD awareness, secure access, and professional clinical organization.
 - **FR-007**: The landing page MUST include entry points for Terms of Use and Privacy
   Policy.
-- **FR-008**: The login page MUST show the Clinica Agil brand and maintain the same
+- **FR-008**: The login page MUST show the clinica-full brand and maintain the same
   calm clinical identity as the Lovable prototype.
 - **FR-009**: The login page MUST provide an e-mail field and a password field.
 - **FR-010**: The login page MUST provide a show/hide password control.

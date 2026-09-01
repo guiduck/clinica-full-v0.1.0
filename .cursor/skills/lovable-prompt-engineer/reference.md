@@ -3,7 +3,7 @@
 ## Recommended Prompt Shape
 
 ```markdown
-Title: Clinica Agil - <slice name>
+Title: clinica-full - <slice name>
 
 Create a Lovable prototype for a SaaS used by therapists and psychologists.
 

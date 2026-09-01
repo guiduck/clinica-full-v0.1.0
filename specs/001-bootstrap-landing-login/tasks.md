@@ -63,9 +63,9 @@
 
 ---
 
-## Phase 3: User Story 1 - Discover Clinica Agil from Search (Priority: P1) MVP
+## Phase 3: User Story 1 - Discover clinica-full from Search (Priority: P1) MVP
 
-**Goal**: A search visitor can find and understand the public Clinica Agil landing page.
+**Goal**: A search visitor can find and understand the public clinica-full landing page.
 
 **Independent Test**: Open `/` and confirm the page explains the audience, modules, trust signal, and primary CTA to `/login`.
 

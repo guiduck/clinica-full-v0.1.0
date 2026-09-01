@@ -10,3 +10,11 @@ export type AppShellView = Readonly<{
   notifications: readonly ShellNotificationView[];
   pendingMessageCount: number;
 }>;
+
+export type AppShellProps = Readonly<{
+  children: React.ReactNode;
+  userName: string;
+  shell: AppShellView;
+  initialStep: number;
+  initiallyOpen: boolean;
+}>;

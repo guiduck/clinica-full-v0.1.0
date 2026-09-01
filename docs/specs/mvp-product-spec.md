@@ -2,7 +2,7 @@
 
 ## Nome do produto
 
-Clinica Agil
+clinica-full
 
 ## Objetivo
 

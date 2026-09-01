@@ -25,7 +25,9 @@ describe("public SEO boundary", () => {
     expect(pageMetadata.landing.indexable).toBe(true);
     expect(pageMetadata.login.indexable).toBe(true);
     expect(pageMetadata.landing.description.toLowerCase()).toContain("software para psicólogos");
-    expect(pageMetadata.login.description).toContain("Clínica Ágil");
+    expect(pageMetadata.login.description).toContain("clinica-full");
     expect(siteConfig.description).toContain("prontuário");
+    expect(siteConfig.name).toBe("clinica-full");
+    expect(siteConfig.url).toBe("https://clinica-full.gfig.space");
   });
 });

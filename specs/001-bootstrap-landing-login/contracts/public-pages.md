@@ -17,7 +17,7 @@ Indexation:
 - Must provide meaningful title, description, and social-preview metadata.
 
 Required visible content:
-- Clinica Agil brand.
+- clinica-full brand.
 - Clear target audience: therapists, psychologists, and psychiatrists working
   independently.
 - Core value proposition: patients, agenda, clinical records, finance, documents,
@@ -52,7 +52,7 @@ Indexation:
 - Must provide meaningful title, description, and social-preview metadata.
 
 Required visible content:
-- Clinica Agil brand.
+- clinica-full brand.
 - E-mail field.
 - Password field.
 - Show/hide password control with accessible label.

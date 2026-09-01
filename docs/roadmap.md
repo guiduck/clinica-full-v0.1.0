@@ -10,7 +10,7 @@ de paciente + perfil financeiro uma única transação Prisma.
 Checkpoint final da feature 003 em 2026-08-31:
 - matriz: 384/384 decididas (`284 equivalent`, `72 unavailable-capability`,
   `28 approved-divergence`, `0 pending`);
-- tarefas: 117/130 concluídas após reconciliação por comportamento; as 13
+- tarefas: 119/130 concluídas após reconciliação por comportamento; as 11
   restantes são testes unitários/de componente granulares de hardening;
 - qualidade: lint, typecheck, 87 testes Vitest, build de 22 rotas e Playwright
   com 17 aprovados/2 pulados intencionalmente;
@@ -18,6 +18,37 @@ Checkpoint final da feature 003 em 2026-08-31:
   Sharp; relatório em `docs/security-best-practices-report.md`;
 - próximo slice: persistência clínica e proteção de dados sensíveis, usando
   `docs/next-spec-clinical-persistence-encryption.md`.
+
+Checkpoint arquitetural de 2026-09-01:
+- `AppShell`, `OnboardingTour` e `Tooltip` migrados para pastas de componente
+  camelCase com `index.tsx` público e partes internas em kebab-case;
+- tour refeito como compound component com store Zustand única, Context de
+  composição, hooks de integração e constantes/tipos/utilitários separados;
+- removidos estado duplicado, prop drilling do shell, barramento global de
+  `CustomEvent`, ternários aninhados e loop contínuo de medição por RAF;
+- padrão completo registrado em `docs/frontend-architecture.md` e `AGENTS.md`,
+  com enforcement por ESLint e teste arquitetural;
+- regressão aprovada: lint, typecheck, 95 testes Vitest, build de 22 rotas e
+  Playwright com 17 aprovados/2 pulados em desktop e mobile.
+
+Checkpoint de identidade e onboarding de 2026-09-01:
+- [x] substituir a marca pública anterior por `clinica-full` e fixar a URL
+  canônica `https://clinica-full.gfig.space` em uma constante compartilhada;
+- [x] revisar código, testes e documentação para remover referências públicas à
+  marca e ao domínio anteriores;
+- [x] alinhar dinamicamente a seta do balão ao centro do alvo destacado usando a
+  largura real do cartão e limites seguros nas bordas;
+- [x] animar deslocamento do cartão, conteúdo, `clip-path` e spotlight, respeitando
+  a preferência de redução de movimento;
+- [x] tornar `Especialidade` opcional sem relaxar a validação obrigatória de CPF;
+- [x] validar com lint, typecheck, 96/96 testes Vitest e o onboarding completo em
+  Playwright desktop `1440x900` e mobile `390x844`.
+
+Checkpoint de hardening de pacientes de 2026-09-01:
+- [x] concluir T047/T048 para lista e perfil de pacientes;
+- [x] cobrir filtros, estados vazios, abas/URL, dados legados e ações contextuais;
+- [x] distinguir `Restaurar paciente` de `Arquivar paciente` sem simular mutação;
+- [x] validar lint, typecheck, 35 arquivos/102 testes e build de 22 rotas.
 
 Marco atual:
 - documentacao base pronta
@@ -171,12 +202,12 @@ Entregas esperadas:
   `output/playwright/evidence`
 - [ ] fechamento integral da matriz e validacao final da feature
 
-Métricas do fechamento formal em 2026-08-31:
-- 78/384 linhas da matriz decididas e 306 ainda `pending`;
-- 43/130 tarefas concluídas e 87 abertas, incluindo tarefas cuja implementação
-  equivalente já existe em componentes consolidados e precisa ser reconciliada;
-- lacunas funcionais restantes: confirmação de descarte de rascunhos clínicos e
-  documentais, auditorias transversais, regressão final e smoke manual.
+Métricas do fechamento formal em 2026-09-01:
+- 384/384 linhas da matriz decididas e nenhuma `pending`;
+- 119/130 tarefas concluídas; as 11 abertas são testes granulares de hardening
+  já identificados em `tasks.md`, não lacunas funcionais ocultas;
+- descarte de rascunhos, auditorias transversais, regressão, bundle e smoke
+  desktop/mobile foram executados.
 
 ### Fase 2 - MVP operacional do terapeuta
 Status: `nao iniciado`
@@ -185,8 +216,8 @@ Objetivo:
 - entregar o nucleo vendavel para autonomos individuais
 
 Modulos:
-- [ ] auth inicial
-- [ ] pacientes
+- [x] auth por e-mail/senha com sessão persistida e cookie HttpOnly
+- [x] criação, listagem e perfil de pacientes persistidos no PostgreSQL
 - [ ] agenda
 - [ ] notificacoes via WhatsApp
 - [ ] prontuario
@@ -259,12 +290,19 @@ Possiveis frentes:
 - nivel de auditoria/versionamento do prontuario no primeiro corte
 
 ## Proxima acao recomendada
-Fechar a feature `003` sem ampliar escopo: decidir cada linha ainda `pending`
-da matriz, executar os smokes manuais do quickstart e concluir as auditorias de
-acessibilidade, LGPD e bundle. Depois disso, executar
-`/speckit.specify` com `docs/next-spec-clinical-persistence-encryption.md`
-para transformar Anamnese, evolução/SOAP e finalização de sessão em registros
-clínicos reais, versionados e auditáveis.
+Concluir as 11 tarefas abertas da feature `003` como hardening testável e iniciar
+o próximo slice executando `/speckit.specify` com
+`docs/next-spec-clinical-persistence-encryption.md`. Esse slice transforma
+Anamnese, evolução/SOAP e finalização de sessão em registros clínicos reais,
+versionados e auditáveis sem reabrir o frontend já aceito.
+
+Services disponíveis agora: autenticação/sessão, criação e leitura de pacientes,
+perfil financeiro inicial, criação/leitura de agenda, preferências de UI,
+dashboard agregado e tentativa transacional de WhatsApp. O próximo conjunto de
+services será o clínico (Anamnese, evolução/SOAP e finalização de sessão), logo
+após especificar e esclarecer retenção, versionamento, autorização, auditoria e
+criptografia. Edição/arquivamento de paciente, financeiro operacional, documentos
+e mensagens permanecem slices posteriores e não devem ser misturados nesse gate.
 
 O service de mensagens deve entrar em slice próprio depois desse gate clínico.
 Antes de implementá-lo, a spec deve congelar um catálogo tipado de variáveis

@@ -3,6 +3,7 @@ import { test, expect } from "./fixtures/clinica-fixture";
 test("guided onboarding spotlights real controls and resumes through Settings", async ({
   authenticatedPage: page,
 }, testInfo) => {
+  test.setTimeout(60_000);
   const tour = page.locator('[aria-labelledby="onboarding-title"]');
   if (await tour.isVisible())
     await page.getByRole("button", { name: "Pular" }).click();
@@ -15,12 +16,25 @@ test("guided onboarding spotlights real controls and resumes through Settings", 
 
   await page.getByRole("button", { name: "Próximo" }).click();
   await expect(tour).toContainText("Passo 2 de 16");
-  await expect(page.getByTestId("onboarding-dim-layer")).toHaveCSS(
+  const dimLayer = page.getByTestId("onboarding-dim-layer");
+  await expect(dimLayer).toHaveCSS(
     "clip-path",
     /polygon/,
   );
+  await expect(dimLayer).toHaveCSS("transition-property", /clip-path/);
+  await expect(tour).toHaveCSS("transition-property", /left/);
   await page.getByRole("button", { name: "Próximo" }).click();
   await expect(tour).toContainText("Passo 3 de 16");
+  await expect
+    .poll(async () => {
+      const arrow = await page.getByTestId("onboarding-arrow").boundingBox();
+      const target = await page.locator("#tour-notifications").boundingBox();
+      if (!arrow || !target) return Number.POSITIVE_INFINITY;
+      const arrowCenter = arrow.x + arrow.width / 2;
+      const targetCenter = target.x + target.width / 2;
+      return Math.abs(arrowCenter - targetCenter);
+    })
+    .toBeLessThan(2);
   await page.getByRole("button", { name: "Próximo" }).click();
   await expect(tour).toContainText("Passo 4 de 16");
 
@@ -52,7 +66,6 @@ test("guided onboarding spotlights real controls and resumes through Settings", 
   await expect(next).toHaveAttribute("aria-disabled", "true");
   await page.getByLabel("CPF *").fill("52998224725");
   await expect(next).toHaveAttribute("aria-disabled", "false");
-  await page.getByLabel("Especialidade *").fill("Psicologia");
   await next.click();
   await expect(tour).toContainText("Passo 11 de 16");
   await page.locator("#tour-settings-account-save").click();

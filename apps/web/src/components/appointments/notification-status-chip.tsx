@@ -6,7 +6,9 @@ export function NotificationStatusChip({ status }: { status?: NotificationStatus
     return <Badge tone="muted">Sem notificação</Badge>;
   }
 
-  const tone = status === "enviado" ? "success" : status === "falhou" ? "danger" : "warning";
+  let tone: "success" | "danger" | "warning" = "warning";
+  if (status === "enviado") tone = "success";
+  if (status === "falhou") tone = "danger";
 
   return <Badge tone={tone}>{status}</Badge>;
 }

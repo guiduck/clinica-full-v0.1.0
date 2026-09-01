@@ -55,11 +55,21 @@ const dateKey = (date: Date | string) => {
 };
 const sameDay = (left: Date | string, right: Date | string) => dateKey(left) === dateKey(right);
 const addDays = (date: Date, days: number) => { const next = new Date(date); next.setDate(next.getDate() + days); return next; };
-const headerTitle = (date: Date, view: View) => view === "mes"
-  ? new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date)
-  : view === "dia"
-    ? new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(date)
-    : new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(date);
+function headerTitle(date: Date, view: View) {
+  if (view === "dia") {
+    return new Intl.DateTimeFormat("pt-BR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
 
 export function AgendaCalendar({ patients, appointments, initialView = "semana", initialDate, initialOpen, defaultPatientId }: {
   patients: PatientOption[];

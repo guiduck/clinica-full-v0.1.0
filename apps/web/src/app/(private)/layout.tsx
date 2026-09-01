@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth/require-user";
-import { AppShell } from "@/components/app-shell/app-shell";
+import { AppShell } from "@/components/appShell";
 import { getUserUiPreference } from "@/services/ui-preferences/ui-preferences";
 import { getAppShellView } from "@/services/app-shell/app-shell";
 

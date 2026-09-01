@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LegalLinks } from "@/components/marketing/legal-links";
 import { PasswordField } from "@/components/marketing/password-field";
+import { SITE_NAME } from "@/constants/site";
 import { publicRoutes } from "@/lib/seo/public-routes";
 import { loginResolver, type LoginInput } from "@/utils/validators/login";
 
@@ -57,7 +58,7 @@ export function LoginCard() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <HeartPulse className="h-6 w-6" aria-hidden="true" />
         </div>
-        <CardTitle>Entrar na Clínica Ágil</CardTitle>
+        <CardTitle>Entrar na {SITE_NAME}</CardTitle>
         <CardDescription>
           Acesse sua area profissional com e-mail e senha cadastrados.
         </CardDescription>

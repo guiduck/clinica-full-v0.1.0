@@ -32,7 +32,7 @@ Validate the first production-ready Next.js slice:
 ## Manual Validation
 
 1. Open `/`.
-2. Confirm the page explains Clinica Agil for autonomous therapists,
+2. Confirm the page explains clinica-full for autonomous therapists,
    psychologists, and psychiatrists.
 3. Confirm the page mentions patients, agenda, clinical records, finance,
    documents, and reminders.

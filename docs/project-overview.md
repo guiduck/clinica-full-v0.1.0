@@ -19,10 +19,27 @@ não simula persistência. A camada de domínio iniciou a próxima fase com
 financeiro na mesma transação Prisma.
 
 O baseline de qualidade atual é: Next 15.5.21, PostgreSQL/Prisma, sessão
-database-backed, audit de produção zerado, 87 testes Vitest, Playwright em
+database-backed, audit de produção zerado, Playwright em
 desktop/mobile e build de 22 rotas. Persistência clínica/documental continua
 proibida até a próxima spec definir autorização, versionamento, retenção,
 auditoria e estratégia real de criptografia/chaves.
+
+### Identidade pública e refinamento do onboarding — 2026-09-01
+
+- O nome público oficial passou a ser `clinica-full` e a URL canônica é
+  `https://clinica-full.gfig.space`; metadata, landing, autenticação, navegação,
+  termos, privacidade, testes e documentação foram reconciliados.
+- A identidade pública usa constantes compartilhadas. Identificadores técnicos
+  de banco/volume já existentes não foram renomeados para não romper dados de
+  ambientes instalados.
+- O balão do onboarding mede sua largura real e calcula a seta a partir do centro
+  do alvo destacado, limitando-a às bordas seguras do cartão.
+- Cartão, conteúdo, `clip-path` e contorno do spotlight agora transitam entre os
+  passos com suporte a `prefers-reduced-motion`.
+- `Especialidade` é opcional em Configurações; CPF continua sendo a precondição
+  obrigatória do passo correspondente.
+- Validação: lint e typecheck aprovados; 33 arquivos/96 testes Vitest aprovados;
+  jornada Playwright completa aprovada em desktop `1440x900` e mobile `390x844`.
 
 Conclusao objetiva:
 - o MVP deve nascer como `plataforma web confiavel para autonomos individuais`
@@ -196,17 +213,25 @@ Pontos fortes:
   paciente, Financeiro, Previsibilidade e Configurações. A lista de pacientes
   passou a crescer conforme os registros, e a Agenda usa dropdowns com largura
   integral e seletores controlados de horário brasileiro em 24 horas.
-- O fechamento formal ainda não acompanha toda a implementação: 78 de 384 linhas
-  da matriz estão decididas e 43 de 130 tarefas estão concluídas. As linhas e
-  tarefas restantes devem ser reconciliadas com evidência real, sem reconstruir
-  componentes equivalentes já existentes nem inferir aprovação.
+- O fechamento formal foi reconciliado: 384 de 384 linhas estão decididas e
+  119 de 130 tarefas estão concluídas. As 11 tarefas abertas são cobertura
+  granular de hardening já identificada, não implementação visual ausente.
+- A lista e o perfil de pacientes ganharam seis testes de componente para filtros,
+  estados vazios, abas/URL, dados legados e fronteiras de capacidade. A criação
+  permanece realmente persistida; edição, arquivamento/restauração e contato
+  manual continuam indisponíveis até seus próprios services serem especificados.
 - A fundacao e a User Story 1 foram corrigidas e revalidadas em 2026-08-27,
   cobrindo T001-T043.
 - O shell usa o rail compacto do prototipo e um Sheet shadcn sobreposto em desktop
   e mobile; nao existe mais sidebar larga/retratil ocupando o layout.
-- O onboarding possui 16 passos declarativos em constantes, e controlado por
-  `?onboarding=<passo>`, mede alvos reais por id, recorta o overlay com
-  `clip-path`, deixa o alvo clicavel e posiciona o balao conforme o espaco.
+- O onboarding possui 16 passos declarativos em constantes, aceita as chaves
+  legadas e grava a URL canônica `?tourStep=<passo>`, mede alvos reais por id,
+  recorta o overlay com `clip-path`, deixa o alvo clicável e posiciona o balão
+  conforme o espaço.
+- A implementação do tour usa uma store Zustand vanilla por Provider, Context
+  apenas para composição, hooks para URL/DOM/preferências e utilitários puros de
+  geometria. Não há barramento global de eventos nem leitura de browser globals
+  durante render server-side.
 - Os passos de perfil abrem o menu real, navegam para
   `/configuracoes?onboarding=10` e continuam no ponto correto. Saves de
   Configuracoes validam CPF, telefone e CEP, mas informam explicitamente que o
@@ -665,12 +690,12 @@ Se fosse para decidir hoje, eu seguiria com:
 - O próximo slice preparado pelo `specify-prompt-engineer` é persistência
   clínica e proteção de dados sensíveis.
 
-1. Fechar as linhas `pending`, auditorias e smoke manual da feature `003`.
-2. Revisar as 10 vulnerabilidades npm sem aplicar upgrades maiores automáticos.
-3. Validar o slice operacional com o sandbox real do Twilio.
-4. Executar `/speckit.specify` com
+1. Executar `/speckit.specify` com
    `docs/next-spec-clinical-persistence-encryption.md`.
-5. Definir o modelo jurídico/contábil de recibo, assinatura e cobrança online
+2. Completar progressivamente os 11 testes granulares de hardening da feature
+   `003` quando os respectivos módulos forem tocados.
+3. Validar o slice operacional com o sandbox real do Twilio.
+4. Definir o modelo jurídico/contábil de recibo, assinatura e cobrança online
    antes de habilitar essas mutações.
 
 ## Arquitetura de deploy em VPS — 2026-08-31

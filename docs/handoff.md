@@ -4,13 +4,89 @@
 Projeto com o `slice paciente/agenda/WhatsApp implementado`, a superfície da
 feature `003-prototype-front-reconstruction` aceita e o primeiro service
 pós-reconstrução entregue. A matriz está 100% decidida; não há `pending`.
-Restam 13 testes granulares de hardening em `tasks.md`, explicitamente não
+Restam 11 testes granulares de hardening em `tasks.md`, explicitamente não
 confundidos com lacunas ocultas de UI ou falso sucesso.
+
+## Hardening de pacientes — 2026-09-01
+
+- T047 e T048 foram concluídas com seis testes de componente para lista e perfil.
+- A lista cobre busca por identificadores, filtro de status, banco vazio, busca
+  vazia, navegação financeira e feedback honesto para ações sem service.
+- O perfil cobre a ordem canônica das seis abas, serialização da aba na URL,
+  registros legados incompletos, links contextuais e ações indisponíveis.
+- Registros arquivados agora exibem `Restaurar paciente`, mantendo a mutação
+  indisponível até existir um service autorizado.
+- Validação: lint e typecheck aprovados; suíte completa com 35 arquivos e
+  102/102 testes aprovados usando dois workers; build de produção aprovado com
+  22 rotas. A primeira execução com quatro workers teve um timeout isolado em
+  teste clínico legado, que passou isoladamente e na repetição integral.
+
+## Identidade pública e refinamento do onboarding — 2026-09-01
+
+- Marca pública consolidada como `clinica-full`, com canonical
+  `https://clinica-full.gfig.space` e constantes compartilhadas para nome, sigla
+  e URL padrão.
+- A auditoria removeu referências públicas ao nome/domínio anteriores do app,
+  dos testes e da documentação. Identificadores internos compatíveis com bancos
+  ou volumes existentes permanecem inalterados intencionalmente.
+- O tour mede largura e altura reais do cartão. A seta usa o centro do alvo menos
+  o início do cartão e metade do próprio triângulo, com clamp para não sair do
+  balão em alvos próximos às bordas.
+- A posição do cartão, o conteúdo de cada passo, o `clip-path` do backdrop e o
+  retângulo do spotlight possuem transições suaves e fallback
+  `prefers-reduced-motion`.
+- O campo `Especialidade` deixou de exibir asterisco e não participa mais da
+  validação de salvamento; CPF válido continua obrigatório.
+
+Validação deste checkpoint:
+- `npm.cmd run lint`: aprovado;
+- `npm.cmd run typecheck`: aprovado;
+- `npm.cmd run test`: 33 arquivos, 96/96 testes aprovados;
+- `app-shell.spec.ts --project=desktop --no-deps`: aprovado;
+- `app-shell.spec.ts --project=mobile --no-deps`: aprovado;
+- o E2E verifica a seta no centro do alvo, as propriedades de transição e o save
+  da conta com especialidade vazia.
+
+## Refatoração arquitetural do frontend — 2026-09-01
+- Branch ativa: `003-prototype-front-reconstruction`.
+- `AppShell`, `OnboardingTour` e `Tooltip` agora seguem o contrato de pasta por
+  componente: diretório camelCase, partes kebab-case e `index.tsx` como API
+  pública montada.
+- `OnboardingTour` expõe partes compostas (`Provider`, `Root`, `Backdrop`,
+  `Spotlight`, `Card`, `Header`, `Progress`, `Hints` e `Actions`) e mantém a API
+  pronta para uso no export principal.
+- A store Zustand é a única fonte do estado de tour, navegação e menu de usuário.
+  Context serve à composição; hooks isolam persistência, URL, navegação,
+  observadores de DOM e medição de viewport.
+- Tipos, passos/eventos, layout, geometria, query state e regras de avanço saíram
+  do JSX para `types`, `constants` e `utils` dedicados.
+- O barramento `CustomEvent`, o loop incondicional de RAF, o prop drilling e os
+  ternários encadeados foram removidos. ESLint bloqueia novos ternários aninhados
+  globalmente e o padrão de JSX legado nas pastas migradas.
+- O Playwright detectou e a implementação corrigiu duas fronteiras que testes
+  unitários não cobriam: leitura de `window` durante SSR e landmark `banner`
+  duplicado dentro do diálogo.
+
+Validação deste checkpoint:
+- `npm.cmd run lint`: aprovado;
+- `npm.cmd run typecheck`: aprovado;
+- `npm.cmd run test -- --maxWorkers=4`: 33 arquivos, 95/95 testes aprovados;
+- `npm.cmd run build`: aprovado, 22 rotas;
+- `npm.cmd run test:e2e`: 17 aprovados e 2 pulados intencionalmente, desktop e
+  mobile;
+- aviso não bloqueante mantido: Next detecta lockfiles na raiz e em `apps/web`.
+
+Contrato durável:
+- ver `docs/frontend-architecture.md` e as regras correspondentes em `AGENTS.md`;
+- Zustand permanece restrito a estado de UI no navegador; persistência clínica,
+  financeira e documental continua em Server Actions/services/Prisma;
+- componentes legados de domínio migram por responsabilidade quando o próximo
+  slice os tocar, com testes antes da remoção do entry point antigo.
 
 ## Reconciliação final e service inicial — 2026-08-31
 - Matriz: 384/384 linhas decididas — 284 equivalentes, 72 capacidades
   indisponíveis e 28 divergências compactas aprovadas pelo product owner.
-- Tarefas: 117/130 concluídas por resultado, inclusive implementações e E2E
+- Tarefas: 119/130 concluídas por resultado, inclusive implementações e E2E
   consolidados em arquivos diferentes dos nomes originalmente planejados.
 - Criação do wizard agora valida dados pessoais e financeiros antes de escrever
   e cria `Patient` + `PatientFinancialProfile` em uma única transação Prisma.
@@ -70,7 +146,7 @@ Validação deste checkpoint:
 
 Situação formal da feature 003:
 - 384 de 384 linhas da matriz estão decididas; 0 continuam `pending`;
-- 117 de 130 tarefas estão concluídas e 13 testes granulares permanecem como
+- 119 de 130 tarefas estão concluídas e 11 testes granulares permanecem como
   hardening rastreado;
 - divergências aceitas têm responsável/data e não ampliam capacidades reais;
 - descarte de rascunhos, auditorias, regressão, bundle e smoke responsivo foram
@@ -86,17 +162,18 @@ Limites reais:
 - o catálogo e a semântica das variáveis dinâmicas de templates de mensagens
   ainda precisam ser especificados antes do service de mensagens.
 
-## Correcao de fidelidade do shell/onboarding — 2026-08-27
-- Modal central removido. O tour agora usa 16 passos tipados em
-  `onboarding-steps.ts`, query `?onboarding=<passo>`, alvos por id, medicao
-  continua e spotlight click-through por `clip-path`.
+## Correcao de fidelidade do shell/onboarding — 2026-08-27 (histórico)
+- Modal central removido. A implementação original deste checkpoint foi
+  substituída pela arquitetura de 2026-09-01 acima. O comportamento preservado
+  continua com 16 passos tipados, URL canônica `?tourStep=<passo>`, alvos por id,
+  medição orientada a eventos/observers e spotlight click-through por `clip-path`.
 - O balao evita cobrir o alvo: no perfil desktop fica a esquerda; no viewport
   movel usa fallback inferior quando nao existe largura lateral.
 - Rail desktop compacto e Sheet shadcn sobreposto substituem a antiga sidebar
   larga. O Sheet e o dropdown do usuario sao controlados e sincronizados com cada
   passo para nao interceptarem cliques posteriores.
 - O fluxo abre o perfil, seleciona Configuracoes, navega para
-  `/configuracoes?onboarding=10` e conclui os 16 passos.
+  `/configuracoes?tourStep=10` e conclui os 16 passos.
 - Configuracoes possui Conta e Contato/Endereco com CPF real, telefone e CEP
   mascarados/validados. Saves validos mostram indisponibilidade e nunca sucesso
   ou persistencia falsa.
@@ -252,7 +329,7 @@ Observacao de ambiente:
 - Vitest/Next podem precisar de permissao para spawn de workers locais
 
 ## Contexto do produto
-`Clinica Agil` e um SaaS para terapeutas e psicologos autonomos.
+`clinica-full` e um SaaS para terapeutas e psicologos autonomos.
 
 Escopo do MVP:
 - um unico profissional por conta

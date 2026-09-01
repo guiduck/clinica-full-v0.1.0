@@ -97,6 +97,32 @@ organization template. Production frontend work must follow these conventions:
   preserve the UI but show an explicit unavailable/not-implemented message. Never
   simulate a successful mutation or fake persisted data.
 
+### Component Architecture Standard
+
+- New or substantially refactored components live in
+  `src/components/<componentNameCamelCase>/`. Use kebab-case filenames for their
+  parts and reserve `index.tsx` for the explicit, ready-to-use public API.
+- Colocate subcomponents, unit tests, and stories with their owner. Use names such
+  as `component-part.tsx`, `component-part.test.tsx`, and
+  `component-part.stories.tsx`.
+- Prefer composition and compound components for complex UI. Expose explicit parts
+  such as `Component.Root`, `Component.Trigger`, and `Component.Content`, plus an
+  ergonomic assembled component when a common usage deserves one.
+- Keep broad domain barrels out of runtime paths. An `index.tsx` may explicitly
+  export the small public API of one component; do not use `export *` aggregators.
+- Put reusable domain types in `src/types`, fixed metadata and option maps in
+  `src/constants`, pure deterministic functions in `src/utils`, client UI state in
+  `src/stores`, and non-trivial synchronization in dedicated hooks.
+- Zustand stores are for cross-component client UI state. Server state and domain
+  mutations remain in Server Components, Server Actions, services, and adapters.
+  Providers hide the store implementation from composed UI whenever practical.
+- Prefer early returns and named booleans. Nested ternaries are forbidden. For
+  conditional JSX, prefer a named condition with `&&` or a subcomponent that
+  returns early instead of `condition ? <Node /> : null`.
+- Effects must synchronize with an external system (DOM, URL, browser API, network,
+  or subscription). Put interaction-driven work in event handlers and isolate
+  unavoidable effects in focused custom hooks.
+
 ## Codex Skill Mapping
 
 Codex discovers repository skills from `.agents/skills`. The Spec Kit and project

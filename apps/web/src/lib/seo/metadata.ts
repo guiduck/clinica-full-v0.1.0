@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { SITE_DEFAULT_URL, SITE_NAME } from "@/constants/site";
 import { landingContent, seoKeywordPhrases } from "@/lib/seo/landing-content";
 import { publicRoutes } from "@/lib/seo/public-routes";
 
 export const siteConfig = {
-  name: "Clínica Ágil",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://clinicaagil.com.br",
+  name: SITE_NAME,
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? SITE_DEFAULT_URL,
   description:
-    "Clínica Ágil é um software para psicólogos, terapeutas e psiquiatras autônomos organizarem pacientes, agenda, prontuário, financeiro, documentos e recibos."
+    `${SITE_NAME} é um software para psicólogos, terapeutas e psiquiatras autônomos organizarem pacientes, agenda, prontuário, financeiro, documentos e recibos.`
 };
 
 type PageMetadata = {
@@ -29,14 +30,14 @@ export const pageMetadata = {
   login: {
     title: "Login profissional",
     description:
-      "Acesse a entrada profissional da Clínica Ágil com e-mail, senha e sessão segura server-side.",
+      `Acesse a entrada profissional da ${SITE_NAME} com e-mail, senha e sessão segura server-side.`,
     canonicalPath: publicRoutes.login,
-    keywords: ["login Clínica Ágil", "acesso profissional", ...seoKeywordPhrases],
+    keywords: [`login ${SITE_NAME}`, "acesso profissional", ...seoKeywordPhrases],
     indexable: true
   },
   placeholder: {
     title: "Página em preparação",
-    description: "Esta área da Clínica Ágil está em preparação e ainda não executa serviços reais.",
+    description: `Esta área da ${SITE_NAME} está em preparação e ainda não executa serviços reais.`,
     canonicalPath: publicRoutes.landing,
     keywords: [],
     indexable: false

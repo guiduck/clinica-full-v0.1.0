@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "radix-ui"]
+  },
   async headers() {
     return [{
       source: "/(.*)",

@@ -12,8 +12,8 @@
 Tasks were reconciled by observable behavior rather than planned filenames:
 consolidated components/services and the consolidated `product-pages.spec.ts`
 count as delivery evidence. Approved compact divergences are linked from the
-384/384 decided parity matrix. After documentation closure, 117/130 tasks are
-complete; the 13 open tasks are explicit unit/component-test hardening and do
+384/384 decided parity matrix. After patient component hardening, 119/130 tasks are
+complete; the 11 open tasks are explicit unit/component-test hardening and do
 not conceal a production mutation or an unreviewed parity row.
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -119,8 +119,8 @@ not conceal a production mutation or an unreviewed parity row.
 - [X] T044 [P] [US2] Expand patient validator tests for required CPF/birth/e-mail/phone, optional address, conditional emergency contact and separate consents in `apps/web/src/tests/unit/patient-validation.test.ts`
 - [X] T045 [P] [US2] Expand financial-profile validator tests for Avulso, unsupported Plano notice, method conditions and card installments without PAN/CVV in `apps/web/src/tests/unit/patient-financial-profile-validation.test.ts`
 - [X] T046 [P] [US2] Add atomic wizard integration tests for ownership, CPF/phone duplication, supported Avulso transaction, rollback and legacy rows in `apps/web/src/tests/integration/patient-wizard-actions.test.ts`
-- [ ] T047 [P] [US2] Add patient-list query/action component tests for search, status, empty states and unavailable edit/archive/restore/contact controls in `apps/web/src/tests/component/patient-list.test.tsx`
-- [ ] T048 [P] [US2] Add patient-profile shell tests for tab order, canonical URL state, incomplete legacy values and contextual actions in `apps/web/src/tests/component/patient-profile.test.tsx`
+- [X] T047 [P] [US2] Add patient-list query/action component tests for search, status, empty states and unavailable edit/archive/restore/contact controls in `apps/web/src/tests/component/patient-list.test.tsx`
+- [X] T048 [P] [US2] Add patient-profile shell tests for tab order, canonical URL state, incomplete legacy values and contextual actions in `apps/web/src/tests/component/patient-profile.test.tsx`
 
 ### `/pacientes` increment
 

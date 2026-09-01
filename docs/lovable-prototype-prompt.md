@@ -1,16 +1,16 @@
-# Lovable Prototype Prompt - Clinica Agil
+# Lovable Prototype Prompt - clinica-full
 
 ```markdown
-Title: Prototipo MVP Completo - Clinica Agil
+Title: Prototipo MVP Completo - clinica-full
 
-Build a Lovable prototype for a complete therapist-facing SaaS called Clinica Agil.
+Build a Lovable prototype for a complete therapist-facing SaaS called clinica-full.
 
 Use the attached reference images from `/references/images` as the functional baseline. They already cover the required product flows: login, create account, dashboard, patient management, patient profile tabs, anamnese, SOAP clinical notes, agenda, finance, documents, document preview and scheduling/payment modals.
 
 The UI/UX may be redesigned and improved, but all functional capabilities represented in the images and described below must be preserved or replaced by a better equivalent experience.
 
 Product context:
-- Clinica Agil is a web SaaS for autonomous therapists, psychologists and psychiatrists.
+- clinica-full is a web SaaS for autonomous therapists, psychologists and psychiatrists.
 - The product centralizes clinical and administrative work: patients, agenda, clinical records, anamnese, finance, receipts, documents, prescriptions and notifications.
 - The main user is an individual healthcare professional managing their own patients.
 - Patient portal, multi-professional accounts, secretary/admin roles and AI automations are future scope.
@@ -487,5 +487,5 @@ Out of scope:
 - Complete DSM database.
 
 Expected outcome:
-Create a complete, navigable, polished web app prototype for Clinica Agil that improves the reference UI while preserving all required modules and flows. The result should feel like a serious MVP ready for user validation with therapists and psychologists.
+Create a complete, navigable, polished web app prototype for clinica-full that improves the reference UI while preserving all required modules and flows. The result should feel like a serious MVP ready for user validation with therapists and psychologists.
 ```

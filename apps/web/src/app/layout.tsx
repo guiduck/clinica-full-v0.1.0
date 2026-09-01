@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   applicationName: siteConfig.name,
-  authors: [{ name: "Clínica Ágil" }],
-  creator: "Clínica Ágil"
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name
 };
 
 export const viewport: Viewport = {

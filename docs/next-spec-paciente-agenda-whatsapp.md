@@ -10,7 +10,7 @@ inicial do paciente como pre-condicao de agendamento.
 ## Feature Intent
 - Goal: criar o primeiro fluxo operacional do MVP em que o profissional cadastra um paciente, completa os dados financeiros iniciais do paciente, agenda uma consulta e dispara uma confirmacao por WhatsApp.
 - Primary actor: terapeuta/psicologo autonomo individual.
-- Business value: transformar a Clinica Agil de uma experiencia publica/login em um fluxo util de operacao clinica, reduzindo trabalho manual e preparando a base para agenda, pacientes e notificacoes.
+- Business value: transformar a clinica-full de uma experiencia publica/login em um fluxo util de operacao clinica, reduzindo trabalho manual e preparando a base para agenda, pacientes e notificacoes.
 
 ## In Scope
 - Cadastro de paciente com dados basicos necessarios para agenda e contato.

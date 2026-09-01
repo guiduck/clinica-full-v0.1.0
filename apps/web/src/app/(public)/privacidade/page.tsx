@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { PlaceholderPage } from "@/components/marketing/placeholder-page";
+import { SITE_NAME } from "@/constants/site";
 import { buildPageMetadata, pageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
   ...pageMetadata.placeholder,
   title: "Privacidade em preparação",
-  description: "Política de privacidade da Clínica Ágil em preparação para uma versão futura."
+  description: `Política de privacidade da ${SITE_NAME} em preparação para uma versão futura.`
 });
 
 export default function PrivacyPage() {

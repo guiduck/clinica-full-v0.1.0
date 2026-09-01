@@ -1,7 +1,7 @@
 # Próxima Spec — Ativação e hardening do ambiente de produção na VPS
 
 Create a feature specification for production activation and operational
-hardening of Clinica Agil on the existing VPS.
+hardening of clinica-full on the existing VPS.
 
 Primary user: operador técnico responsável pela VPS.
 

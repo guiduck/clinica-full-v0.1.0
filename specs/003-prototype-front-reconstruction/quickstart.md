@@ -126,5 +126,5 @@ feature is ready only when:
   `output/playwright/evidence`.
 - Matriz: 384/384 decididas, sem `pending`.
 
-Pendências não bloqueantes: 13 testes granulares de componente/unidade,
+Pendências não bloqueantes: 11 testes granulares de componente/unidade,
 Twilio sandbox real, CSP e decisão do workspace com múltiplos lockfiles.

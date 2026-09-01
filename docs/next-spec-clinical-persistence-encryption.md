@@ -1,11 +1,18 @@
 # Proxima Spec: Persistencia Clinica e Protecao de Dados Sensiveis
 
-> Brief revalidado com `specify-prompt-engineer` em 2026-08-31 contra as
+> Brief revalidado com `specify-prompt-engineer` em 2026-09-01 contra as
 > superfícies finais transitórias de Anamnese, Prontuário, sessão e Agenda.
 > A matriz da feature 003 está 384/384 decidida e este brief está pronto para
 > alimentar `/speckit.specify`.
 > Preservar também o contrato de localização aprovado: datas em `dd/mm/aaaa`,
 > horários em 24 horas e seletores/dropdowns com largura integral do campo.
+> Revalidado após o checkpoint de identidade/onboarding de 2026-09-01: a marca
+> pública é `clinica-full`, o canonical é `https://clinica-full.gfig.space`, o
+> tour animado é baseline aceita e `Especialidade` permanece opcional. Este slice
+> não deve reabrir essas decisões compartilhadas.
+> Revalidado após T047/T048: criação, listagem e perfil de pacientes já possuem
+> persistência/testes próprios; este brief começa nos registros clínicos e não deve
+> recriar o service de pacientes nem absorver edição/arquivamento/financeiro.
 
 Create a feature specification for persistent clinical records with an explicit
 security, privacy, retention and audit model.
@@ -39,6 +46,15 @@ Constraints:
 - Next.js modular monolith in `apps/web`, server-first with Server Components,
   Server Actions, services, Prisma and PostgreSQL;
 - shadcn/ui, React Hook Form and shared Zod schemas remain the frontend contract;
+- preserve the frontend architecture contract in `docs/frontend-architecture.md`:
+  componentName camelCase folders, kebab-case internal parts, an explicit
+  `index.tsx` public API and compound composition for complex reusable UI;
+- keep client-only shared UI state in focused Zustand stores, compound contracts
+  in Context, integration effects in custom hooks and authoritative clinical data
+  in Server Actions/services/Prisma; never copy clinical bodies into a browser
+  store;
+- use early returns and named conditions, reject nested ternaries and keep browser
+  globals out of render paths so Client Components remain SSR-safe;
 - dates are shown as `dd/mm/aaaa`, time uses 24-hour format and DSM/CID remains a
   manual field without embedded copyrighted catalog content;
 - never place clinical bodies in URLs, cookies, localStorage, analytics, audit logs,

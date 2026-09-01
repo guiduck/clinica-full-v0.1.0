@@ -1,4 +1,4 @@
-# Requisitos do Projeto - Clinica Agil
+# Requisitos do Projeto - clinica-full
 
 ## Status do documento
 Este documento consolida os requisitos do projeto com base em:
@@ -10,7 +10,7 @@ Este documento consolida os requisitos do projeto com base em:
 As telas do prototipo sao referencia funcional obrigatoria: a UI e a UX podem ser redesenhadas e melhoradas, mas as capacidades representadas nas telas devem ser preservadas ou explicitamente substituidas por uma experiencia melhor equivalente.
 
 ## Visao geral
-`Clinica Agil` e um SaaS web para profissionais de saude mental, com foco inicial em terapeutas, psicologos e psiquiatras autonomos. O sistema deve centralizar a rotina clinica e administrativa: acesso seguro, dashboard, gestao de pacientes, agenda, prontuario, anamnese, financeiro, documentos, receituario, recibos e notificacoes.
+`clinica-full` e um SaaS web para profissionais de saude mental, com foco inicial em terapeutas, psicologos e psiquiatras autonomos. O sistema deve centralizar a rotina clinica e administrativa: acesso seguro, dashboard, gestao de pacientes, agenda, prontuario, anamnese, financeiro, documentos, receituario, recibos e notificacoes.
 
 O produto deve transmitir confianca, organizacao e seguranca, sem parecer complexo ou hospitalar demais. A experiencia pode melhorar o prototipo, mas deve manter os fluxos e modulos demonstrados.
 

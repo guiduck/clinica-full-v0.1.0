@@ -24,7 +24,29 @@ const eslintConfig = [
       ".specify/**"
     ]
   },
-  ...compat.extends("next/core-web-vitals", "next/typescript")
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-nested-ternary": "error"
+    }
+  },
+  {
+    files: [
+      "src/components/appShell/**/*.tsx",
+      "src/components/onboardingTour/**/*.tsx",
+      "src/components/tooltip/**/*.tsx"
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ConditionalExpression[alternate.type='Literal'][alternate.value=null]",
+          message: "Use uma constante nomeada e renderização com &&, ou extraia um subcomponente com early return."
+        }
+      ]
+    }
+  }
 ];
 
 export default eslintConfig;

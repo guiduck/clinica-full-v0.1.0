@@ -5,6 +5,7 @@ import { LandingFeatures } from "@/components/marketing/landing-features";
 import { LandingHero } from "@/components/marketing/landing-hero";
 import { LandingTrust } from "@/components/marketing/landing-trust";
 import { buttonVariants } from "@/components/ui/button";
+import { SITE_NAME } from "@/constants/site";
 import { landingContent } from "@/lib/seo/landing-content";
 
 export function LandingPage() {
@@ -29,7 +30,7 @@ export function LandingPage() {
           <div>
             <h2 className="text-3xl font-semibold">Comece pela entrada profissional</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#d9f3ee]">
-              Login e cadastro já funcionam com sessão server-side para validar a experiência inicial da Clínica Ágil.
+              Login e cadastro já funcionam com sessão server-side para validar a experiência inicial da {SITE_NAME}.
             </p>
           </div>
           <Link className={buttonVariants({ variant: "secondary", size: "lg" })} href={landingContent.primaryCtaHref}>
@@ -41,7 +42,7 @@ export function LandingPage() {
       <footer className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 lg:px-8">
         <LegalLinks />
         <p className="text-sm text-muted-foreground">
-          Clínica Ágil organiza software para psicólogos, agenda para terapeutas, gestão de pacientes, prontuário psicológico, financeiro para clínica e recibos.
+          {SITE_NAME} organiza software para psicólogos, agenda para terapeutas, gestão de pacientes, prontuário psicológico, financeiro para clínica e recibos.
         </p>
       </footer>
     </main>

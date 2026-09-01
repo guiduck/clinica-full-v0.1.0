@@ -19,7 +19,7 @@ Follow-up TODOs:
   implementing prontuario persistence.
 - TODO(CID_DSM_LICENSE): confirm licensed source and allowed UX for CID-11/DSM-5 lookup.
 -->
-# Clinica Agil Constitution
+# clinica-full Constitution
 
 ## Core Principles
 

@@ -1,4 +1,5 @@
 import { CalendarDays, ClipboardCheck, FileText, HeartPulse, Receipt, UsersRound } from "lucide-react";
+import { SITE_NAME } from "@/constants/site";
 import { publicRoutes } from "@/lib/seo/public-routes";
 
 export const seoKeywordPhrases = [
@@ -11,8 +12,8 @@ export const seoKeywordPhrases = [
 ] as const;
 
 export const landingContent = {
-  brand: "Clínica Ágil",
-  heroTitle: "Clínica Ágil",
+  brand: SITE_NAME,
+  heroTitle: SITE_NAME,
   heroSubtitle:
     "Software para psicólogos, terapeutas e psiquiatras autônomos organizarem pacientes, agenda, prontuário psicológico, financeiro, documentos e lembretes em um só lugar.",
   primaryCtaLabel: "Acessar área profissional",

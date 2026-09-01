@@ -5,6 +5,12 @@ function getBaseUrl() {
   return process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
+function getRequestBody(request: APIRequest, isFormData: boolean) {
+  if (request.method === "GET" || !request.data) return undefined;
+  if (isFormData) return request.data as FormData;
+  return JSON.stringify(request.data);
+}
+
 export default async function API<T = unknown>(request: APIRequest): Promise<APIResponse<T>> {
   const fullUrl = new URL(request.url.replace(/^\/+/, ""), `${getBaseUrl().replace(/\/$/, "")}/`);
   const isFormData = request.data instanceof FormData;
@@ -15,12 +21,7 @@ export default async function API<T = unknown>(request: APIRequest): Promise<API
     .join("; ");
 
   try {
-    const body: BodyInit | undefined =
-      request.method !== "GET" && request.data
-        ? isFormData
-          ? (request.data as FormData)
-          : JSON.stringify(request.data)
-        : undefined;
+    const body: BodyInit | undefined = getRequestBody(request, isFormData);
 
     const response = await fetch(fullUrl, {
       method: request.method,

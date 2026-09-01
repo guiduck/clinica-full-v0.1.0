@@ -1,4 +1,5 @@
 import { LockKeyhole, ShieldCheck, Stethoscope, UserCheck } from "lucide-react";
+import { SITE_NAME } from "@/constants/site";
 import { landingContent } from "@/lib/seo/landing-content";
 
 const icons = [ShieldCheck, LockKeyhole, Stethoscope, UserCheck] as const;
@@ -11,7 +12,7 @@ export function LandingTrust() {
           <p className="text-sm font-semibold uppercase tracking-normal text-primary">Confiança antes do login</p>
           <h2 className="mt-3 text-3xl font-semibold leading-tight">Privacidade, LGPD e clareza desde a entrada</h2>
           <p className="mt-4 text-base leading-7 text-muted-foreground">
-            A Clínica Ágil foi planejada para lidar com fluxos sensíveis de saúde com postura profissional. Neste primeiro slice, nenhuma credencial ou dado clínico é persistido.
+            A {SITE_NAME} foi planejada para lidar com fluxos sensíveis de saúde com postura profissional. Neste primeiro slice, nenhuma credencial ou dado clínico é persistido.
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">

@@ -5,7 +5,7 @@
 
 ## Summary
 
-Reconstruct the Clinica Agil production frontend page by page with visual and
+Reconstruct the clinica-full production frontend page by page with visual and
 functional parity to the frozen Lovable commit
 `226e5ab6811c5dce717fa12b404370b4fbb2663e`. Keep Next.js pages server-first,
 isolate dense interaction in focused Client Components, adapt shadcn/ui to the
@@ -286,6 +286,13 @@ apps/web/
 Pages only compose routes/data. Domain components, hooks, constants and pure
 transformations are separated by responsibility. Services call Prisma directly for
 internal server flows; Route Handlers are not added for internal page data.
+
+Complex reusable components follow `docs/frontend-architecture.md`: each public
+component owns a camelCase folder, keeps kebab-case parts beside it and assembles an
+explicit API in `index.tsx`. Compound components avoid boolean-prop proliferation;
+Zustand is limited to cross-component browser UI state, while Context coordinates
+compound parts and custom hooks isolate URL/DOM/external synchronization. Nested
+ternaries and browser-global reads during render are prohibited.
 
 ## Complexity Tracking
 
