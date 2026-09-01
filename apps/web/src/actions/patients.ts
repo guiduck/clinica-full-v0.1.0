@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { getDomainErrorMessage } from "@/lib/errors/domain-errors";
+import { createPatientWizard } from "@/services/patients/create-patient-wizard";
 import { createPatient } from "@/services/patients/patients";
-import { patientSchema } from "@/utils/validators/patient";
+import { patientSchema, patientWizardPatientSchema } from "@/utils/validators/patient";
+import { patientFinancialProfileSchema } from "@/utils/validators/patient-financial-profile";
 
 export type PatientActionState = {
   ok: boolean;
@@ -21,29 +23,33 @@ export async function createPatientWizardAction(
 ): Promise<PatientWizardActionState> {
   const user = await requireUser();
   const raw = Object.fromEntries(formData.entries());
-  const parsed = patientSchema.safeParse({
+  const patientParsed = patientWizardPatientSchema.safeParse({
     ...raw,
     whatsappConsent: formData.get("whatsappConsent") === "on",
+    emailConsent: formData.get("emailConsent") === "on",
     intent: "save",
   });
-  if (!parsed.success) {
+  if (!patientParsed.success) {
     return {
       ok: false,
       message:
-        parsed.error.issues[0]?.message ?? "Revise os dados do paciente.",
+        patientParsed.error.issues[0]?.message ?? "Revise os dados do paciente.",
     };
   }
+  const financialParsed = patientFinancialProfileSchema.safeParse(raw);
+  if (!financialParsed.success) return { ok: false, message: financialParsed.error.issues[0]?.message ?? "Revise os dados de pagamento." };
   try {
-    const patient = await createPatient(user.id, parsed.data);
+    const { patient } = await createPatientWizard(user.id, { patient: patientParsed.data, financial: financialParsed.data });
     revalidatePath("/pacientes");
     revalidatePath("/dashboard");
+    revalidatePath("/agenda");
     return { ok: true, patientId: patient.id, patientName: patient.name };
   } catch (error) {
     return {
       ok: false,
       message: getDomainErrorMessage(
         error,
-        "Nao foi possivel cadastrar o paciente.",
+        "Não foi possível cadastrar o paciente.",
       ),
     };
   }
@@ -75,7 +81,7 @@ export async function createPatientAction(
   } catch (error) {
     return {
       ok: false,
-      message: getDomainErrorMessage(error, "Nao foi possivel cadastrar o paciente.")
+      message: getDomainErrorMessage(error, "Não foi possível cadastrar o paciente.")
     };
   }
 

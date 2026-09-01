@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createPatientAction, type PatientActionState } from "@/actions/patients";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { maskBrazilianDate } from "@/utils/masks";
 
 const initialState: PatientActionState = {
   ok: false,
@@ -15,6 +16,7 @@ const initialState: PatientActionState = {
 
 export function PatientForm() {
   const [state, action, isPending] = useActionState(createPatientAction, initialState);
+  const [birthDate, setBirthDate] = useState("");
 
   return (
     <Card>
@@ -43,18 +45,18 @@ export function PatientForm() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="birthDate">Nascimento</Label>
-              <Input id="birthDate" name="birthDate" type="date" />
+              <Input id="birthDate" name="birthDate" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={birthDate} onChange={(event) => setBirthDate(maskBrazilianDate(event.target.value))} />
             </div>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="notes">Observacoes</Label>
+            <Label htmlFor="notes">Observações</Label>
             <Input id="notes" name="notes" />
           </div>
 
           <label className="flex items-center gap-3 text-sm">
             <Checkbox name="whatsappConsent" />
-            Paciente autorizou comunicacao por WhatsApp
+            Paciente autorizou comunicação por WhatsApp
           </label>
 
           {state.message ? (

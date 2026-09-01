@@ -1,11 +1,23 @@
 # Roadmap
 
 ## Status geral
-Projeto com o `slice paciente/agenda/WhatsApp implementado` e a superfície
-principal do protótipo reconstruída em Next.js. A feature `003` continua aberta
-somente para o fechamento formal da matriz granular, auditorias transversais e
-smoke manual; as rotas e interações centrais já estão disponíveis em desktop e
-mobile sem persistência falsa.
+Projeto com o `slice paciente/agenda/WhatsApp implementado`, a superfície
+principal do protótipo reconstruída em Next.js e o gate visual da feature `003`
+formalmente reconciliado. As 384 linhas da matriz estão decididas, os gates
+transversais passaram e o primeiro avanço prático de services tornou a criação
+de paciente + perfil financeiro uma única transação Prisma.
+
+Checkpoint final da feature 003 em 2026-08-31:
+- matriz: 384/384 decididas (`284 equivalent`, `72 unavailable-capability`,
+  `28 approved-divergence`, `0 pending`);
+- tarefas: 117/130 concluídas após reconciliação por comportamento; as 13
+  restantes são testes unitários/de componente granulares de hardening;
+- qualidade: lint, typecheck, 87 testes Vitest, build de 22 rotas e Playwright
+  com 17 aprovados/2 pulados intencionalmente;
+- segurança: audit de produção zerado após upgrade compatível de Next/PostCSS/
+  Sharp; relatório em `docs/security-best-practices-report.md`;
+- próximo slice: persistência clínica e proteção de dados sensíveis, usando
+  `docs/next-spec-clinical-persistence-encryption.md`.
 
 Marco atual:
 - documentacao base pronta
@@ -29,8 +41,8 @@ Marco atual:
 - validacao de 2026-08-27: `lint`, `typecheck` e `build` passaram; `test`
   terminou com 45/47 testes passando e 2 falhas porque datas fixas do teste de
   agendamento agora estao no passado
-- `npm install` reportou 10 vulnerabilidades (1 low, 8 high, 1 critical), ainda
-  pendentes de auditoria e correcao controlada
+- as vulnerabilidades históricas foram revisadas e corrigidas sem upgrade major;
+  `npm audit --omit=dev` reporta 0 em 2026-08-31
 - inventario integral do prototipo criado em
   `docs/prototype-feature-inventory.md`
 - proximo prompt de spec criado em
@@ -280,3 +292,20 @@ Checkpoint corretivo de 2026-08-27:
   sem antecipar a aceitacao dos respectivos gates de paridade;
 - validacao: 79 testes Vitest, typecheck e build passaram; o E2E dos 16 passos
   passou em desktop `1440x900` e mobile `390x844`.
+
+## Checkpoint de infraestrutura de produção — 2026-08-31
+
+Status: `scaffold de VPS implementado e validado localmente; ativação remota pendente`.
+
+- [x] configurar Next.js standalone para self-hosting;
+- [x] criar Dockerfile multi-stage com OpenSSL compatível com Prisma;
+- [x] criar Compose de produção com migration, app e PostgreSQL sem porta pública;
+- [x] tornar a porta local do app configurável por `APP_PORT`;
+- [x] criar exemplo de ambiente da VPS e endpoint de saúde;
+- [x] documentar Vercel DNS, Caddy, submódulos, deploy e atualização;
+- [x] validar Compose, typecheck, build, imagem e healthcheck do container;
+- [x] autenticar na VPS, inventariar serviços e reservar a porta local 3101;
+- [ ] criar registro A do subdomínio para `216.158.236.156`;
+- [ ] executar primeiro deploy, migration e smoke persistente;
+- [ ] validar e recarregar o Caddy real sem interromper os sites existentes;
+- [ ] confirmar HTTPS, login e persistência depois de reiniciar containers.

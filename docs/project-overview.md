@@ -10,6 +10,20 @@ O produto faz sentido como um SaaS nichado para terapeutas e psicologos autonomo
 
 O diferencial desejado e conveniencia operacional, com `WhatsApp transacional` no MVP e `IA assistiva` entrando depois.
 
+## Estado técnico consolidado — 2026-08-31
+
+A reconstrução visual da feature 003 foi aceita com 384/384 linhas decididas.
+O frontend preserva operações sem service como transitórias ou indisponíveis e
+não simula persistência. A camada de domínio iniciou a próxima fase com
+`createPatientWizard`, que valida o payload completo e grava paciente + perfil
+financeiro na mesma transação Prisma.
+
+O baseline de qualidade atual é: Next 15.5.21, PostgreSQL/Prisma, sessão
+database-backed, audit de produção zerado, 87 testes Vitest, Playwright em
+desktop/mobile e build de 22 rotas. Persistência clínica/documental continua
+proibida até a próxima spec definir autorização, versionamento, retenção,
+auditoria e estratégia real de criptografia/chaves.
+
 Conclusao objetiva:
 - o MVP deve nascer como `plataforma web confiavel para autonomos individuais`
 - o WhatsApp deve entrar no MVP apenas para `mensagens automaticas e confirmacoes simples`
@@ -658,3 +672,19 @@ Se fosse para decidir hoje, eu seguiria com:
    `docs/next-spec-clinical-persistence-encryption.md`.
 5. Definir o modelo jurídico/contábil de recibo, assinatura e cobrança online
    antes de habilitar essas mutações.
+
+## Arquitetura de deploy em VPS — 2026-08-31
+
+- O app Next.js agora gera `output: "standalone"` e possui Dockerfile
+  multi-stage em `apps/web/Dockerfile`.
+- `apps/web/docker-compose.prod.yml` orquestra app, migration Prisma e
+  PostgreSQL. O banco não publica porta no host.
+- O app publica somente `127.0.0.1:${APP_PORT}:3000`; o Caddy é a única
+  entrada HTTP/HTTPS pública e encaminha o subdomínio para essa porta local.
+- `apps/web/.env.vps.example` documenta porta, banco, URLs públicas, sessão e
+  Twilio sem versionar segredos.
+- `/api/health` oferece um healthcheck leve para Docker/Caddy.
+- Docker Compose, e não PM2, é o supervisor do app containerizado por meio de
+  `restart: unless-stopped`.
+- O procedimento completo de DNS Vercel, clone sem o submódulo privado de referência, deploy, Caddy e
+  atualização está em `docs/deploy-vps.md`.

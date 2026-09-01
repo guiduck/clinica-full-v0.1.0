@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { FileText, Plus, Save } from "lucide-react";
+import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
+import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
+import { formatBrazilianDate, formatTime24 } from "@/utils/formatters";
+import { maskBrazilianDate } from "@/utils/masks";
 
 const clinicalUnavailable = {
   key: "patients.clinical-save",
@@ -51,11 +56,16 @@ const sections = [
 
 type Draft = Record<string, Record<string, string>>;
 
-export function PatientAnamneseTab() {
+export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
   const [draft, setDraft] = React.useState<Draft>({});
   const total = sections.reduce((sum, section) => sum + section.fields.length, 0);
   const filled = sections.reduce((sum, section) => sum + section.fields.filter((field) => draft[section.id]?.[field.key]?.trim()).length, 0);
   const completion = Math.round((filled / total) * 100);
+
+  React.useEffect(() => {
+    onDirtyChange?.(filled > 0);
+    return () => onDirtyChange?.(false);
+  }, [filled, onDirtyChange]);
 
   const change = (section: string, field: string, value: string) => {
     setDraft((current) => ({ ...current, [section]: { ...current[section], [field]: value } }));
@@ -96,27 +106,50 @@ export function PatientAnamneseTab() {
   </div>;
 }
 
-type EvolutionDraft = { date: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string };
+type EvolutionDraft = { date: string; time: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string };
 
-export function PatientClinicalRecordTab() {
+const createEvolutionDraft = (): EvolutionDraft => ({
+  date: formatBrazilianDate(new Date()),
+  time: formatTime24(new Date()),
+  mood: 5,
+  free: "",
+  subjective: "",
+  objective: "",
+  assessment: "",
+  plan: "",
+});
+
+export function PatientClinicalRecordTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
   const [open, setOpen] = React.useState(false);
   const [blocked, setBlocked] = React.useState(false);
-  const [draft, setDraft] = React.useState<EvolutionDraft>(() => ({
-    date: new Date().toISOString().slice(0, 16), mood: 5, free: "", subjective: "", objective: "", assessment: "", plan: "",
-  }));
+  const [draft, setDraft] = React.useState<EvolutionDraft>(createEvolutionDraft);
+  const hasMeaningfulContent = [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan].some((value) => value.trim().length > 0);
+  const discard = useDiscardConfirmation(hasMeaningfulContent);
+  const closeEditor = React.useCallback(() => {
+    setDraft(createEvolutionDraft());
+    setOpen(false);
+  }, []);
+
+  React.useEffect(() => {
+    onDirtyChange?.(hasMeaningfulContent);
+    return () => onDirtyChange?.(false);
+  }, [hasMeaningfulContent, onDirtyChange]);
+
+  const requestClose = () => discard.requestDiscard(closeEditor);
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evoluções clínicas</h2><p className="text-sm text-muted-foreground">Registro livre e/ou estruturado (SOAP) por sessão</p></div><Button onClick={() => setOpen(true)}><Plus className="size-4" />Nova evolução</Button></div>
     <Card className="p-12 text-center"><FileText className="mx-auto size-10 text-muted-foreground/50" /><h3 className="mt-3 font-medium">Nenhuma evolução registrada</h3><p className="mt-1 text-sm text-muted-foreground">Comece registrando a primeira sessão deste paciente.</p><Button className="mt-4" onClick={() => setOpen(true)}>Criar primeira evolução</Button></Card>
-    <Dialog open={open} onOpenChange={setOpen}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O rascunho permanece somente nesta janela até que a persistência clínica seja liberada.</DialogDescription></DialogHeader>
+    <Dialog open={open} onOpenChange={(next) => { if (next) setOpen(true); else requestClose(); }}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O rascunho permanece somente nesta janela até que a persistência clínica seja liberada.</DialogDescription></DialogHeader>
       <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2"><div><Label htmlFor="evolution-date">Data e hora</Label><Input id="evolution-date" className="mt-1.5" type="datetime-local" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></div><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
+        <div className="grid gap-4 sm:grid-cols-3"><div><Label htmlFor="evolution-date">Data</Label><Input id="evolution-date" className="mt-1.5" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={draft.date} onChange={(event) => setDraft({ ...draft, date: maskBrazilianDate(event.target.value) })} /></div><AppointmentTimeSelect id="evolution-time" label="Horário" value={draft.time} onValueChange={(time) => setDraft({ ...draft, time })} /><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
         <div><Label htmlFor="evolution-free">Registro livre</Label><Textarea id="evolution-free" className="mt-1.5 min-h-44" placeholder="Descreva o que aconteceu na sessão, observações clínicas e plano..." value={draft.free} onChange={(event) => setDraft({ ...draft, free: event.target.value })} /></div>
         <Accordion type="single" collapsible><AccordionItem value="soap" className="rounded-md border"><AccordionTrigger className="px-4 hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger><AccordionContent className="space-y-3 px-4">
           {([["subjective", "S", "Subjetivo"], ["objective", "O", "Objetivo"], ["assessment", "A", "Avaliação"], ["plan", "P", "Plano"]] as const).map(([key, letter, label]) => <div key={key}><Label htmlFor={`soap-${key}`} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">{letter}</span>{label}</Label><Textarea id={`soap-${key}`} className="mt-1.5" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></div>)}
         </AccordionContent></AccordionItem></Accordion>
       </div>
-      <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={() => setBlocked(true)}><Save className="size-4" />Salvar evolução</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={() => setBlocked(true)}><Save className="size-4" />Salvar evolução</Button></DialogFooter>
     </DialogContent></Dialog>
+    <DiscardConfirmation open={discard.open} onCancel={discard.cancelDiscard} onConfirm={discard.confirmDiscard} />
     <CapabilityNotice descriptor={clinicalUnavailable} open={blocked} onOpenChange={setBlocked} />
   </div>;
 }

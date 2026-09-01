@@ -33,12 +33,12 @@ export async function createAppointmentAction(
 
     return {
       ok: true,
-      message: "Consulta criada e confirmacao enviada para processamento."
+      message: "Consulta criada e confirmação enviada para processamento."
     };
   } catch (error) {
     return {
       ok: false,
-      message: getDomainErrorMessage(error, "Nao foi possivel criar a consulta.")
+      message: getDomainErrorMessage(error, "Não foi possível criar a consulta.")
     };
   }
 }

@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, CreditCard, Save, Wallet } from "lucide-react";
 import { createPatientWizardAction } from "@/actions/patients";
-import { upsertPatientFinancialProfileAction } from "@/actions/patient-financial-profile";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -83,18 +82,15 @@ export function PatientWizard({ open, onOpenChange }: { open: boolean; onOpenCha
       patientData.set("phone", draft.phone);
       patientData.set("notes", draft.notes);
       if (draft.whatsappConsent) patientData.set("whatsappConsent", "on");
+      if (draft.emailConsent) patientData.set("emailConsent", "on");
+      patientData.set("preferredPaymentMethod", method);
+      patientData.set("defaultSessionPrice", String(Number(price.replace(/\D/g, "")) / 100));
+      if (method === "pix") {
+        patientData.set("pixKeyType", pixType);
+        patientData.set("pixKey", pixKey);
+      }
       const result = await createPatientWizardAction(patientData);
       if (!result.ok) return setError(result.message);
-
-      const financial = new FormData();
-      financial.set("preferredPaymentMethod", method);
-      financial.set("defaultSessionPrice", String(Number(price.replace(/\D/g, "")) / 100));
-      if (method === "pix") {
-        financial.set("pixKeyType", pixType);
-        financial.set("pixKey", pixKey);
-      }
-      const financeResult = await upsertPatientFinancialProfileAction(result.patientId, { ok: false, message: "" }, financial);
-      if (!financeResult.ok) return setError(financeResult.message);
       setCreated({ id: result.patientId, name: result.patientName });
       router.refresh();
     });
@@ -131,7 +127,7 @@ export function PatientWizard({ open, onOpenChange }: { open: boolean; onOpenCha
             ) : (
               <div className="space-y-5">
                 <p className="text-sm leading-6 text-muted-foreground">Escolha o plano ou o valor por sessão combinado com o paciente, e depois o método de pagamento. A receita é registrada automaticamente no financeiro após o cadastro.</p>
-                <Field label="Modelo de cobrança"><div className="grid grid-cols-2 rounded-lg bg-muted p-1"><button onClick={() => setBilling("avulso")} className={cn("flex min-h-10 items-center justify-center gap-2 rounded-md text-sm", billing === "avulso" && "bg-card shadow-sm")}><CreditCard className="size-4" />Avulso</button><button onClick={() => setBilling("plano")} className={cn("flex min-h-10 items-center justify-center gap-2 rounded-md text-sm", billing === "plano" && "bg-card shadow-sm")}><Wallet className="size-4" />Plano</button></div></Field>
+                <Field label="Modelo de cobrança"><div className="grid grid-cols-2 rounded-lg bg-muted p-1"><button type="button" onClick={() => setBilling("avulso")} className={cn("flex min-h-11 items-center justify-center gap-2 rounded-md text-sm", billing === "avulso" && "bg-card shadow-sm")}><CreditCard className="size-4" />Avulso</button><button type="button" onClick={() => setBilling("plano")} className={cn("flex min-h-11 items-center justify-center gap-2 rounded-md text-sm", billing === "plano" && "bg-card shadow-sm")}><Wallet className="size-4" />Plano</button></div></Field>
                 <Field label="Valor por sessão (R$)"><Input inputMode="numeric" value={price} onChange={(e) => setPrice(maskBrl(e.target.value))} placeholder="Ex.: 250,00" /></Field>
                 <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">Cada atendimento gera uma cobrança individual com este valor de referência. Você pode ajustá-lo em cada sessão.</div>
                 <Field label="Método de pagamento"><Select value={method} onValueChange={setMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pix">PIX</SelectItem><SelectItem value="cash">Dinheiro</SelectItem><SelectItem value="card">Cartão</SelectItem><SelectItem value="insurance">Convênio</SelectItem></SelectContent></Select></Field>

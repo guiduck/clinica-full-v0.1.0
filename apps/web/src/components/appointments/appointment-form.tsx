@@ -6,6 +6,7 @@ import {
   type AppointmentActionState,
 } from "@/actions/appointments";
 import { Button } from "@/components/ui/button";
+import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { maskBrazilianDate } from "@/utils/masks";
 type PatientOption = {
   id: string;
@@ -34,8 +36,9 @@ export function AppointmentForm({ patients }: { patients: PatientOption[] }) {
     initialState,
   );
   const [date, setDate] = React.useState("");
-  const [start, setStart] = React.useState("");
-  const [end, setEnd] = React.useState("");
+  const [patientId, setPatientId] = React.useState("");
+  const [start, setStart] = React.useState("09:00");
+  const [end, setEnd] = React.useState("09:50");
   return (
     <Card>
       <CardHeader>
@@ -48,22 +51,19 @@ export function AppointmentForm({ patients }: { patients: PatientOption[] }) {
         <form action={action} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="patientId">Paciente</Label>
-            <select
-              id="patientId"
-              name="patientId"
-              className="min-h-11 rounded-md border bg-background px-3 text-sm"
-              required
-            >
-              <option value="">Selecione</option>
+            <Select name="patientId" value={patientId} onValueChange={setPatientId} required>
+              <SelectTrigger id="patientId"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectContent>
               {patients.map((p) => (
-                <option key={p.id} value={p.id}>
+                <SelectItem key={p.id} value={p.id}>
                   {p.name}
                   {p.hasCompleteFinancialProfile
                     ? ""
                     : " — financeiro pendente"}
-                </option>
+                </SelectItem>
               ))}
-            </select>
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="grid gap-2">
@@ -78,28 +78,8 @@ export function AppointmentForm({ patients }: { patients: PatientOption[] }) {
                 required
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="appointment-start">Início</Label>
-              <Input
-                id="appointment-start"
-                type="time"
-                lang="pt-BR"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="appointment-end">Fim</Label>
-              <Input
-                id="appointment-end"
-                type="time"
-                lang="pt-BR"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-                required
-              />
-            </div>
+            <AppointmentTimeSelect id="appointment-start" label="Início" value={start} onValueChange={setStart} />
+            <AppointmentTimeSelect id="appointment-end" label="Fim" value={end} onValueChange={setEnd} />
           </div>
           <input type="hidden" name="startsAt" value={iso(date, start)} />
           <input type="hidden" name="endsAt" value={iso(date, end)} />

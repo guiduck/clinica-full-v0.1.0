@@ -20,6 +20,7 @@ import {
 import { createAppointmentAction, type AppointmentActionState } from "@/actions/appointments";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
+import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,6 +33,7 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { maskBrazilianDate } from "@/utils/masks";
 import { formatBrazilianDate, formatStatusLabel, formatTime24 } from "@/utils/formatters";
 
@@ -104,7 +106,7 @@ function TimeGrid({ view, referenceDate, appointments, onSelect }: { view: "dia"
         const start = new Date(item.startsAt), end = new Date(item.endsAt);
         const top = (start.getHours() * 60 + start.getMinutes()) / 60 * 64;
         const height = Math.max(34, ((end.getTime() - start.getTime()) / 3_600_000) * 64);
-        return <button key={item.id} onClick={() => onSelect(item)} className="absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-2 border-primary bg-primary/15 px-2 py-1 text-left text-xs text-primary hover:bg-primary/25" style={{ top, height }}><b className="block truncate text-foreground">{item.patientName}</b><span>{formatTime24(item.startsAt)}–{formatTime24(item.endsAt)}</span></button>;
+        return <button type="button" key={item.id} onClick={() => onSelect(item)} className="absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-2 border-primary bg-primary/15 px-2 py-1 text-left text-xs text-primary hover:bg-primary/25" style={{ top, height }}><b className="block truncate text-foreground">{item.patientName}</b><span>{formatTime24(item.startsAt)}–{formatTime24(item.endsAt)}</span></button>;
       })}</div>)}
     </div>
   </div></div>;
@@ -114,7 +116,7 @@ function MonthView({ referenceDate, appointments, onSelect }: { referenceDate: D
   const first = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 1);
   const gridStart = startOfWeek(first);
   const days = Array.from({ length: 42 }, (_, index) => addDays(gridStart, index));
-  return <div className="grid grid-cols-7 border-t">{["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((label) => <div key={label} className="border-b border-r p-2 text-center text-xs font-medium text-muted-foreground">{label}</div>)}{days.map((day) => <div key={dateKey(day)} className={cn("min-h-28 border-b border-r p-2", day.getMonth() !== referenceDate.getMonth() && "bg-muted/20 text-muted-foreground")}><p className={cn("mb-1 grid size-6 place-items-center rounded-full text-xs", sameDay(day, new Date()) && "bg-primary text-primary-foreground")}>{day.getDate()}</p>{appointments.filter((item) => sameDay(item.startsAt, day)).slice(0, 3).map((item) => <button key={item.id} onClick={() => onSelect(item)} className="mb-1 block w-full truncate rounded bg-primary/15 px-1.5 py-1 text-left text-[11px] text-primary">{formatTime24(item.startsAt)} {item.patientName}</button>)}</div>)}</div>;
+  return <div className="grid grid-cols-7 border-t">{["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((label) => <div key={label} className="border-b border-r p-2 text-center text-xs font-medium text-muted-foreground">{label}</div>)}{days.map((day) => <div key={dateKey(day)} className={cn("min-h-28 border-b border-r p-2", day.getMonth() !== referenceDate.getMonth() && "bg-muted/20 text-muted-foreground")}><p className={cn("mb-1 grid size-6 place-items-center rounded-full text-xs", sameDay(day, new Date()) && "bg-primary text-primary-foreground")}>{day.getDate()}</p>{appointments.filter((item) => sameDay(item.startsAt, day)).slice(0, 3).map((item) => <button type="button" key={item.id} onClick={() => onSelect(item)} className="mb-1 block w-full truncate rounded bg-primary/15 px-1.5 py-1 text-left text-[11px] text-primary">{formatTime24(item.startsAt)} {item.patientName}</button>)}</div>)}</div>;
 }
 
 function NewAppointmentDialog({ open, onOpenChange, patients, defaultPatientId }: { open: boolean; onOpenChange: (open: boolean) => void; patients: PatientOption[]; defaultPatientId?: string }) {
@@ -148,13 +150,17 @@ function SessionDialog({ appointment, onOpenChange }: { appointment: Appointment
   const [seconds, setSeconds] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
   const [mood, setMood] = React.useState([5]);
+  const [free, setFree] = React.useState("");
+  const discard = useDiscardConfirmation(free.trim().length > 0 || mood[0] !== 5);
   React.useEffect(() => {
     if (!appointment || paused) return;
     const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000);
     return () => window.clearInterval(timer);
   }, [appointment, paused]);
-  React.useEffect(() => { if (!appointment) { setSeconds(0); setPaused(false); } }, [appointment]);
+  React.useEffect(() => { if (!appointment) { setSeconds(0); setPaused(false); setMood([5]); setFree(""); } }, [appointment]);
+  const close = React.useCallback(() => { setSeconds(0); setPaused(false); setMood([5]); setFree(""); onOpenChange(false); }, [onOpenChange]);
+  const requestClose = () => discard.requestDiscard(close);
   const time = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-  return <Dialog open={Boolean(appointment)} onOpenChange={onOpenChange}><DialogContent className="max-w-5xl p-0"><div className="flex flex-wrap items-center justify-between gap-3 border-b bg-brand-soft/60 p-6"><div><p className="text-xs text-muted-foreground">Sessão em andamento</p><DialogTitle>{appointment?.patientName}</DialogTitle></div><div className="flex items-center gap-2"><span className="rounded-lg border bg-card px-3 py-2 font-mono"><Clock className="mr-2 inline size-4 text-primary" />{time}</span><Button variant="outline" onClick={() => setPaused((value) => !value)}>{paused ? <Play className="size-4" /> : <Pause className="size-4" />}{paused ? "Retomar" : "Pausar"}</Button><CapabilityNotice descriptor={unavailable} trigger={<Button>Finalizar sessão</Button>} /></div></div><div className="max-h-[calc(100dvh-12rem)] space-y-5 overflow-y-auto p-6"><div className="rounded-lg border p-4 text-sm">Resumo da anamnese <span className="float-right">⌄</span></div><div><h3 className="mb-4 font-semibold">Nova evolução</h3><Label>Humor relatado: {mood[0]}/10</Label><Slider className="mt-3" min={1} max={10} step={1} value={mood} onValueChange={setMood} /></div><div><Label>Registro livre</Label><Textarea className="mt-1.5 min-h-44" placeholder="Anote livremente o que aconteceu na sessão..." /></div><div className="rounded-lg border p-4 text-sm">Registro estruturado (SOAP) — opcional <span className="float-right">⌄</span></div><div className="rounded-lg border p-4 text-sm">Histórico de evoluções (0) <span className="float-right">⌄</span></div></div></DialogContent></Dialog>;
+  return <><Dialog open={Boolean(appointment)} onOpenChange={(next) => { if (!next) requestClose(); }}><DialogContent className="max-w-5xl p-0"><div className="flex flex-wrap items-center justify-between gap-3 border-b bg-brand-soft/60 p-6"><div><p className="text-xs text-muted-foreground">Sessão em andamento</p><DialogTitle>{appointment?.patientName}</DialogTitle></div><div className="flex items-center gap-2"><span className="rounded-lg border bg-card px-3 py-2 font-mono"><Clock className="mr-2 inline size-4 text-primary" />{time}</span><Button variant="outline" onClick={() => setPaused((value) => !value)}>{paused ? <Play className="size-4" /> : <Pause className="size-4" />}{paused ? "Retomar" : "Pausar"}</Button><CapabilityNotice descriptor={unavailable} trigger={<Button>Finalizar sessão</Button>} /></div></div><div className="max-h-[calc(100dvh-12rem)] space-y-5 overflow-y-auto p-6"><div className="rounded-lg border p-4 text-sm">Resumo da anamnese <span className="float-right">⌄</span></div><div><h3 className="mb-4 font-semibold">Nova evolução</h3><Label>Humor relatado: {mood[0]}/10</Label><Slider className="mt-3" min={1} max={10} step={1} value={mood} onValueChange={setMood} /></div><div><Label htmlFor="session-free-record">Registro livre</Label><Textarea id="session-free-record" className="mt-1.5 min-h-44" value={free} onChange={(event) => setFree(event.target.value)} placeholder="Anote livremente o que aconteceu na sessão..." /></div><div className="rounded-lg border p-4 text-sm">Registro estruturado (SOAP) — opcional <span className="float-right">⌄</span></div><div className="rounded-lg border p-4 text-sm">Histórico de evoluções (0) <span className="float-right">⌄</span></div></div></DialogContent></Dialog><DiscardConfirmation open={discard.open} onCancel={discard.cancelDiscard} onConfirm={discard.confirmDiscard} /></>;
 }
 function Detail({ label, value }: { label: string; value: string }) { return <div><p className="text-xs text-muted-foreground">{label}</p><p className="text-sm">{value}</p></div>; }

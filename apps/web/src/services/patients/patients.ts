@@ -38,9 +38,21 @@ export async function createPatient(userId: string, input: ParsedPatientInput) {
       email: input.email ?? null,
       cpf: input.cpf || null,
       normalizedCpf,
-      birthDate: input.birthDate ? new Date(input.birthDate) : null,
+      birthDate: input.birthDate ? new Date(`${input.birthDate}T12:00:00.000Z`) : null,
       notes: input.notes || null,
-      whatsappConsent: input.whatsappConsent
+      chiefComplaint: input.chiefComplaint || null,
+      whatsappConsent: input.whatsappConsent,
+      emailConsent: input.emailConsent ?? false,
+      addressZipCode: input.addressZipCode || null,
+      addressStreet: input.addressStreet || null,
+      addressNumber: input.addressNumber || null,
+      addressComplement: input.addressComplement || null,
+      addressCity: input.addressCity || null,
+      addressState: input.addressState || null,
+      emergencyContactName: input.emergencyContactName || null,
+      emergencyContactPhone: input.emergencyContactPhone || null,
+      emergencyContactRelationship: input.emergencyContactRelationship || null,
+      status: input.status ?? "ativo"
     },
     include: {
       financialProfile: true
@@ -73,7 +85,7 @@ export async function getPatient(userId: string, patientId: string) {
   });
 
   if (!patient) {
-    throw new DomainError("NOT_FOUND", "Paciente nao encontrado.");
+    throw new DomainError("NOT_FOUND", "Paciente não encontrado.");
   }
 
   return patient;

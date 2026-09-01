@@ -42,9 +42,9 @@ describe("notification service", () => {
       startsAt: appointment.startsAt
     });
 
-    expect(message).toContain("Ola, Maria.");
+    expect(message).toContain("Olá, Maria.");
     expect(message).toContain("Dra Ana");
-    expect(message).toContain("Responda apenas sim ou nao");
+    expect(message).toContain("Responda apenas sim ou não");
   });
 
   it("moves pending notification to sent on provider success", async () => {

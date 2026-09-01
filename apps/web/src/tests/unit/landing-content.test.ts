@@ -8,12 +8,12 @@ describe("landingContent", () => {
       ...landingContent.modules.map((module) => `${module.title} ${module.description}`)
     ].join(" ");
 
-    expect(visibleCopy).toMatch(/psicologos/i);
+    expect(visibleCopy).toMatch(/psicólogos/i);
     expect(visibleCopy).toMatch(/terapeutas/i);
     expect(visibleCopy).toMatch(/psiquiatras/i);
     expect(visibleCopy).toMatch(/pacientes/i);
     expect(visibleCopy).toMatch(/agenda/i);
-    expect(visibleCopy).toMatch(/prontuario/i);
+    expect(visibleCopy).toMatch(/prontuário/i);
     expect(visibleCopy).toMatch(/financeiro/i);
     expect(visibleCopy).toMatch(/documentos/i);
     expect(visibleCopy).toMatch(/lembretes/i);

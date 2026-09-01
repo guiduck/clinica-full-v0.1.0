@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   upsertPatientFinancialProfileAction,
   type FinancialProfileActionState
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const initialState: FinancialProfileActionState = {
   ok: false,
@@ -44,32 +45,31 @@ export function PatientFinancialProfileForm({
   const defaultSessionPrice = initialProfile
     ? (initialProfile.defaultSessionPriceCents / 100).toFixed(2)
     : "";
+  const [preferredPaymentMethod, setPreferredPaymentMethod] = useState(initialProfile?.preferredPaymentMethod ?? "pix");
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Dados de pagamento</CardTitle>
-        <CardDescription>Escolha o metodo e preencha apenas os dados necessarios.</CardDescription>
+        <CardDescription>Escolha o método e preencha apenas os dados necessários.</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="grid gap-5">
           <div className="grid gap-2">
-            <Label htmlFor="preferredPaymentMethod">Metodo preferido</Label>
-            <select
-              id="preferredPaymentMethod"
-              name="preferredPaymentMethod"
-              className="min-h-11 rounded-md border border-border bg-background px-3 text-sm"
-              defaultValue={initialProfile?.preferredPaymentMethod ?? "pix"}
-            >
-              <option value="pix">PIX</option>
-              <option value="card">Cartao</option>
-              <option value="cash">Dinheiro</option>
-              <option value="insurance">Convenio</option>
-            </select>
+            <Label htmlFor="preferredPaymentMethod">Método preferido</Label>
+            <Select name="preferredPaymentMethod" value={preferredPaymentMethod} onValueChange={setPreferredPaymentMethod}>
+              <SelectTrigger id="preferredPaymentMethod"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pix">PIX</SelectItem>
+                <SelectItem value="card">Cartão</SelectItem>
+                <SelectItem value="cash">Dinheiro</SelectItem>
+                <SelectItem value="insurance">Convênio</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="defaultSessionPrice">Valor padrao da sessao</Label>
+            <Label htmlFor="defaultSessionPrice">Valor padrão da sessão</Label>
             <Input
               id="defaultSessionPrice"
               name="defaultSessionPrice"
@@ -88,7 +88,7 @@ export function PatientFinancialProfileForm({
           </fieldset>
 
           <fieldset className="grid gap-3 rounded-md border border-border p-4">
-            <legend className="px-1 text-sm font-semibold">Cartao</legend>
+            <legend className="px-1 text-sm font-semibold">Cartão</legend>
             <Input name="cardProvider" placeholder="Provedor (ex: Stripe)" defaultValue={initialProfile?.cardProvider ?? ""} />
             <Input
               name="cardPaymentMethodRef"
@@ -102,21 +102,21 @@ export function PatientFinancialProfileForm({
               maxLength={4}
               defaultValue={initialProfile?.cardLast4 ?? ""}
             />
-            <Input name="cardHolderName" placeholder="Nome no cartao" defaultValue={initialProfile?.cardHolderName ?? ""} />
-            <p className="text-xs text-muted-foreground">Nunca informe numero completo ou CVV do cartao.</p>
+            <Input name="cardHolderName" placeholder="Nome no cartão" defaultValue={initialProfile?.cardHolderName ?? ""} />
+            <p className="text-xs text-muted-foreground">Nunca informe número completo ou CVV do cartão.</p>
           </fieldset>
 
           <fieldset className="grid gap-3 rounded-md border border-border p-4">
-            <legend className="px-1 text-sm font-semibold">Convenio</legend>
-            <Input name="insuranceName" placeholder="Convenio/pagador" defaultValue={initialProfile?.insuranceName ?? ""} />
+            <legend className="px-1 text-sm font-semibold">Convênio</legend>
+            <Input name="insuranceName" placeholder="Convênio/pagador" defaultValue={initialProfile?.insuranceName ?? ""} />
             <Input
               name="insuranceMemberId"
-              placeholder="Identificacao do paciente"
+              placeholder="Identificação do paciente"
               defaultValue={initialProfile?.insuranceMemberId ?? ""}
             />
             <Input
               name="insuranceAuthorizationInfo"
-              placeholder="Autorizacao ou observacao"
+              placeholder="Autorização ou observação"
               defaultValue={initialProfile?.insuranceAuthorizationInfo ?? ""}
             />
           </fieldset>

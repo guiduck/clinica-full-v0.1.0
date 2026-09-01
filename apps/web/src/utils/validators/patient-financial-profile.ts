@@ -10,10 +10,10 @@ const optionalText = z
 export const patientFinancialProfileSchema = z
   .object({
     preferredPaymentMethod: z.enum(["pix", "card", "cash", "insurance"], {
-      required_error: "Escolha um metodo de pagamento."
+      required_error: "Escolha um método de pagamento."
     }),
     defaultSessionPrice: z.coerce
-      .number({ invalid_type_error: "Informe o valor padrao da sessao." })
+      .number({ invalid_type_error: "Informe o valor padrão da sessão." })
       .positive("Informe um valor maior que zero."),
     pixKeyType: optionalText,
     pixKey: optionalText,
@@ -22,6 +22,7 @@ export const patientFinancialProfileSchema = z
     cardBrand: optionalText,
     cardLast4: optionalText,
     cardHolderName: optionalText,
+    cardInstallments: z.coerce.number().int().min(1).max(24).optional(),
     insuranceName: optionalText,
     insuranceMemberId: optionalText,
     insuranceAuthorizationInfo: optionalText
@@ -39,7 +40,7 @@ export const patientFinancialProfileSchema = z
       if (!value.cardProvider || !value.cardPaymentMethodRef) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe a referencia segura do cartao no provedor.",
+          message: "Informe a referência segura do cartão no provedor.",
           path: ["cardPaymentMethodRef"]
         });
       }
@@ -48,7 +49,7 @@ export const patientFinancialProfileSchema = z
       if (possibleRawCard && /^\d{13,19}$/.test(possibleRawCard)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Nao salve numero bruto de cartao. Use token/referencia segura do provedor.",
+          message: "Não salve número bruto de cartão. Use token/referência segura do provedor.",
           path: ["cardPaymentMethodRef"]
         });
       }
@@ -57,7 +58,7 @@ export const patientFinancialProfileSchema = z
     if (value.preferredPaymentMethod === "insurance" && !value.insuranceName) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Informe o convenio/pagador.",
+        message: "Informe o convênio/pagador.",
         path: ["insuranceName"]
       });
     }

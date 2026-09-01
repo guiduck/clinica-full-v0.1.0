@@ -46,7 +46,7 @@ export default async function PatientFinancePage({ params, searchParams }: Props
               <CardTitle>Complete os dados de pagamento</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
-              Esse cadastro libera o agendamento e evita cobrar sem metodo definido.
+              Esse cadastro libera o agendamento e evita cobrar sem método definido.
             </CardContent>
           </Card>
         ) : null}

@@ -51,22 +51,20 @@ export function AppHeader({ userName, shell, userMenuOpen, onUserMenuOpenChange,
           <DropdownMenuTrigger asChild><Button id="tour-user-menu" variant="ghost" className="h-12 gap-2 px-2"><Avatar className="size-8"><AvatarFallback className="bg-primary text-xs text-primary-foreground">{userName.trim().charAt(0).toUpperCase() || "?"}</AvatarFallback></Avatar><div className="hidden text-left md:block"><p className="text-sm font-medium leading-tight">Minha conta</p><p className="text-xs text-muted-foreground">Complete seu perfil</p></div><ChevronDown className="hidden size-4 md:block" /></Button></DropdownMenuTrigger>
           <DropdownMenuContent id="tour-user-menu-panel" align="end" className="w-56" onInteractOutside={(event) => { if (tourActive) event.preventDefault(); }} onEscapeKeyDown={(event) => { if (tourActive) event.preventDefault(); }}>
             <DropdownMenuLabel>Minha conta</DropdownMenuLabel><DropdownMenuSeparator />
-            <DropdownMenuItem
-              id="tour-open-settings"
-              onSelect={() => {
-                router.push(
-                  tourActive
-                    ? "/configuracoes?tourStep=10"
-                    : "/configuracoes",
-                );
-                if (tourActive) {
-                  window.dispatchEvent(
-                    new CustomEvent("tour:settings-selected"),
-                  );
-                }
-              }}
-            >
-              <Settings className="mr-2 size-4" />Configurações
+            <DropdownMenuItem asChild>
+              <Link
+                id="tour-open-settings"
+                href={tourActive ? "/configuracoes?tourStep=10" : "/configuracoes"}
+                onClick={(event) => {
+                  if (tourActive) {
+                    event.preventDefault();
+                    window.dispatchEvent(new CustomEvent("tour:settings-selected"));
+                    window.location.assign("/configuracoes?tourStep=10");
+                  }
+                }}
+              >
+                <Settings className="mr-2 size-4" />Configurações
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => void restart()}><RotateCcw className="mr-2 size-4" />Reiniciar tutorial</DropdownMenuItem>
             <DropdownMenuSeparator /><DropdownMenuItem onSelect={() => void signOut()}><LogOut className="mr-2 size-4" />Sair</DropdownMenuItem>

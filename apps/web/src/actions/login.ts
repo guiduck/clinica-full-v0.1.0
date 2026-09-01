@@ -28,8 +28,5 @@ export async function loginAndSetSession(input: {
     };
   }
 
-  return {
-    ...result,
-    data: null
-  };
+  return { status: result.status, error: true, errorUserMessage: result.errorUserMessage, headers: null, data: null };
 }

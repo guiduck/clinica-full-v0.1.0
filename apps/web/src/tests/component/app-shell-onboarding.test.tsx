@@ -171,7 +171,6 @@ describe("app shell and guided onboarding", () => {
       />,
     );
     const settings = screen.getByRole("menuitem", { name: "Configurações" });
-    fireEvent.click(settings);
-    expect(pushMock).toHaveBeenCalledWith("/configuracoes?tourStep=10");
+    expect(settings).toHaveAttribute("href", "/configuracoes?tourStep=10");
   });
 });

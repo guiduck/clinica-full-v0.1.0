@@ -13,7 +13,6 @@ export interface APIResponse<T> {
   data: T | null;
   error: boolean;
   errorUserMessage: string;
-  debug?: unknown;
   status: number;
   headers?: Headers | null;
 }

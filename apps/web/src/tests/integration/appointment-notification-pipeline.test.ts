@@ -10,7 +10,7 @@ describe("appointment notification pipeline contract", () => {
     });
 
     expect(message).toContain("consulta");
-    expect(message).toContain("Responda apenas sim ou nao");
+    expect(message).toContain("Responda apenas sim ou não");
     expect(message).not.toContain("diagnostico");
     expect(message).not.toContain("pagamento");
   });

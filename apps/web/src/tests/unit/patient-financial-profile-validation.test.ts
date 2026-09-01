@@ -35,7 +35,7 @@ describe("patient financial profile validation", () => {
       throw new Error("Expected validation to fail");
     }
     expect(result.error.flatten().fieldErrors.cardPaymentMethodRef).toContain(
-      "Nao salve numero bruto de cartao. Use token/referencia segura do provedor."
+      "Não salve número bruto de cartão. Use token/referência segura do provedor."
     );
   });
 
@@ -49,6 +49,6 @@ describe("patient financial profile validation", () => {
     if (result.success) {
       throw new Error("Expected validation to fail");
     }
-    expect(result.error.flatten().fieldErrors.insuranceName).toContain("Informe o convenio/pagador.");
+    expect(result.error.flatten().fieldErrors.insuranceName).toContain("Informe o convênio/pagador.");
   });
 });

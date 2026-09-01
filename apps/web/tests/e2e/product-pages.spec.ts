@@ -5,7 +5,7 @@ import path from "node:path";
 const evidenceDir = path.resolve(process.cwd(), "../../output/playwright/evidence");
 
 test("core product pages expose the complete reconstructed interaction surface", async ({ authenticatedPage: page }, testInfo) => {
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   await fs.mkdir(evidenceDir, { recursive: true });
   const skip = page.getByRole("button", { name: "Pular" });
   if (await skip.isVisible()) await skip.click();
@@ -46,6 +46,8 @@ test("core product pages expose the complete reconstructed interaction surface",
   await page.getByLabel("Descrição detalhada").fill("Rascunho clínico para validação de interface.");
   await expect(page.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow", "0");
   await page.getByRole("tab", { name: "Prontuário" }).click();
+  await expect(page.getByText("Descartar conteúdo não salvo?")).toBeVisible();
+  await page.getByRole("button", { name: "Descartar e sair" }).click();
   await page.getByRole("button", { name: "Criar primeira evolução" }).click();
   await expect(page.getByRole("dialog").getByText("Registro livre")).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
@@ -58,7 +60,10 @@ test("core product pages expose the complete reconstructed interaction surface",
   await page.getByRole("button", { name: "Assinar" }).click();
   await expect(page.getByRole("dialog").getByText("Assinatura eletrônica simples")).toBeVisible();
   await page.getByRole("button", { name: "Cancelar" }).click();
-  await page.keyboard.press("Escape");
+  await expect(page.getByText("Assinatura eletrônica simples")).not.toBeVisible();
+  await page.getByRole("dialog").filter({ hasText: "Documento clínico" }).getByRole("button", { name: "Fechar" }).click();
+  await expect(page.getByText("Descartar conteúdo não salvo?")).toBeVisible();
+  await page.getByRole("button", { name: "Descartar e sair" }).click();
 
   await page.goto("/agenda");
   await expect(page.getByRole("heading", { name: "Agenda" })).toBeVisible();

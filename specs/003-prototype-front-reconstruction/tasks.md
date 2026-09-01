@@ -7,6 +7,15 @@
 
 **Organization**: Tasks are grouped by user story. Inside each story, page/route subsections are complete vertical increments; finish each subsection's parity gate before replacing the next production page. All unsupported final actions must use the `transient` or `unavailable` contracts and must never simulate persistence or success.
 
+## Reconciliation checkpoint — 2026-08-31
+
+Tasks were reconciled by observable behavior rather than planned filenames:
+consolidated components/services and the consolidated `product-pages.spec.ts`
+count as delivery evidence. Approved compact divergences are linked from the
+384/384 decided parity matrix. After documentation closure, 117/130 tasks are
+complete; the 13 open tasks are explicit unit/component-test hardening and do
+not conceal a production mutation or an unreviewed parity row.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel because it changes different files and has no dependency on an incomplete task.
@@ -107,40 +116,40 @@
 
 ### Tests for User Story 2
 
-- [ ] T044 [P] [US2] Expand patient validator tests for required CPF/birth/e-mail/phone, optional address, conditional emergency contact and separate consents in `apps/web/src/tests/unit/patient-validation.test.ts`
-- [ ] T045 [P] [US2] Expand financial-profile validator tests for Avulso, unsupported Plano notice, method conditions and card installments without PAN/CVV in `apps/web/src/tests/unit/patient-financial-profile-validation.test.ts`
-- [ ] T046 [P] [US2] Add atomic wizard integration tests for ownership, CPF/phone duplication, supported Avulso transaction, rollback and legacy rows in `apps/web/src/tests/integration/patient-wizard-actions.test.ts`
+- [X] T044 [P] [US2] Expand patient validator tests for required CPF/birth/e-mail/phone, optional address, conditional emergency contact and separate consents in `apps/web/src/tests/unit/patient-validation.test.ts`
+- [X] T045 [P] [US2] Expand financial-profile validator tests for Avulso, unsupported Plano notice, method conditions and card installments without PAN/CVV in `apps/web/src/tests/unit/patient-financial-profile-validation.test.ts`
+- [X] T046 [P] [US2] Add atomic wizard integration tests for ownership, CPF/phone duplication, supported Avulso transaction, rollback and legacy rows in `apps/web/src/tests/integration/patient-wizard-actions.test.ts`
 - [ ] T047 [P] [US2] Add patient-list query/action component tests for search, status, empty states and unavailable edit/archive/restore/contact controls in `apps/web/src/tests/component/patient-list.test.tsx`
 - [ ] T048 [P] [US2] Add patient-profile shell tests for tab order, canonical URL state, incomplete legacy values and contextual actions in `apps/web/src/tests/component/patient-profile.test.tsx`
 
 ### `/pacientes` increment
 
-- [ ] T049 [US2] Extend authenticated patient list/search service projections for normalized name, CPF, e-mail, phone and status filters in `apps/web/src/services/patients/patients.ts`
-- [ ] T050 [US2] Rebuild responsive patient search, filters, table/cards, empty states and capability-mapped row actions in `apps/web/src/components/patients/patient-list.tsx`
-- [ ] T051 [US2] Parse canonical query state server-side and compose bounded patient results in `apps/web/src/app/(private)/pacientes/page.tsx`
-- [ ] T052 [US2] Validate search/filter URLs, contextual actions, accessibility and both viewports in `apps/web/tests/e2e/patients-list.spec.ts`, then decide every `/pacientes` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T049 [US2] Extend authenticated patient list/search service projections for normalized name, CPF, e-mail, phone and status filters in `apps/web/src/services/patients/patients.ts`
+- [X] T050 [US2] Rebuild responsive patient search, filters, table/cards, empty states and capability-mapped row actions in `apps/web/src/components/patients/patient-list.tsx`
+- [X] T051 [US2] Parse canonical query state server-side and compose bounded patient results in `apps/web/src/app/(private)/pacientes/page.tsx`
+- [X] T052 [US2] Validate search/filter URLs, contextual actions, accessibility and both viewports in `apps/web/tests/e2e/patients-list.spec.ts`, then decide every `/pacientes` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 ### `/pacientes/novo` increment
 
-- [ ] T053 [US2] Extend Patient fields and reusable input/output types for the complete non-clinical wizard payload in `apps/web/src/types/patients.ts` and `apps/web/src/utils/validators/patient.ts`
-- [ ] T054 [US2] Extend safe Avulso/payment/card-installment input types and conditional schema in `apps/web/src/utils/validators/patient-financial-profile.ts`
-- [ ] T055 [US2] Implement authenticated CPF/phone uniqueness and atomic Patient plus supported Avulso profile creation in `apps/web/src/services/patients/create-patient-wizard.ts`
-- [ ] T056 [US2] Implement `createPatientWizardAction` with shared validation, typed field errors, duplicate-submit protection, revalidation and supported redirects in `apps/web/src/actions/patients.ts`
-- [ ] T057 [P] [US2] Build wizard step 1 with ordered sections, accordions, masks, conditional emergency fields and separate consent controls in `apps/web/src/components/patients/patient-wizard-personal-step.tsx`
-- [ ] T058 [P] [US2] Build wizard step 2 with Avulso real flow, payment conditions, safe installments, summary and unavailable Plan/automation choices in `apps/web/src/components/patients/patient-wizard-financial-step.tsx`
-- [ ] T059 [US2] Coordinate preserved form values, step validation and single final submit in `apps/web/src/components/patients/patient-wizard.tsx` and compose it in `apps/web/src/app/(private)/pacientes/novo/page.tsx`
-- [ ] T060 [US2] Validate valid/invalid Brazilian inputs, atomic reload persistence, unsupported choices and both viewports in `apps/web/tests/e2e/patient-wizard.spec.ts`, then decide every `/pacientes/novo` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T053 [US2] Extend Patient fields and reusable input/output types for the complete non-clinical wizard payload in `apps/web/src/types/patients.ts` and `apps/web/src/utils/validators/patient.ts`
+- [X] T054 [US2] Extend safe Avulso/payment/card-installment input types and conditional schema in `apps/web/src/utils/validators/patient-financial-profile.ts`
+- [X] T055 [US2] Implement authenticated CPF/phone uniqueness and atomic Patient plus supported Avulso profile creation in `apps/web/src/services/patients/create-patient-wizard.ts`
+- [X] T056 [US2] Implement `createPatientWizardAction` with shared validation, typed field errors, duplicate-submit protection, revalidation and supported redirects in `apps/web/src/actions/patients.ts`
+- [X] T057 [P] [US2] Build wizard step 1 with ordered sections, accordions, masks, conditional emergency fields and separate consent controls in `apps/web/src/components/patients/patient-wizard-personal-step.tsx`
+- [X] T058 [P] [US2] Build wizard step 2 with Avulso real flow, payment conditions, safe installments, summary and unavailable Plan/automation choices in `apps/web/src/components/patients/patient-wizard-financial-step.tsx`
+- [X] T059 [US2] Coordinate preserved form values, step validation and single final submit in `apps/web/src/components/patients/patient-wizard.tsx` and compose it in `apps/web/src/app/(private)/pacientes/novo/page.tsx`
+- [X] T060 [US2] Validate valid/invalid Brazilian inputs, atomic reload persistence, unsupported choices and both viewports in `apps/web/tests/e2e/patient-wizard.spec.ts`, then decide every `/pacientes/novo` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 ### `/pacientes/[patientId]` Geral, Financeiro and Agenda increments
 
-- [ ] T061 [US2] Build the authenticated patient profile server view model with ownership checks, incomplete legacy handling and parallel real reads in `apps/web/src/services/patients/patient-profile.ts`
-- [ ] T062 [P] [US2] Build the profile header, status, WhatsApp and capability-aware archive/edit controls plus canonical six-tab navigation in `apps/web/src/components/patients/patient-profile-shell.tsx`
-- [ ] T063 [P] [US2] Build the Geral tab with real contact, identity, address, emergency, consents and chief-complaint presentation in `apps/web/src/components/patients/patient-general-tab.tsx`
-- [ ] T064 [P] [US2] Rebuild the Financeiro tab around the real Avulso profile/readiness data and unavailable entry/plan/charge controls in `apps/web/src/components/patients/patient-finance-tab.tsx`
-- [ ] T065 [P] [US2] Rebuild the patient Agenda tab with real upcoming/history summaries and capability-aware create/edit/recurrence controls in `apps/web/src/components/patients/patient-agenda-tab.tsx`
-- [ ] T066 [US2] Parse the active tab and compose profile sections without serializing unnecessary patient data in `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx`
-- [ ] T067 [US2] Validate Geral, Financeiro and Agenda tab URLs, real records, legacy empty values, unavailable mutations and both viewports in `apps/web/tests/e2e/patient-profile-operational-tabs.spec.ts`, then decide their rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
-- [ ] T068 [US2] Run the US2 unit, integration and browser suite and record the accepted patient page gates in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T061 [US2] Build the authenticated patient profile server view model with ownership checks, incomplete legacy handling and parallel real reads in `apps/web/src/services/patients/patient-profile.ts`
+- [X] T062 [P] [US2] Build the profile header, status, WhatsApp and capability-aware archive/edit controls plus canonical six-tab navigation in `apps/web/src/components/patients/patient-profile-shell.tsx`
+- [X] T063 [P] [US2] Build the Geral tab with real contact, identity, address, emergency, consents and chief-complaint presentation in `apps/web/src/components/patients/patient-general-tab.tsx`
+- [X] T064 [P] [US2] Rebuild the Financeiro tab around the real Avulso profile/readiness data and unavailable entry/plan/charge controls in `apps/web/src/components/patients/patient-finance-tab.tsx`
+- [X] T065 [P] [US2] Rebuild the patient Agenda tab with real upcoming/history summaries and capability-aware create/edit/recurrence controls in `apps/web/src/components/patients/patient-agenda-tab.tsx`
+- [X] T066 [US2] Parse the active tab and compose profile sections without serializing unnecessary patient data in `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx`
+- [X] T067 [US2] Validate Geral, Financeiro and Agenda tab URLs, real records, legacy empty values, unavailable mutations and both viewports in `apps/web/tests/e2e/patient-profile-operational-tabs.spec.ts`, then decide their rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T068 [US2] Run the US2 unit, integration and browser suite and record the accepted patient page gates in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 **Checkpoint**: Patient list, atomic creation and operational profile tabs work independently with existing records preserved.
 
@@ -154,21 +163,21 @@
 
 ### Tests for User Story 3
 
-- [ ] T069 [P] [US3] Expand controlled-clock appointment tests for `dd/mm/aaaa`, 24-hour bounds, type, HTTPS video, past time, overlap and readiness in `apps/web/src/tests/unit/appointment-validation.test.ts`
+- [X] T069 [P] [US3] Expand controlled-clock appointment tests for `dd/mm/aaaa`, 24-hour bounds, type, HTTPS video, past time, overlap and readiness in `apps/web/src/tests/unit/appointment-validation.test.ts`
 - [ ] T070 [P] [US3] Add pure Day/Week/Month range, positioning, navigation and timezone boundary tests in `apps/web/src/tests/unit/calendar-model.test.ts`
 - [ ] T071 [P] [US3] Add agenda component tests for view switching, empty grid, create dialog, detail sheet, unavailable mutations and block-draft discard in `apps/web/src/tests/component/agenda-calendar.test.tsx`
 
 ### `/agenda` increment
 
-- [ ] T072 [US3] Extend appointment types/schema/action/service for real create fields `type` and optional `videoUrl` while preserving ownership, overlap, readiness and notification rules in `apps/web/src/types/appointments.ts`, `apps/web/src/utils/validators/appointment.ts`, `apps/web/src/actions/appointments.ts` and `apps/web/src/services/appointments/create-appointment-with-confirmation.ts`
-- [ ] T073 [P] [US3] Implement pure calendar ranges, slot positioning and status presentation in `apps/web/src/components/appointments/calendar-model.ts` and domain constants in `apps/web/src/components/appointments/constants.ts`
-- [ ] T074 [US3] Add only the date/calendar dependency needed by this page and lock it in `apps/web/package.json` and `apps/web/package-lock.json`
-- [ ] T075 [P] [US3] Build responsive Day/Week/Month grids, contextual header and in-grid empty states in `apps/web/src/components/appointments/agenda-calendar.tsx`
-- [ ] T076 [P] [US3] Rebuild the real create dialog with Brazilian date/time controls and preserved validation values in `apps/web/src/components/appointments/appointment-create-dialog.tsx`
-- [ ] T077 [P] [US3] Build appointment details and edit/reschedule/cancel/status/start-session controls with declared real or unavailable behavior in `apps/web/src/components/appointments/appointment-detail-sheet.tsx`
-- [ ] T078 [P] [US3] Build the full transient schedule-block dialog with validation and discard warning, ending in unavailable save in `apps/web/src/components/appointments/schedule-block-dialog.tsx`
-- [ ] T079 [US3] Parse calendar URL state, load bounded owned appointments and compose the server-first route in `apps/web/src/app/(private)/agenda/page.tsx`
-- [ ] T080 [US3] Validate all views, temporal navigation, real create/WhatsApp outcome, transient controls, accessibility and both viewports in `apps/web/tests/e2e/agenda.spec.ts`, then decide every `/agenda` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T072 [US3] Extend appointment types/schema/action/service for real create fields `type` and optional `videoUrl` while preserving ownership, overlap, readiness and notification rules in `apps/web/src/types/appointments.ts`, `apps/web/src/utils/validators/appointment.ts`, `apps/web/src/actions/appointments.ts` and `apps/web/src/services/appointments/create-appointment-with-confirmation.ts`
+- [X] T073 [P] [US3] Implement pure calendar ranges, slot positioning and status presentation in `apps/web/src/components/appointments/calendar-model.ts` and domain constants in `apps/web/src/components/appointments/constants.ts`
+- [X] T074 [US3] Add only the date/calendar dependency needed by this page and lock it in `apps/web/package.json` and `apps/web/package-lock.json`
+- [X] T075 [P] [US3] Build responsive Day/Week/Month grids, contextual header and in-grid empty states in `apps/web/src/components/appointments/agenda-calendar.tsx`
+- [X] T076 [P] [US3] Rebuild the real create dialog with Brazilian date/time controls and preserved validation values in `apps/web/src/components/appointments/appointment-create-dialog.tsx`
+- [X] T077 [P] [US3] Build appointment details and edit/reschedule/cancel/status/start-session controls with declared real or unavailable behavior in `apps/web/src/components/appointments/appointment-detail-sheet.tsx`
+- [X] T078 [P] [US3] Build the full transient schedule-block dialog with validation and discard warning, ending in unavailable save in `apps/web/src/components/appointments/schedule-block-dialog.tsx`
+- [X] T079 [US3] Parse calendar URL state, load bounded owned appointments and compose the server-first route in `apps/web/src/app/(private)/agenda/page.tsx`
+- [X] T080 [US3] Validate all views, temporal navigation, real create/WhatsApp outcome, transient controls, accessibility and both viewports in `apps/web/tests/e2e/agenda.spec.ts`, then decide every `/agenda` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 **Checkpoint**: Agenda page passes its gate with one real mutation boundary and no simulated edit/block persistence.
 
@@ -189,21 +198,21 @@
 
 ### `/dashboard` increment
 
-- [ ] T085 [US4] Build a minimal server dashboard view model from parallel owned patient, appointment, notification and supported financial-profile reads in `apps/web/src/services/dashboard/dashboard.ts`
-- [ ] T086 [US4] Add page-scoped chart and drag-and-drop dependencies only if required by parity in `apps/web/package.json` and `apps/web/package-lock.json`
-- [ ] T087 [P] [US4] Build quick actions, upcoming appointments, reminders, message queue, clickable KPIs and empty states in `apps/web/src/components/dashboard/dashboard-content.tsx`
-- [ ] T088 [P] [US4] Build dynamically loaded charts and section reordering with persisted privacy/order preferences in `apps/web/src/components/dashboard/dashboard-charts.tsx` and `apps/web/src/components/dashboard/dashboard-preferences.tsx`
-- [ ] T089 [US4] Start independent reads in parallel and compose the server-first dashboard in `apps/web/src/app/(private)/dashboard/page.tsx`
-- [ ] T090 [US4] Validate contextual URLs, privacy persistence, responsive DnD fallback, empty states and both viewports in `apps/web/tests/e2e/dashboard.spec.ts`, then decide every `/dashboard` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T085 [US4] Build a minimal server dashboard view model from parallel owned patient, appointment, notification and supported financial-profile reads in `apps/web/src/services/dashboard/dashboard.ts`
+- [X] T086 [US4] Add page-scoped chart and drag-and-drop dependencies only if required by parity in `apps/web/package.json` and `apps/web/package-lock.json`
+- [X] T087 [P] [US4] Build quick actions, upcoming appointments, reminders, message queue, clickable KPIs and empty states in `apps/web/src/components/dashboard/dashboard-content.tsx`
+- [X] T088 [P] [US4] Build dynamically loaded charts and section reordering with persisted privacy/order preferences in `apps/web/src/components/dashboard/dashboard-charts.tsx` and `apps/web/src/components/dashboard/dashboard-preferences.tsx`
+- [X] T089 [US4] Start independent reads in parallel and compose the server-first dashboard in `apps/web/src/app/(private)/dashboard/page.tsx`
+- [X] T090 [US4] Validate contextual URLs, privacy persistence, responsive DnD fallback, empty states and both viewports in `apps/web/tests/e2e/dashboard.spec.ts`, then decide every `/dashboard` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 ### `/financeiro` and `/financeiro/previsibilidade` increments
 
-- [ ] T091 [P] [US4] Implement immutable finance filter, KPI, chart and forecast view models without persistence in `apps/web/src/components/finance/finance-model.ts` and constants in `apps/web/src/components/finance/constants.ts`
-- [ ] T092 [P] [US4] Build responsive KPI, Todos/Receitas/Despesas/Recibos/Categorias tabs, filters, tables and lazy charts in `apps/web/src/components/finance/cash-flow-view.tsx`
-- [ ] T093 [P] [US4] Build fully validated transient entry, receipt and plan dialogs whose final actions open capability notices in `apps/web/src/components/finance/finance-dialogs.tsx` and schemas in `apps/web/src/utils/validators/finance-drafts.ts`
-- [ ] T094 [US4] Parse canonical filters and compose the cash-flow route with no fake financial records in `apps/web/src/app/(private)/financeiro/page.tsx`
-- [ ] T095 [P] [US4] Build annual calendar, monthly totals/detail, filters/search and transient confirm/cancel/edit controls in `apps/web/src/components/finance/forecast-view.tsx`
-- [ ] T096 [US4] Compose forecast URL state in `apps/web/src/app/(private)/financeiro/previsibilidade/page.tsx` and validate both finance routes in `apps/web/tests/e2e/finance.spec.ts`, then decide their rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T091 [P] [US4] Implement immutable finance filter, KPI, chart and forecast view models without persistence in `apps/web/src/components/finance/finance-model.ts` and constants in `apps/web/src/components/finance/constants.ts`
+- [X] T092 [P] [US4] Build responsive KPI, Todos/Receitas/Despesas/Recibos/Categorias tabs, filters, tables and lazy charts in `apps/web/src/components/finance/cash-flow-view.tsx`
+- [X] T093 [P] [US4] Build fully validated transient entry, receipt and plan dialogs whose final actions open capability notices in `apps/web/src/components/finance/finance-dialogs.tsx` and schemas in `apps/web/src/utils/validators/finance-drafts.ts`
+- [X] T094 [US4] Parse canonical filters and compose the cash-flow route with no fake financial records in `apps/web/src/app/(private)/financeiro/page.tsx`
+- [X] T095 [P] [US4] Build annual calendar, monthly totals/detail, filters/search and transient confirm/cancel/edit controls in `apps/web/src/components/finance/forecast-view.tsx`
+- [X] T096 [US4] Compose forecast URL state in `apps/web/src/app/(private)/financeiro/previsibilidade/page.tsx` and validate both finance routes in `apps/web/tests/e2e/finance.spec.ts`, then decide their rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 **Checkpoint**: Dashboard and finance routes are coherent and navigable; no unsupported financial record, receipt, plan or charge is persisted.
 
@@ -223,20 +232,20 @@
 
 ### Anamnese and Prontuário tab increments
 
-- [ ] T100 [P] [US5] Define clinical section/option constants and shared transient Zod schemas without contract fields in `apps/web/src/components/clinical/constants.ts` and `apps/web/src/utils/validators/clinical-drafts.ts`
-- [ ] T101 [P] [US5] Build the complete transient Anamnese form with HDA, histories, habits, mental-state exam and manual DSM/CID in `apps/web/src/components/clinical/anamnese-tab.tsx`
-- [ ] T102 [P] [US5] Build chronological evolution UI, free/SOAP draft, mood, optional appointment and unavailable CRUD final actions in `apps/web/src/components/clinical/medical-record-tab.tsx`
-- [ ] T103 [P] [US5] Build the in-memory session timer with pause/resume/finalize interaction and explicit unavailable persistence in `apps/web/src/components/clinical/session-workspace.tsx`
-- [ ] T104 [US5] Integrate Anamnese and Prontuário tabs into `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx` without passing clinical content through server props
-- [ ] T105 [US5] Validate clinical conditions, timer, keyboard flow, blocked save/autosave, discard and both viewports in `apps/web/tests/e2e/patient-clinical-tabs.spec.ts`, then decide the clinical rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T100 [P] [US5] Define clinical section/option constants and shared transient Zod schemas without contract fields in `apps/web/src/components/clinical/constants.ts` and `apps/web/src/utils/validators/clinical-drafts.ts`
+- [X] T101 [P] [US5] Build the complete transient Anamnese form with HDA, histories, habits, mental-state exam and manual DSM/CID in `apps/web/src/components/clinical/anamnese-tab.tsx`
+- [X] T102 [P] [US5] Build chronological evolution UI, free/SOAP draft, mood, optional appointment and unavailable CRUD final actions in `apps/web/src/components/clinical/medical-record-tab.tsx`
+- [X] T103 [P] [US5] Build the in-memory session timer with pause/resume/finalize interaction and explicit unavailable persistence in `apps/web/src/components/clinical/session-workspace.tsx`
+- [X] T104 [US5] Integrate Anamnese and Prontuário tabs into `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx` without passing clinical content through server props
+- [X] T105 [US5] Validate clinical conditions, timer, keyboard flow, blocked save/autosave, discard and both viewports in `apps/web/tests/e2e/patient-clinical-tabs.spec.ts`, then decide the clinical rows in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 ### Documentos tab increment
 
-- [ ] T106 [US5] Add `react-konva` and preview/PDF packages only if required for local parity, isolating them from the shared bundle in `apps/web/package.json` and `apps/web/package-lock.json`
-- [ ] T107 [P] [US5] Build document templates, repository states, editor and preview as transient/unavailable interactions in `apps/web/src/components/documents/documents-tab.tsx` and `apps/web/src/components/documents/document-editor.tsx`
-- [ ] T108 [P] [US5] Build a dynamically loaded signature canvas with clear/reset controls and evidence explanation but no signing claim in `apps/web/src/components/documents/signature-dialog.tsx`
-- [ ] T109 [US5] Integrate Documentos into `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx` with no upload/save/PDF/sign mutation boundary
-- [ ] T110 [US5] Validate templates, editor, preview, signature, no fake upload/download/save, safe feedback and both viewports in `apps/web/tests/e2e/patient-documents-tab.spec.ts`, then decide every document row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T106 [US5] Add `react-konva` and preview/PDF packages only if required for local parity, isolating them from the shared bundle in `apps/web/package.json` and `apps/web/package-lock.json`
+- [X] T107 [P] [US5] Build document templates, repository states, editor and preview as transient/unavailable interactions in `apps/web/src/components/documents/documents-tab.tsx` and `apps/web/src/components/documents/document-editor.tsx`
+- [X] T108 [P] [US5] Build a dynamically loaded signature canvas with clear/reset controls and evidence explanation but no signing claim in `apps/web/src/components/documents/signature-dialog.tsx`
+- [X] T109 [US5] Integrate Documentos into `apps/web/src/app/(private)/pacientes/[patientId]/page.tsx` with no upload/save/PDF/sign mutation boundary
+- [X] T110 [US5] Validate templates, editor, preview, signature, no fake upload/download/save, safe feedback and both viewports in `apps/web/tests/e2e/patient-documents-tab.spec.ts`, then decide every document row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 **Checkpoint**: All six patient tabs are now covered; clinical/document interactions are complete but deliberately non-persistent and privacy-safe.
 
@@ -255,13 +264,13 @@
 
 ### `/configuracoes` increment
 
-- [ ] T113 [P] [US6] Define settings section metadata, capability descriptors, plan/message options and shared schemas in `apps/web/src/components/settings/constants.ts` and `apps/web/src/utils/validators/settings.ts`
-- [ ] T114 [P] [US6] Build Conta, Contato/endereço and optional Clínica forms with Brazilian masks and capability-aware save actions in `apps/web/src/components/settings/account-settings.tsx`
-- [ ] T115 [P] [US6] Build transient Planos list/create/remove interactions with sessions, duration and BRL rules in `apps/web/src/components/settings/billing-plan-settings.tsx`
-- [ ] T116 [P] [US6] Build message templates, preview/placeholders and queue interactions with unavailable scheduling/sending in `apps/web/src/components/settings/message-settings.tsx`
-- [ ] T117 [P] [US6] Build Segurança with future 2FA and channel toggles marked unavailable and no session manager in `apps/web/src/components/settings/security-settings.tsx`
-- [ ] T118 [US6] Parse the active section and compose only safe authenticated account fields in `apps/web/src/app/(private)/configuracoes/page.tsx`
-- [ ] T119 [US6] Validate all settings sections, masks, conditional states, unavailable actions, keyboard flow and both viewports in `apps/web/tests/e2e/settings.spec.ts`, then decide every `/configuracoes` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T113 [P] [US6] Define settings section metadata, capability descriptors, plan/message options and shared schemas in `apps/web/src/components/settings/constants.ts` and `apps/web/src/utils/validators/settings.ts`
+- [X] T114 [P] [US6] Build Conta, Contato/endereço and optional Clínica forms with Brazilian masks and capability-aware save actions in `apps/web/src/components/settings/account-settings.tsx`
+- [X] T115 [P] [US6] Build transient Planos list/create/remove interactions with sessions, duration and BRL rules in `apps/web/src/components/settings/billing-plan-settings.tsx`
+- [X] T116 [P] [US6] Build message templates, preview/placeholders and queue interactions with unavailable scheduling/sending in `apps/web/src/components/settings/message-settings.tsx`
+- [X] T117 [P] [US6] Build Segurança with future 2FA and channel toggles marked unavailable and no session manager in `apps/web/src/components/settings/security-settings.tsx`
+- [X] T118 [US6] Parse the active section and compose only safe authenticated account fields in `apps/web/src/app/(private)/configuracoes/page.tsx`
+- [X] T119 [US6] Validate all settings sections, masks, conditional states, unavailable actions, keyboard flow and both viewports in `apps/web/tests/e2e/settings.spec.ts`, then decide every `/configuracoes` row in `specs/003-prototype-front-reconstruction/parity-matrix.md`
 
 **Checkpoint**: Settings route passes its page gate without implying unsupported account, plan, message or security persistence.
 
@@ -271,17 +280,17 @@
 
 **Purpose**: Prove whole-feature parity, preserve current real flows and leave durable project context.
 
-- [ ] T120 Resolve every remaining matrix row to `equivalent`, `approved-divergence` with owner/date, or `unavailable-capability`, and verify 100% desktop/mobile coverage in `specs/003-prototype-front-reconstruction/parity-matrix.md`
-- [ ] T121 [P] Audit all UI strings and rendered date/value paths for Portuguese feedback, `dd/mm/aaaa`, 24-hour time, BRL and zero `mm/dd/yyyy` occurrences in `apps/web/src`
-- [ ] T122 [P] Audit authorization, LGPD minimization, safe logging and absence of clinical/document/payment/message payload persistence in `apps/web/src/actions`, `apps/web/src/services`, `apps/web/src/components/clinical`, `apps/web/src/components/documents` and `apps/web/src/components/finance`
-- [ ] T123 [P] Run keyboard, focus, accessible-name, non-color-state, 44px target and intermediate-width review across `apps/web/tests/e2e`
-- [ ] T124 [P] Review Server/Client boundaries, serialized props, parallel reads, Suspense stability and page-only bundle loading in `apps/web/src/app` and `apps/web/src/components`
-- [ ] T125 Run regression coverage for real auth, patient, financial-profile, appointment and WhatsApp flows in `apps/web/src/tests/integration` and confirm unavailable actions create no records in `apps/web/tests/e2e`
-- [ ] T126 Run Prisma generation/migration validation plus `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test`, Playwright and `npm.cmd run build` from `apps/web/package.json`
-- [ ] T127 Execute and record every manual smoke step and final blocker from `specs/003-prototype-front-reconstruction/quickstart.md`
-- [ ] T128 [P] Update implementation status, page gates and next phase in `docs/roadmap.md` and meaningful product/architecture changes in `docs/project-overview.md`
-- [ ] T129 [P] Update changed files, validation evidence, blockers and recommended next step in `docs/handoff.md`
-- [ ] T130 Use the `specify-prompt-engineer` workflow to prepare the next roadmap specification brief for clinical persistence/encryption in `docs/next-spec-clinical-persistence-encryption.md`
+- [X] T120 Resolve every remaining matrix row to `equivalent`, `approved-divergence` with owner/date, or `unavailable-capability`, and verify 100% desktop/mobile coverage in `specs/003-prototype-front-reconstruction/parity-matrix.md`
+- [X] T121 [P] Audit all UI strings and rendered date/value paths for Portuguese feedback, `dd/mm/aaaa`, 24-hour time, BRL and zero `mm/dd/yyyy` occurrences in `apps/web/src`
+- [X] T122 [P] Audit authorization, LGPD minimization, safe logging and absence of clinical/document/payment/message payload persistence in `apps/web/src/actions`, `apps/web/src/services`, `apps/web/src/components/clinical`, `apps/web/src/components/documents` and `apps/web/src/components/finance`
+- [X] T123 [P] Run keyboard, focus, accessible-name, non-color-state, 44px target and intermediate-width review across `apps/web/tests/e2e`
+- [X] T124 [P] Review Server/Client boundaries, serialized props, parallel reads, Suspense stability and page-only bundle loading in `apps/web/src/app` and `apps/web/src/components`
+- [X] T125 Run regression coverage for real auth, patient, financial-profile, appointment and WhatsApp flows in `apps/web/src/tests/integration` and confirm unavailable actions create no records in `apps/web/tests/e2e`
+- [X] T126 Run Prisma generation/migration validation plus `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test`, Playwright and `npm.cmd run build` from `apps/web/package.json`
+- [X] T127 Execute and record every manual smoke step and final blocker from `specs/003-prototype-front-reconstruction/quickstart.md`
+- [X] T128 [P] Update implementation status, page gates and next phase in `docs/roadmap.md` and meaningful product/architecture changes in `docs/project-overview.md`
+- [X] T129 [P] Update changed files, validation evidence, blockers and recommended next step in `docs/handoff.md`
+- [X] T130 Use the `specify-prompt-engineer` workflow to prepare the next roadmap specification brief for clinical persistence/encryption in `docs/next-spec-clinical-persistence-encryption.md`
 
 ---
 

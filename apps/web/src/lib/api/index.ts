@@ -43,7 +43,6 @@ export default async function API<T = unknown>(request: APIRequest): Promise<API
         data: null,
         error: true,
         errorUserMessage: responseData?.message || "Erro desconhecido.",
-        debug: responseData,
         headers: response.headers
       };
     }
@@ -55,14 +54,13 @@ export default async function API<T = unknown>(request: APIRequest): Promise<API
       errorUserMessage: "",
       headers: response.headers
     };
-  } catch (error) {
+  } catch {
     return {
       status: 500,
       data: null,
       error: true,
       errorUserMessage: "Erro no servidor.",
-      headers: null,
-      debug: error
+      headers: null
     };
   }
 }

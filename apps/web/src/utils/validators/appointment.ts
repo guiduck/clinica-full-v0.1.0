@@ -38,7 +38,7 @@ export const appointmentSchema = z
     if (!Number.isNaN(startsAt.getTime()) && startsAt < new Date()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "A consulta nao pode ser criada no passado.",
+        message: "A consulta não pode ser criada no passado.",
         path: ["startsAt"]
       });
     }

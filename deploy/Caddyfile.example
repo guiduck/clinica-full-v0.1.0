@@ -1,0 +1,6 @@
+# Troque clinica.seudominio.com pelo subdominio criado na Vercel.
+# Troque 3101 se APP_PORT tiver outro valor em apps/web/.env.
+clinica.seudominio.com {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:3101
+}

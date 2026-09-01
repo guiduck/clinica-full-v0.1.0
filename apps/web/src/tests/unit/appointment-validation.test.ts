@@ -41,7 +41,7 @@ describe("appointment validation", () => {
     if (result.success) {
       throw new Error("Expected validation to fail");
     }
-    expect(result.error.flatten().fieldErrors.startsAt).toContain("A consulta nao pode ser criada no passado.");
+    expect(result.error.flatten().fieldErrors.startsAt).toContain("A consulta não pode ser criada no passado.");
   });
 
   it("accepts a future appointment", () => {

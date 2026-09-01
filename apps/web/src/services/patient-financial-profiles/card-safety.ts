@@ -6,7 +6,7 @@ export function assertSafeCardReference(reference?: string | null) {
   if (/^\d{13,19}$/.test(compactReference)) {
     throw new DomainError(
       "VALIDATION",
-      "Nao salve numero bruto de cartao. Use uma referencia segura do provedor."
+      "Não salve número bruto de cartão. Use uma referência segura do provedor."
     );
   }
 

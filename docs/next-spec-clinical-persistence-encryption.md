@@ -2,8 +2,8 @@
 
 > Brief revalidado com `specify-prompt-engineer` em 2026-08-31 contra as
 > superfícies finais transitórias de Anamnese, Prontuário, sessão e Agenda.
-> Não executar `/speckit.specify` enquanto a matriz integral da feature 003
-> estiver aberta.
+> A matriz da feature 003 está 384/384 decidida e este brief está pronto para
+> alimentar `/speckit.specify`.
 > Preservar também o contrato de localização aprovado: datas em `dd/mm/aaaa`,
 > horários em 24 horas e seletores/dropdowns com largura integral do campo.
 

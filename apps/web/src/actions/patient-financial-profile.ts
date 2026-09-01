@@ -39,7 +39,7 @@ export async function upsertPatientFinancialProfileAction(
   } catch (error) {
     return {
       ok: false,
-      message: getDomainErrorMessage(error, "Nao foi possivel salvar os dados de pagamento.")
+      message: getDomainErrorMessage(error, "Não foi possível salvar os dados de pagamento.")
     };
   }
 }

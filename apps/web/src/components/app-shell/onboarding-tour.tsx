@@ -369,7 +369,7 @@ export function OnboardingTour({
         style={style}
       >
         {placement !== "center" ? <span aria-hidden className={cn("absolute size-4 rotate-45 border bg-background", placement === "bottom" && "-top-2 left-8 border-b-0 border-r-0", placement === "top" && "-bottom-2 left-8 border-l-0 border-t-0", placement === "left" && "-right-2 top-8 border-b-0 border-l-0", placement === "right" && "-left-2 top-8 border-r-0 border-t-0")} /> : null}
-        <button onClick={skip} className="absolute right-3 top-3 grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-muted" aria-label="Fechar tutorial"><X className="size-4" /></button>
+        <button type="button" onClick={skip} className="absolute right-3 top-3 grid size-11 place-items-center rounded-md text-muted-foreground hover:bg-muted" aria-label="Fechar tutorial"><X className="size-4" /></button>
         <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">
           Passo {step + 1} de {ONBOARDING_STEPS.length}
         </p>
@@ -382,7 +382,7 @@ export function OnboardingTour({
         <p className="mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground">
           {current.description}
         </p>
-        <div className="mt-4 h-1 overflow-hidden rounded-full bg-primary/10"><span className="block h-full bg-primary transition-all" style={{ width: `${((step + 1) / ONBOARDING_STEPS.length) * 100}%` }} /></div>
+        <div className="mt-4 h-1 overflow-hidden rounded-full bg-primary/10"><span className="block h-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${((step + 1) / ONBOARDING_STEPS.length) * 100}%` }} /></div>
         {current.advance && current.advance !== "next" ? <p className="mt-3 rounded-md bg-muted/70 px-3 py-2 text-xs italic text-muted-foreground">Clique no destaque para avançar</p> : null}
         {!mayAdvance ? <p className="mt-3 rounded-md bg-muted/70 px-3 py-2 text-xs italic text-muted-foreground">{current.blockedHint ?? "Complete o dado obrigatório destacado para continuar"}</p> : null}
         <div className="mt-3 flex items-center justify-between gap-2">

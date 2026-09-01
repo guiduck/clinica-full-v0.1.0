@@ -27,7 +27,7 @@ export class TwilioWhatsAppSender implements WhatsAppSender {
     if (!config) {
       return {
         ok: false,
-        failureReason: "WhatsApp nao configurado."
+        failureReason: "WhatsApp não configurado."
       };
     }
 

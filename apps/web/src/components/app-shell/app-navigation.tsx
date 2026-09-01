@@ -59,7 +59,7 @@ export function AppNavigation({
             </PopoverContent>
           </Popover>
         </nav>
-        <Tooltip delayDuration={80}><TooltipTrigger asChild><button onClick={() => void signOut()} className="grid size-10 place-items-center rounded-lg text-foreground/60 hover:bg-muted hover:text-foreground" aria-label="Sair"><LogOut className="size-4" /></button></TooltipTrigger><TooltipContent side="right">Sair</TooltipContent></Tooltip>
+        <Tooltip delayDuration={80}><TooltipTrigger asChild><button type="button" onClick={() => void signOut()} className="grid size-11 place-items-center rounded-lg text-foreground/60 hover:bg-muted hover:text-foreground" aria-label="Sair"><LogOut className="size-4" /></button></TooltipTrigger><TooltipContent side="right">Sair</TooltipContent></Tooltip>
       </aside>
 
       <Sheet open={open} onOpenChange={(value) => { if (value || !tourActive) onOpenChange(value); }}>
@@ -75,7 +75,7 @@ export function AppNavigation({
               <div className="ml-7 mt-1 space-y-1">{financeItems.map((item) => <Link key={item.href} href={item.href} onClick={() => { if (!tourActive) onOpenChange(false); }} className={cn("flex min-h-10 items-center gap-2 rounded-md px-3 text-xs font-medium text-foreground/60 hover:bg-muted hover:text-foreground", path === item.href && "bg-muted text-foreground")}><item.icon className="size-3.5" />{item.label}</Link>)}</div>
             </div>
           </nav>
-          <button onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"><LogOut className="size-4" />Sair</button>
+          <button type="button" onClick={() => void signOut()} className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-foreground/70 hover:bg-muted hover:text-foreground"><LogOut className="size-4" />Sair</button>
         </SheetContent>
       </Sheet>
 

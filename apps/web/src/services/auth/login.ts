@@ -12,7 +12,7 @@ export async function loginUser(email: string, password: string): Promise<APIRes
   });
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    return createAPIError("E-mail ou senha invalidos.", 401);
+    return createAPIError("E-mail ou senha inválidos.", 401);
   }
 
   const session = await createSession(user.id);

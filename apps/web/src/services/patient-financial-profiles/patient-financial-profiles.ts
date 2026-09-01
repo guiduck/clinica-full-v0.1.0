@@ -40,7 +40,7 @@ export async function upsertPatientFinancialProfile(
   });
 
   if (!patient) {
-    throw new DomainError("NOT_FOUND", "Paciente nao encontrado.");
+    throw new DomainError("NOT_FOUND", "Paciente não encontrado.");
   }
 
   assertSafeCardReference(input.cardPaymentMethodRef);

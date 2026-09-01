@@ -18,7 +18,7 @@ export async function createAppointmentWithConfirmation(
   const endsAt = new Date(input.endsAt);
 
   if (startsAt < now) {
-    throw new DomainError("VALIDATION", "A consulta nao pode ser criada no passado.");
+    throw new DomainError("VALIDATION", "A consulta não pode ser criada no passado.");
   }
 
   const patient = await prisma.patient.findFirst({
@@ -30,7 +30,7 @@ export async function createAppointmentWithConfirmation(
   });
 
   if (!patient) {
-    throw new DomainError("NOT_FOUND", "Paciente nao encontrado ou inativo.");
+    throw new DomainError("NOT_FOUND", "Paciente não encontrado ou inativo.");
   }
 
   await assertPatientFinancialReady(userId, patient.id);

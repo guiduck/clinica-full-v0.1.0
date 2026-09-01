@@ -9,6 +9,7 @@ output/playwright/
 *.tsbuildinfo
 .env*
 !.env.example
+!.env.vps.example
 .vercel/
 .turbo/
 Thumbs.db

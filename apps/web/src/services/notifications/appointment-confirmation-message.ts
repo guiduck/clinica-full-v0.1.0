@@ -9,5 +9,5 @@ export function buildAppointmentConfirmationMessage(input: {
     timeZone: "America/Sao_Paulo"
   }).format(input.startsAt);
 
-  return `Ola, ${input.patientName}. Sua consulta com ${input.therapistName} esta marcada para ${date}. Responda apenas sim ou nao para confirmar.`;
+  return `Olá, ${input.patientName}. Sua consulta com ${input.therapistName} está marcada para ${date}. Responda apenas sim ou não para confirmar.`;
 }

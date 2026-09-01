@@ -108,3 +108,23 @@ feature is ready only when:
 - Existing npm audit findings require controlled review; do not apply automatic
   major upgrades as part of this feature.
 - Clinical persistence remains blocked until a separate encryption design is approved.
+
+## Registro do gate final — 2026-08-31
+
+- Prisma validate/generate: aprovado.
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test`: 30 arquivos e 87 testes aprovados.
+- `npm.cmd run build`: aprovado; 22 rotas, 102 kB compartilhados; Dashboard
+  272 kB e Financeiro 267 kB de First Load JS são os maiores bundles.
+- `npm.cmd run test:e2e`: 17 cenários aprovados e 2 mutações reais puladas
+  intencionalmente no mobile; desktop 1440x900 e mobile 390x844.
+- `npm.cmd audit --omit=dev`: 0 vulnerabilidades após upgrade controlado.
+- Smoke: cadastro/login, onboarding, criação atômica de paciente, perfil,
+  rascunhos clínicos/documentais, Agenda 24h, Financeiro, Previsibilidade e
+  Configurações cobertos pela jornada real e pelas evidências em
+  `output/playwright/evidence`.
+- Matriz: 384/384 decididas, sem `pending`.
+
+Pendências não bloqueantes: 13 testes granulares de componente/unidade,
+Twilio sandbox real, CSP e decisão do workspace com múltiplos lockfiles.

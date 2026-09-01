@@ -11,11 +11,11 @@ export const seoKeywordPhrases = [
 ] as const;
 
 export const landingContent = {
-  brand: "Clinica Agil",
-  heroTitle: "Clinica Agil",
+  brand: "Clínica Ágil",
+  heroTitle: "Clínica Ágil",
   heroSubtitle:
-    "Software para psicologos, terapeutas e psiquiatras autonomos organizarem pacientes, agenda, prontuario psicologico, financeiro, documentos e lembretes em um so lugar.",
-  primaryCtaLabel: "Acessar area profissional",
+    "Software para psicólogos, terapeutas e psiquiatras autônomos organizarem pacientes, agenda, prontuário psicológico, financeiro, documentos e lembretes em um só lugar.",
+  primaryCtaLabel: "Acessar área profissional",
   primaryCtaHref: publicRoutes.login,
   secondaryCtaLabel: "Ver recursos",
   seoKeywordPhrases,
@@ -23,44 +23,44 @@ export const landingContent = {
     {
       title: "Pacientes",
       description:
-        "Centralize cadastro, contatos, historico de atendimentos e dados essenciais para gestao de pacientes.",
+        "Centralize cadastro, contatos, histórico de atendimentos e dados essenciais para gestão de pacientes.",
       icon: UsersRound
     },
     {
       title: "Agenda",
       description:
-        "Organize horarios, consultas e confirmacoes com uma agenda para terapeutas pensada para rotina clinica.",
+        "Organize horários, consultas e confirmações com uma agenda para terapeutas pensada para a rotina clínica.",
       icon: CalendarDays
     },
     {
-      title: "Prontuario",
+      title: "Prontuário",
       description:
-        "Prepare uma base segura para evolucoes, observacoes e prontuario psicologico com clareza profissional.",
+        "Prepare uma base segura para evoluções, observações e prontuário psicológico com clareza profissional.",
       icon: ClipboardCheck
     },
     {
       title: "Financeiro",
       description:
-        "Acompanhe pagamentos, valores em aberto e financeiro para clinica sem perder o contexto do atendimento.",
+        "Acompanhe pagamentos, valores em aberto e o financeiro da clínica sem perder o contexto do atendimento.",
       icon: Receipt
     },
     {
       title: "Documentos",
       description:
-        "Deixe recibos, contratos e documentos clinicos prontos para um fluxo simples e organizado.",
+        "Deixe recibos, contratos e documentos clínicos prontos para um fluxo simples e organizado.",
       icon: FileText
     },
     {
       title: "Lembretes",
       description:
-        "Tenha uma estrutura para lembretes e confirmacoes, incluindo WhatsApp em etapas futuras do MVP.",
+        "Tenha uma estrutura para lembretes e confirmações, incluindo WhatsApp em etapas futuras do MVP.",
       icon: HeartPulse
     }
   ],
   trustStatements: [
-    "Privacidade e LGPD consideradas desde a primeira experiencia publica.",
-    "Acesso seguro com autenticacao server-side e sessao por cookie HttpOnly.",
-    "Organizacao clinica profissional sem expor dados sensiveis em paginas publicas.",
-    "Login e cadastro ja funcionam sobre Prisma e PostgreSQL; recuperacao de senha e paginas legais seguem como proximos refinamentos."
+    "Privacidade e LGPD consideradas desde a primeira experiência pública.",
+    "Acesso seguro com autenticação server-side e sessão por cookie HttpOnly.",
+    "Organização clínica profissional sem expor dados sensíveis em páginas públicas.",
+    "Login e cadastro já funcionam sobre Prisma e PostgreSQL; recuperação de senha e páginas legais seguem como próximos refinamentos."
   ]
 } as const;

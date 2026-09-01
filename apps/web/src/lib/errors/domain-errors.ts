@@ -18,7 +18,7 @@ export class DomainError extends Error {
   }
 }
 
-export function getDomainErrorMessage(error: unknown, fallback = "Nao foi possivel concluir a acao.") {
+export function getDomainErrorMessage(error: unknown, fallback = "Não foi possível concluir a ação.") {
   if (error instanceof DomainError) {
     return error.message;
   }

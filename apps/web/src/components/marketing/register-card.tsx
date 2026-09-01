@@ -103,7 +103,7 @@ export function RegisterCard() {
 
           {formError ? (
             <Alert variant="destructive">
-              <AlertTitle>Nao foi possivel criar a conta</AlertTitle>
+              <AlertTitle>Não foi possível criar a conta</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}

@@ -3,10 +3,10 @@ import { landingContent, seoKeywordPhrases } from "@/lib/seo/landing-content";
 import { publicRoutes } from "@/lib/seo/public-routes";
 
 export const siteConfig = {
-  name: "Clinica Agil",
+  name: "Clínica Ágil",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://clinicaagil.com.br",
   description:
-    "Clinica Agil e um software para psicologos, terapeutas e psiquiatras autonomos organizarem pacientes, agenda, prontuario, financeiro, documentos e recibos."
+    "Clínica Ágil é um software para psicólogos, terapeutas e psiquiatras autônomos organizarem pacientes, agenda, prontuário, financeiro, documentos e recibos."
 };
 
 type PageMetadata = {
@@ -19,9 +19,9 @@ type PageMetadata = {
 
 export const pageMetadata = {
   landing: {
-    title: "Software para psicologos e terapeutas autonomos",
+    title: "Software para psicólogos e terapeutas autônomos",
     description:
-      "Software para psicologos e terapeutas: organize pacientes, agenda para terapeutas, prontuario psicologico, financeiro para clinica, documentos, recibos e lembretes.",
+      "Software para psicólogos e terapeutas: organize pacientes, agenda, prontuário psicológico, financeiro da clínica, documentos, recibos e lembretes.",
     canonicalPath: publicRoutes.landing,
     keywords: seoKeywordPhrases,
     indexable: true
@@ -29,14 +29,14 @@ export const pageMetadata = {
   login: {
     title: "Login profissional",
     description:
-      "Acesse a entrada profissional da Clinica Agil com e-mail, senha e sessao segura server-side.",
+      "Acesse a entrada profissional da Clínica Ágil com e-mail, senha e sessão segura server-side.",
     canonicalPath: publicRoutes.login,
-    keywords: ["login Clinica Agil", "acesso profissional", ...seoKeywordPhrases],
+    keywords: ["login Clínica Ágil", "acesso profissional", ...seoKeywordPhrases],
     indexable: true
   },
   placeholder: {
-    title: "Pagina em preparacao",
-    description: "Esta area da Clinica Agil esta em preparacao e ainda nao executa servicos reais.",
+    title: "Página em preparação",
+    description: "Esta área da Clínica Ágil está em preparação e ainda não executa serviços reais.",
     canonicalPath: publicRoutes.landing,
     keywords: [],
     indexable: false

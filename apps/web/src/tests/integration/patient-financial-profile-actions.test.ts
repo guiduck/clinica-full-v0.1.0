@@ -50,13 +50,13 @@ describe("patient financial profile actions", () => {
   });
 
   it("returns user isolation errors without leaking internals", async () => {
-    upsertMock.mockRejectedValue(new DomainError("NOT_FOUND", "Paciente nao encontrado."));
+    upsertMock.mockRejectedValue(new DomainError("NOT_FOUND", "Paciente não encontrado."));
     const formData = new FormData();
     formData.set("preferredPaymentMethod", "cash");
     formData.set("defaultSessionPrice", "180");
 
     const result = await upsertPatientFinancialProfileAction("patient-2", { ok: false, message: "" }, formData);
 
-    expect(result).toEqual({ ok: false, message: "Paciente nao encontrado." });
+    expect(result).toEqual({ ok: false, message: "Paciente não encontrado." });
   });
 });

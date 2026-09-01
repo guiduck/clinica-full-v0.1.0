@@ -1,12 +1,33 @@
 # Handoff
 
 ## Status atual
-Projeto com o `slice paciente/agenda/WhatsApp implementado` e a superfície
-funcional da feature `003-prototype-front-reconstruction` reconstruída. Todas
-as rotas centrais agora existem e os cenários principais passam em desktop e
-mobile. A feature permanece formalmente aberta porque a matriz granular ainda
-contém linhas `pending`, e os smokes/auditorias finais não devem ser inferidos a
-partir de um único teste de jornada.
+Projeto com o `slice paciente/agenda/WhatsApp implementado`, a superfície da
+feature `003-prototype-front-reconstruction` aceita e o primeiro service
+pós-reconstrução entregue. A matriz está 100% decidida; não há `pending`.
+Restam 13 testes granulares de hardening em `tasks.md`, explicitamente não
+confundidos com lacunas ocultas de UI ou falso sucesso.
+
+## Reconciliação final e service inicial — 2026-08-31
+- Matriz: 384/384 linhas decididas — 284 equivalentes, 72 capacidades
+  indisponíveis e 28 divergências compactas aprovadas pelo product owner.
+- Tarefas: 117/130 concluídas por resultado, inclusive implementações e E2E
+  consolidados em arquivos diferentes dos nomes originalmente planejados.
+- Criação do wizard agora valida dados pessoais e financeiros antes de escrever
+  e cria `Patient` + `PatientFinancialProfile` em uma única transação Prisma.
+- Rascunhos de Anamnese, evolução, sessão e documentos pedem confirmação antes
+  de trocar aba, fechar diálogo ou sair da página.
+- Datas/horários legados foram removidos das superfícies revisadas; Agenda usa
+  `dd/mm/aaaa`, seletores de 24 horas, ícones de relógio e dropdown na largura
+  do gatilho.
+- Ações manuais de WhatsApp sem service agora mostram indisponibilidade explícita.
+- Dependências de produção: Next 15.5.21, PostCSS 8.5.23 e Sharp 0.35.0;
+  `npm audit --omit=dev` = 0.
+- Evidência: lint/typecheck aprovados, 30 arquivos/87 testes Vitest aprovados,
+  build de 22 rotas aprovado e Playwright completo com 17 aprovados/2 pulados
+  intencionalmente em desktop 1440x900 e mobile 390x844.
+- Próximo passo: executar `/speckit.specify` com
+  `docs/next-spec-clinical-persistence-encryption.md`; não persistir conteúdo
+  clínico antes de decidir histórico, retenção, criptografia e chaves.
 
 ## Checkpoint funcional — 2026-08-31
 - A rodada final de feedback removeu a altura mínima da tabela de pacientes quando
@@ -48,22 +69,20 @@ Validação deste checkpoint:
   largura do dropdown e opção `13:00` no seletor de horário.
 
 Situação formal da feature 003:
-- 78 de 384 linhas da matriz estão decididas; 306 continuam `pending`;
-- 43 de 130 tarefas estão marcadas como concluídas e 87 permanecem abertas;
-- parte das tarefas abertas já possui implementação equivalente em arquivos
-  consolidados e precisa ser reconciliada com evidência, não marcada por inferência;
-- confirmação de descarte de rascunhos clínicos/documentais, auditorias
-  transversais, regressão final e smoke manual ainda precisam de fechamento.
+- 384 de 384 linhas da matriz estão decididas; 0 continuam `pending`;
+- 117 de 130 tarefas estão concluídas e 13 testes granulares permanecem como
+  hardening rastreado;
+- divergências aceitas têm responsável/data e não ampliam capacidades reais;
+- descarte de rascunhos, auditorias, regressão, bundle e smoke responsivo foram
+  executados e registrados.
 
 Limites reais:
 - persistência clínica, documentos/PDF/assinatura, ledger financeiro editável,
   recibos, planos, templates e configurações avançadas continuam sem service;
-- o wizard cria paciente e perfil financeiro em duas operações sequenciais, não
-  em uma transação única;
-- 10 vulnerabilidades npm conhecidas (1 low, 8 high, 1 critical) exigem revisão
-  controlada; não usar auto-fix com upgrades maiores;
+- o wizard cria paciente e perfil financeiro atomicamente em uma transação;
+- o audit de dependências de produção está zerado; manter upgrades controlados;
 - Next ainda avisa sobre múltiplos lockfiles e inferência do workspace root;
-- Twilio sandbox e o smoke manual completo continuam pendentes.
+- Twilio sandbox real continua pendente; o smoke local fixo desktop/mobile passou.
 - o catálogo e a semântica das variáveis dinâmicas de templates de mensagens
   ainda precisam ser especificados antes do service de mensagens.
 
@@ -374,3 +393,37 @@ Geral/Financeiro/Agenda, aceitando uma pagina apenas depois dos testes e da matr
 desktop/mobile. O brief da spec posterior, voltada a persistencia clinica e
 criptografia, esta em `docs/next-spec-clinical-persistence-encryption.md` e deve ser
 revalidado quando toda a reconstrucao frontend terminar.
+
+## Checkpoint de deploy em VPS — 2026-08-31
+
+Mudanças:
+- adicionado build Next.js standalone, Dockerfile multi-stage e Compose de
+  produção com app, migration Prisma e PostgreSQL privado;
+- adicionados `.env.vps.example`, `/api/health`,
+  `deploy/Caddyfile.example` e o guia `docs/deploy-vps.md`;
+- a porta do app é configurável por `APP_PORT` e vinculada somente a
+  `127.0.0.1`, para acesso via Caddy;
+- OpenSSL foi instalado na imagem Alpine após o smoke inicial detectar
+  incompatibilidade do Prisma.
+
+Validação:
+- `docker compose ... config`: aprovado;
+- `npm run typecheck`: aprovado;
+- `npm run build`: aprovado, incluindo `/api/health`;
+- imagem `web-web`: construída com sucesso;
+- smoke do container standalone: `GET /api/health` retornou
+  `{"status":"ok"}`.
+
+Bloqueios externos:
+- o inventário manual de 2026-09-01 confirmou `3100` ocupada pelo Persuando e
+  `3101` livre; nenhum serviço existente deve ser alterado;
+- ainda faltam criar o registro A do subdomínio, copiar/preencher o `.env`,
+  subir o Compose e adicionar/validar o bloco no Caddy real;
+- o submódulo privado `references/clinica-full` é referência visual e deve ser
+  ignorado no clone de produção; ele não participa do build de `apps/web`;
+- as 10 vulnerabilidades npm conhecidas continuam pendentes de revisão
+  controlada.
+
+Próximo passo recomendado:
+- seguir `docs/deploy-vps.md` usando `APP_PORT=3101`, executar o primeiro
+  deploy e validar DNS, HTTPS, healthcheck, login e persistência após reinício.

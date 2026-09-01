@@ -17,10 +17,7 @@ export async function registerAndLogin(input: RegisterInput): Promise<APIRespons
   const registerResult = await registerUser({ name: parsed.data.name, email: parsed.data.email, password: parsed.data.password });
 
   if (registerResult.error) {
-    return {
-      ...registerResult,
-      data: null
-    };
+    return { status: registerResult.status, error: true, errorUserMessage: registerResult.errorUserMessage, headers: null, data: null };
   }
 
   const loginResult = await loginUser(parsed.data.email, parsed.data.password);
@@ -41,10 +38,7 @@ export async function registerAndLogin(input: RegisterInput): Promise<APIRespons
     };
   }
 
-  return {
-    ...loginResult,
-    data: null
-  };
+  return { status: loginResult.status, error: true, errorUserMessage: loginResult.errorUserMessage, headers: null, data: null };
 }
 
 export async function logout() {

@@ -26,7 +26,7 @@ export function LegalLinks({ className, compact = false }: LegalLinksProps) {
         Termos de uso
       </Link>
       <Link className="hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" href={publicRoutes.privacy}>
-        Politica de privacidade
+        Política de privacidade
       </Link>
     </nav>
   );

@@ -24,8 +24,8 @@ describe("public SEO boundary", () => {
   it("defines meaningful metadata for landing and login", () => {
     expect(pageMetadata.landing.indexable).toBe(true);
     expect(pageMetadata.login.indexable).toBe(true);
-    expect(pageMetadata.landing.description.toLowerCase()).toContain("software para psicologos");
-    expect(pageMetadata.login.description).toContain("Clinica Agil");
-    expect(siteConfig.description).toContain("prontuario");
+    expect(pageMetadata.landing.description.toLowerCase()).toContain("software para psicólogos");
+    expect(pageMetadata.login.description).toContain("Clínica Ágil");
+    expect(siteConfig.description).toContain("prontuário");
   });
 });

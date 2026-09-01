@@ -57,7 +57,7 @@ export function LoginCard() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <HeartPulse className="h-6 w-6" aria-hidden="true" />
         </div>
-        <CardTitle>Entrar na Clinica Agil</CardTitle>
+        <CardTitle>Entrar na Clínica Ágil</CardTitle>
         <CardDescription>
           Acesse sua area profissional com e-mail e senha cadastrados.
         </CardDescription>
@@ -100,7 +100,7 @@ export function LoginCard() {
 
           {formError ? (
             <Alert variant="destructive">
-              <AlertTitle>Nao foi possivel entrar</AlertTitle>
+              <AlertTitle>Não foi possível entrar</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
@@ -115,7 +115,7 @@ export function LoginCard() {
 
         <div className="mt-6 space-y-5 text-center">
           <p className="text-sm text-muted-foreground">
-            Ainda nao tem acesso?{" "}
+            Ainda não tem acesso?{" "}
             <Link className="font-semibold text-primary hover:underline" href={publicRoutes.createAccount}>
               Criar conta
             </Link>
