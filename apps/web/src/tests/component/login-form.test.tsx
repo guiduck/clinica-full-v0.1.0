@@ -41,10 +41,9 @@ describe("LoginForm", () => {
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/dashboard"));
   });
 
-  it("keeps Google visible but performs no login", () => {
+  it("links Google login to the OAuth start route", () => {
     render(<LoginForm />);
-    fireEvent.click(screen.getByRole("button", { name: "Continuar com Google" }));
-    expect(screen.getByRole("dialog")).toHaveTextContent("ainda não está disponível");
+    expect(screen.getByRole("link", { name: "Continuar com Google" })).toHaveAttribute("href", "/api/auth/google/start");
     expect(loginMock).not.toHaveBeenCalled();
   });
 });

@@ -6,7 +6,10 @@ export type DomainErrorCode =
   | "PAYMENT_PROFILE_INCOMPLETE"
   | "WHATSAPP_NOT_CONFIGURED"
   | "APPOINTMENT_OVERLAP"
-  | "PROVIDER_FAILURE";
+  | "PROVIDER_FAILURE"
+  | "CONFIGURATION"
+  | "EMAIL_NOT_CONFIGURED"
+  | "INVALID_TOKEN";
 
 export class DomainError extends Error {
   constructor(

@@ -18,3 +18,8 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
+
+# Google OAuth credentials downloaded from Google Cloud Console.
+# Production uses only AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET from the environment.
+/client-secret.json
+/client_secret*.json

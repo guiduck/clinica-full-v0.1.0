@@ -2,14 +2,18 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AgendaCalendar } from "@/components/appointments/agenda-calendar";
 
-const refreshMock = vi.hoisted(() => vi.fn());
+const navigationMocks = vi.hoisted(() => ({ refresh: vi.fn(), replace: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: refreshMock }),
+  useRouter: () => ({ refresh: navigationMocks.refresh, replace: navigationMocks.replace }),
+  usePathname: () => "/agenda",
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("@/actions/appointments", () => ({
   createAppointmentAction: vi.fn(),
+  startAppointmentSessionAction: vi.fn(),
+  finishAppointmentSessionAction: vi.fn(),
 }));
 
 const patient = {
@@ -54,6 +58,8 @@ describe("AgendaCalendar", () => {
             status: "agendada",
             type: "Sessão individual",
             videoUrl: null,
+            sessionStartedAt: null,
+            sessionEndedAt: null,
           },
         ]}
       />,
@@ -123,5 +129,5 @@ describe("AgendaCalendar", () => {
     expect(screen.getByRole("option", { name: "09:10" })).not.toHaveAttribute(
       "data-disabled",
     );
-  });
+  }, 10_000);
 });

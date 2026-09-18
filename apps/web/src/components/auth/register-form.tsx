@@ -25,7 +25,7 @@ export function RegisterForm() {
     setFormError(null);
     const result = await registerAndLogin(values);
     if (result.error) { setFormError(result.errorUserMessage); return; }
-    router.push(publicRoutes.dashboard);
+    router.push(result.data?.next === "verify-email" ? `${publicRoutes.login}?registered=1&verify=1` : publicRoutes.dashboard);
   }
 
   return (

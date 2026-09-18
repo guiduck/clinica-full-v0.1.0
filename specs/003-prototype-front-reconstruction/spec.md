@@ -5,6 +5,14 @@
 **Status**: Draft  
 **Input**: User description: `docs/next-spec-prototype-front-reconstruction.md`, com baseline Lovable congelada no commit `226e5ab6811c5dce717fa12b404370b4fbb2663e`
 
+> **Addendum aprovado em 2026-09-18:** após o aceite da reconstrução, o product
+> owner autorizou substituir os limites transitórios de login Google,
+> recuperação/confirmação de e-mail, Anamnese, evolução e sessão por services
+> reais. Também autorizou query state canônico e sincronização opcional com
+> Google Agenda. A implementação e seus limites estão registrados em
+> `docs/handoff.md`; os enunciados históricos abaixo continuam descrevendo o gate
+> visual original, não o estado operacional atual.
+
 ## Clarifications
 
 ### Session 2026-08-27

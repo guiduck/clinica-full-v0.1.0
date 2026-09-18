@@ -43,6 +43,10 @@ vi.mock("@/services/finance/finance-entries", () => ({
   createAppointmentFinanceEntry: financeEntryCreateMock,
 }));
 
+vi.mock("@/services/integrations/google-calendar", () => ({
+  syncAppointmentToGoogleCalendar: vi.fn().mockResolvedValue({ synced: false }),
+}));
+
 describe("appointment service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -89,6 +93,7 @@ describe("appointment service", () => {
     expect(appointment).toEqual({
       id: "appointment-1",
       notificationScheduled: true,
+      calendarSynced: false,
     });
     expect(notificationCreateMock).toHaveBeenCalledOnce();
     expect(financeEntryCreateMock).toHaveBeenCalledWith(
@@ -155,6 +160,7 @@ describe("appointment service", () => {
     expect(appointment).toEqual({
       id: "appointment-1",
       notificationScheduled: false,
+      calendarSynced: false,
     });
     expect(notificationCreateMock).not.toHaveBeenCalled();
     expect(sendConfirmationMock).not.toHaveBeenCalled();

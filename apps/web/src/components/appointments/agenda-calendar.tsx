@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useActionState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Ban,
   Calendar as CalendarIcon,
@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import {
   createAppointmentAction,
+  finishAppointmentSessionAction,
+  startAppointmentSessionAction,
   type AppointmentActionState,
 } from "@/actions/appointments";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
@@ -87,6 +89,8 @@ type AppointmentView = {
   status: string;
   type: string;
   videoUrl: string | null;
+  sessionStartedAt: string | null;
+  sessionEndedAt: string | null;
 };
 const initialAction: AppointmentActionState = { ok: false, message: "" };
 const unavailable = {
@@ -116,6 +120,9 @@ export function AgendaCalendar({
   defaultPatientId?: string;
   whatsappConfigured?: boolean;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [view, setView] = React.useState<AgendaView>(initialView);
   const [referenceDate, setReferenceDate] = React.useState(() =>
     initialDate ? new Date(`${initialDate}T12:00:00`) : new Date(),
@@ -126,10 +133,28 @@ export function AgendaCalendar({
     () => appointments.find((item) => item.id === initialOpen) ?? null,
   );
   const [session, setSession] = React.useState<AppointmentView | null>(null);
-  const navigatePeriod = (direction: -1 | 1) =>
-    setReferenceDate((current) =>
-      shiftAgendaReferenceDate(current, view, direction),
-    );
+  const updateAgendaQuery = React.useCallback((nextDate: Date, nextView: AgendaView) => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("view", nextView);
+    next.set("date", agendaDateKey(nextDate));
+    next.delete("open");
+    next.delete("new");
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
+  const navigatePeriod = (direction: -1 | 1) => {
+    const nextDate = shiftAgendaReferenceDate(referenceDate, view, direction);
+    setReferenceDate(nextDate);
+    updateAgendaQuery(nextDate, view);
+  };
+  const goToday = () => {
+    const today = new Date();
+    setReferenceDate(today);
+    updateAgendaQuery(today, view);
+  };
+  const changeView = (nextView: AgendaView) => {
+    setView(nextView);
+    updateAgendaQuery(referenceDate, nextView);
+  };
   return (
     <main className="app-page space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -163,7 +188,7 @@ export function AgendaCalendar({
             </Button>
             <Button
               variant="outline"
-              onClick={() => setReferenceDate(new Date())}
+              onClick={goToday}
             >
               Hoje
             </Button>
@@ -181,7 +206,7 @@ export function AgendaCalendar({
           </div>
           <Tabs
             value={view}
-            onValueChange={(value) => setView(value as AgendaView)}
+            onValueChange={(value) => changeView(value as AgendaView)}
           >
             <TabsList>
               <TabsTrigger value="dia">Dia</TabsTrigger>
@@ -575,6 +600,25 @@ function AppointmentDetails({
   onOpenChange: (open: boolean) => void;
   onStart: (item: AppointmentView) => void;
 }) {
+  const [pending, startTransition] = React.useTransition();
+  const [error, setError] = React.useState<string | null>(null);
+  const isFinished = appointment?.status === "realizada" || Boolean(appointment?.sessionEndedAt);
+  let sessionButtonLabel = "Iniciar sessão";
+  if (isFinished) sessionButtonLabel = "Sessão finalizada";
+  else if (pending) sessionButtonLabel = "Iniciando...";
+  const start = () => {
+    if (!appointment) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await startAppointmentSessionAction(appointment.id);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      onOpenChange(false);
+      onStart({ ...appointment, sessionStartedAt: appointment.sessionStartedAt ?? new Date().toISOString() });
+    });
+  };
   return (
     <Sheet open={Boolean(appointment)} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-[min(92vw,24rem)]">
@@ -614,9 +658,9 @@ function AppointmentDetails({
               </Button>
             ) : null}
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" onClick={() => onStart(appointment)}>
+              <Button variant="outline" onClick={start} disabled={pending || isFinished}>
                 <Play className="size-4" />
-                Iniciar sessão
+                {sessionButtonLabel}
               </Button>
               <CapabilityNotice
                 descriptor={unavailable}
@@ -637,6 +681,7 @@ function AppointmentDetails({
                 }
               />
             </div>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="border-t pt-4">
               <div className="grid grid-cols-2 gap-2">
                 <CapabilityNotice
@@ -673,10 +718,13 @@ function SessionDialog({
   appointment: AppointmentView | null;
   onOpenChange: (open: boolean) => void;
 }) {
+  const router = useRouter();
   const [seconds, setSeconds] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
   const [mood, setMood] = React.useState([5]);
   const [free, setFree] = React.useState("");
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [pending, startTransition] = React.useTransition();
   const discard = useDiscardConfirmation(
     free.trim().length > 0 || mood[0] !== 5,
   );
@@ -694,6 +742,7 @@ function SessionDialog({
       setPaused(false);
       setMood([5]);
       setFree("");
+      setFeedback(null);
     }
   }, [appointment]);
   const close = React.useCallback(() => {
@@ -704,6 +753,30 @@ function SessionDialog({
     onOpenChange(false);
   }, [onOpenChange]);
   const requestClose = () => discard.requestDiscard(close);
+  const finish = () => {
+    if (!appointment) return;
+    setFeedback(null);
+    const now = new Date();
+    startTransition(async () => {
+      const result = await finishAppointmentSessionAction(appointment.id, {
+        appointmentId: appointment.id,
+        date: formatBrazilianDate(now),
+        time: formatTime24(now),
+        mood: mood[0],
+        free,
+        subjective: "",
+        objective: "",
+        assessment: "",
+        plan: "",
+      });
+      if (!result.ok) {
+        setFeedback(result.message);
+        return;
+      }
+      close();
+      router.refresh();
+    });
+  };
   const time = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
   return (
     <>
@@ -737,10 +810,9 @@ function SessionDialog({
                 )}
                 {paused ? "Retomar" : "Pausar"}
               </Button>
-              <CapabilityNotice
-                descriptor={unavailable}
-                trigger={<Button>Finalizar sessão</Button>}
-              />
+              <Button onClick={finish} disabled={pending || !free.trim()}>
+                {pending ? "Finalizando..." : "Finalizar sessão"}
+              </Button>
             </div>
           </div>
           <div className="max-h-[calc(100dvh-12rem)] space-y-5 overflow-y-auto p-6">
@@ -758,6 +830,7 @@ function SessionDialog({
                 value={mood}
                 onValueChange={setMood}
               />
+              {feedback ? <p className="mt-2 text-sm text-destructive">{feedback}</p> : null}
             </div>
             <div>
               <Label htmlFor="session-free-record">Registro livre</Label>

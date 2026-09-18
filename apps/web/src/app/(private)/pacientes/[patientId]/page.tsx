@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PatientProfileView } from "@/components/patients/patient-profile-view";
 import { requireUser } from "@/lib/auth/require-user";
 import { getPatient } from "@/services/patients/patients";
+import { getClinicalRecord } from "@/services/clinical/clinical-records";
 
 type Props = {
   params: Promise<{
@@ -18,6 +19,7 @@ export default async function PatientDetailPage({ params, searchParams }: Props)
   if (!patient) {
     notFound();
   }
+  const clinicalRecord = await getClinicalRecord(user.id, patientId);
 
   const query = await searchParams;
   const allowed = ["geral", "anamnese", "agenda", "prontuario", "financeiro", "documentos"] as const;
@@ -59,5 +61,5 @@ export default async function PatientDetailPage({ params, searchParams }: Props)
       status: appointment.status,
       type: appointment.type,
     })),
-  }} initialTab={initialTab} />;
+  }} clinicalRecord={clinicalRecord} initialTab={initialTab} />;
 }

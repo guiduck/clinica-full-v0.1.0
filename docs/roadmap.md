@@ -1,5 +1,26 @@
 # Roadmap
 
+## Checkpoint auth, e-mail, clínica e calendário — 2026-09-18
+
+- login Google real integrado à sessão própria do sistema, usando o callback
+  `https://clinica-full.gfig.space/api/auth/callback/google`;
+- confirmação de conta e recuperação de senha com tokens únicos, expirados e
+  armazenados somente como hash; envio compatível com Resend ou SendGrid;
+- Anamnese e evoluções clínicas persistidas no PostgreSQL com payload AES-256-GCM
+  e autorização pelo profissional proprietário;
+- início/finalização de sessão persistidos; finalizar grava evolução vinculada e
+  marca a consulta como `realizada`;
+- novas consultas continuam criando receita prevista vinculada ao paciente e
+  podem ser copiadas ao Google Agenda quando a integração estiver conectada;
+- busca/status de pacientes e data/visão da agenda agora usam query string
+  canônica e sobrevivem a reload/compartilhamento;
+- migration `20260918000100_auth_email_clinical_calendar` adicionada; o ambiente
+  de produção deve mostrar **4 migrations** após o próximo deploy;
+- gate local aprovado: Prisma format/generate, lint, typecheck, 55 arquivos/161
+  testes e build de produção com 29 rotas/páginas geradas;
+- próximo slice recomendado: documentos clínicos, recibos PDF e assinatura
+  simples, descrito em `docs/next-spec-documentos-recibos-assinatura.md`.
+
 ## Checkpoint financeiro persistente — 2026-09-14
 
 - ledger financeiro real adicionado ao PostgreSQL com receitas, despesas,
@@ -246,7 +267,7 @@ Métricas do fechamento formal em 2026-09-01:
   desktop/mobile foram executados.
 
 ### Fase 2 - MVP operacional do terapeuta
-Status: `nao iniciado`
+Status: `em andamento; núcleo operacional persistente disponível`
 
 Objetivo:
 - entregar o nucleo vendavel para autonomos individuais
@@ -254,13 +275,13 @@ Objetivo:
 Modulos:
 - [x] auth por e-mail/senha com sessão persistida e cookie HttpOnly
 - [x] criação, listagem e perfil de pacientes persistidos no PostgreSQL
-- [ ] agenda
+- [x] agenda (criação, conflito, sessão e sincronização opcional com Google)
 - [ ] notificacoes via WhatsApp
-- [ ] prontuario
+- [x] prontuario básico (Anamnese e evolução/SOAP criptografadas)
 - [x] financeiro básico persistente (ledger, previsão, efetivação e despesas)
 - [ ] documentos
 - [ ] assinatura simples
-- [ ] dashboard
+- [x] dashboard
 
 ### Fase 3 - Hardening e producao
 Status: `nao iniciado`

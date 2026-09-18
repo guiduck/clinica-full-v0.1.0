@@ -23,6 +23,20 @@ extended the desktop/mobile Agenda journey through real creation and reload. The
 final gate is 49 Vitest files/147 tests, lint, typecheck, a 22-route build and
 11/11 Playwright scenarios.
 
+## Addendum operacional — 2026-09-18
+
+- [X] T131 Integrar login Google à sessão persistente e ao callback canônico.
+- [X] T132 Implementar confirmação de conta e redefinição de senha com e-mail real.
+- [X] T133 Persistir Anamnese e evolução/SOAP com criptografia de aplicação.
+- [X] T134 Persistir início/finalização de sessão e vínculo com consulta.
+- [X] T135 Sincronizar novas consultas opcionalmente com Google Agenda.
+- [X] T136 Persistir filtros de pacientes e estado da agenda em query string.
+- [X] T137 Atualizar migration, Compose, exemplos de ambiente, testes e documentação.
+
+Gate do addendum: Prisma format/generate, lint, typecheck, 55 arquivos/161 testes
+e build de produção com 29 rotas/páginas aprovados. O smoke externo depende do
+deploy na VPS e das credenciais configuradas pelo proprietário.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel because it changes different files and has no dependency on an incomplete task.

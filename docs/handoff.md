@@ -1,5 +1,51 @@
 # Handoff
 
+## Atualização de 2026-09-18 — auth Google/e-mail, clínica e sessão prontos
+
+Implementado:
+- OAuth Google com callback canônico `/api/auth/callback/google`, vínculo de conta
+  por e-mail Google verificado e sessão database-backed existente;
+- confirmação de e-mail, esqueci/redefinição de senha, tokens com hash/expiração e
+  templates transacionais; adapters Resend e SendGrid sem SDK adicional;
+- Anamnese e evolução/SOAP reais, payloads AES-256-GCM e leitura restrita ao dono;
+- início e finalização de sessão, vínculo da evolução à consulta e status
+  `realizada`;
+- conexão opcional do Google Agenda e criação best-effort de evento sem impedir a
+  consulta quando o provider falhar;
+- filtros de pacientes (`q`, `status`) e estado da Agenda (`view`, `date`) na URL;
+- `.env.example`, `.env.vps.example`, Compose e `.gitignore` atualizados. O arquivo
+  `client-secret.json` está ignorado e não deve ir para Git nem VPS.
+
+Validação local:
+- `prisma format` e `prisma generate`: aprovados;
+- `npm.cmd run lint`: aprovado;
+- `npm.cmd run typecheck`: aprovado;
+- `npm.cmd run test -- --maxWorkers=2 --reporter=dot`: 52 arquivos/156 testes;
+- 3 arquivos/5 testes adicionais de criptografia, Google OAuth e e-mail aprovados;
+- `npm.cmd run build`: aprovado, 29 rotas/páginas;
+- `git diff --check`: sem erro; somente avisos LF/CRLF do Windows.
+
+Estado de produção observado antes desta entrega:
+- aplicação e healthcheck responderam na porta host `3101` e o domínio público via
+  Caddy respondeu HTTP 200;
+- o container de migration informou apenas 2 migrations, portanto aquela execução
+  ainda estava em código antigo. O próximo deploy correto deve encontrar/aplicar 4;
+- `jungle-gaming` não estava ativo e `docker compose down` removeu containers/rede,
+  preservando volumes porque não foi usado `-v`.
+
+Configuração manual ainda necessária:
+- colocar Client ID/Secret no `.env` da VPS;
+- manter o callback de login já cadastrado e adicionar o callback separado do
+  Google Agenda;
+- escolher Resend ou SendGrid, verificar o domínio remetente e preencher a chave;
+- gerar e guardar backup seguro de `SENSITIVE_DATA_ENCRYPTION_KEY`; perder essa
+  chave torna o prontuário existente irrecuperável.
+
+Próximo passo recomendado: publicar, aplicar a migration
+`20260918000100_auth_email_clinical_calendar`, executar o smoke manual descrito na
+resposta de entrega e então iniciar
+`docs/next-spec-documentos-recibos-assinatura.md`.
+
 ## Atualização de 2026-09-14 — financeiro persistente pronto para deploy
 
 Implementado:

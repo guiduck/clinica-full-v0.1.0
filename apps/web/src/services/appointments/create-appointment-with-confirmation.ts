@@ -6,6 +6,7 @@ import { sendAppointmentConfirmation } from "@/services/notifications/notificati
 import type { ParsedAppointmentInput } from "@/utils/validators/appointment";
 import { createAppointmentFinanceEntry } from "@/services/finance/finance-entries";
 import { hasAppointmentOverlap } from "./appointments";
+import { syncAppointmentToGoogleCalendar } from "@/services/integrations/google-calendar";
 
 export async function createAppointmentWithConfirmation(
   userId: string,
@@ -90,5 +91,12 @@ export async function createAppointmentWithConfirmation(
     await sendAppointmentConfirmation(userId, appointment.id);
   }
 
-  return { ...appointment, notificationScheduled };
+  let calendarSynced = false;
+  try {
+    calendarSynced = (await syncAppointmentToGoogleCalendar(userId, appointment.id)).synced;
+  } catch {
+    calendarSynced = false;
+  }
+
+  return { ...appointment, notificationScheduled, calendarSynced };
 }

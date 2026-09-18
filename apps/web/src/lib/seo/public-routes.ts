@@ -5,6 +5,7 @@ export const publicRoutes = {
   privacy: "/privacidade",
   createAccount: "/criar-conta",
   recoverPassword: "/recuperar-senha",
+  resetPassword: "/redefinir-senha",
   dashboard: "/dashboard"
 } as const;
 
@@ -14,5 +15,6 @@ export const nonIndexableRoutes = [
   publicRoutes.terms,
   publicRoutes.privacy,
   publicRoutes.createAccount,
-  publicRoutes.recoverPassword
+  publicRoutes.recoverPassword,
+  publicRoutes.resetPassword
 ] as const;

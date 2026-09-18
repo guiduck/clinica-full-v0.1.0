@@ -3,6 +3,13 @@
 **Branch**: `003-prototype-front-reconstruction` | **Date**: 2026-08-27 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/003-prototype-front-reconstruction/spec.md`
 
+> **Addendum de implementação — 2026-09-18:** o escopo operacional foi ampliado
+> por solicitação explícita após o gate original. Prisma/PostgreSQL agora também
+> armazenam tokens OAuth, conexão Google Agenda, Anamnese/evolução cifradas e
+> timestamps de sessão. Resend/SendGrid e Google são fronteiras HTTP reais. O
+> plano histórico abaixo permanece como evidência da reconstrução, enquanto
+> `docs/handoff.md` descreve a arquitetura atual.
+
 ## Summary
 
 Reconstruct the clinica-full production frontend page by page with visual and

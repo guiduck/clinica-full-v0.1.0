@@ -46,6 +46,7 @@ export const anamneseDraftSchema = z.object({
     .object({ cidDsm: optionalClinicalText, objectives: optionalClinicalText })
     .optional(),
 });
+export type AnamneseDraft = z.output<typeof anamneseDraftSchema>;
 
 const brazilianDate = z
   .string()
@@ -75,3 +76,4 @@ export const evolutionDraftSchema = z
       ].some((value) => value.trim()),
     { message: "Informe um registro livre ou ao menos um campo SOAP." },
   );
+export type EvolutionDraft = z.output<typeof evolutionDraftSchema>;

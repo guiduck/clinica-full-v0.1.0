@@ -5,7 +5,7 @@ import { PatientAnamneseTab, PatientClinicalRecordTab } from "@/components/patie
 describe("clinical draft protection", () => {
   it("reports meaningful anamnesis content to the profile guard", async () => {
     const onDirtyChange = vi.fn();
-    render(<PatientAnamneseTab onDirtyChange={onDirtyChange} />);
+    render(<PatientAnamneseTab patientId="patient-1" onDirtyChange={onDirtyChange} />);
 
     fireEvent.change(screen.getByLabelText("Descrição detalhada"), {
       target: { value: "Conteúdo clínico em edição" },
@@ -16,7 +16,7 @@ describe("clinical draft protection", () => {
 
   it("keeps an evolution draft until discard is explicitly confirmed", async () => {
     const onDirtyChange = vi.fn();
-    render(<PatientClinicalRecordTab onDirtyChange={onDirtyChange} />);
+    render(<PatientClinicalRecordTab patientId="patient-1" onDirtyChange={onDirtyChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Nova evolução" }));
     fireEvent.change(screen.getByLabelText("Registro livre"), {

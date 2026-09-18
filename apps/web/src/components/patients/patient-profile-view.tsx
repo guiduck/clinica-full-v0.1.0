@@ -36,6 +36,7 @@ import {
   FinanceEntryDialog,
 } from "@/components/financeEntryEditor";
 import type { FinanceEntryView } from "@/types/finance";
+import type { AnamneseDraft } from "@/utils/validators/clinical-drafts";
 
 type AppointmentView = { id: string; startsAt: string; endsAt: string; status: string; type: string };
 type PatientView = {
@@ -46,6 +47,7 @@ type PatientView = {
   appointments: AppointmentView[];
 };
 type Tab = "geral" | "anamnese" | "agenda" | "prontuario" | "financeiro" | "documentos";
+type ClinicalRecordView = { anamnesis: AnamneseDraft; evolutions: Array<{ id: string; appointmentId: string | null; occurredAt: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string }> };
 const tabs: { key: Tab; label: string }[] = [
   { key: "geral", label: "Geral" }, { key: "anamnese", label: "Anamnese" },
   { key: "agenda", label: "Agenda" }, { key: "prontuario", label: "Prontuário" },
@@ -55,7 +57,7 @@ const unavailable = { key: "patients.profile-save", mode: "unavailable", title: 
 const whatsappUnavailable = { key: "patients.profile-whatsapp", mode: "unavailable", title: "WhatsApp ainda não conectado", message: "O envio manual será habilitado quando o service de mensagens estiver disponível. Nenhuma mensagem foi enviada.", affectedAction: "send" } as const;
 const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?";
 
-export function PatientProfileView({ patient, initialTab = "geral" }: { patient: PatientView; initialTab?: Tab }) {
+export function PatientProfileView({ patient, clinicalRecord = { anamnesis: {}, evolutions: [] }, initialTab = "geral" }: { patient: PatientView; clinicalRecord?: ClinicalRecordView; initialTab?: Tab }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>(initialTab);
   const [hasUnsavedDraft, setHasUnsavedDraft] = React.useState(false);
@@ -80,9 +82,9 @@ export function PatientProfileView({ patient, initialTab = "geral" }: { patient:
       <Tabs value={tab} onValueChange={selectTab}>
         <TabsList className="max-w-full justify-start overflow-x-auto">{tabs.map((item) => <TabsTrigger key={item.key} value={item.key}>{item.label}</TabsTrigger>)}</TabsList>
         <TabsContent value="geral"><GeneralTab patient={patient} onDirtyChange={handleDirtyChange} /></TabsContent>
-        <TabsContent value="anamnese"><PatientAnamneseTab onDirtyChange={handleDirtyChange} /></TabsContent>
+        <TabsContent value="anamnese"><PatientAnamneseTab patientId={patient.id} initialDraft={clinicalRecord.anamnesis} onDirtyChange={handleDirtyChange} /></TabsContent>
         <TabsContent value="agenda"><AgendaTab patient={patient} /></TabsContent>
-        <TabsContent value="prontuario"><PatientClinicalRecordTab onDirtyChange={handleDirtyChange} /></TabsContent>
+        <TabsContent value="prontuario"><PatientClinicalRecordTab patientId={patient.id} initialEvolutions={clinicalRecord.evolutions} onDirtyChange={handleDirtyChange} /></TabsContent>
         <TabsContent value="financeiro"><FinanceTab patient={patient} /></TabsContent>
         <TabsContent value="documentos"><PatientDocumentsTab patientName={patient.name} onDirtyChange={handleDirtyChange} /></TabsContent>
       </Tabs>

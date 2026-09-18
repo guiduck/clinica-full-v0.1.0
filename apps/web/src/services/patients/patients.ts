@@ -94,13 +94,20 @@ export async function getPatient(userId: string, patientId: string) {
   return patient;
 }
 
-export async function searchPatients(userId: string, query = "") {
+type PatientStatusFilter = "ativo" | "inativo" | "arquivado";
+
+export async function searchPatients(
+  userId: string,
+  query = "",
+  status?: PatientStatusFilter,
+) {
   const normalizedQuery = query.trim();
   const digits = normalizedQuery.replace(/\D/g, "");
 
   return prisma.patient.findMany({
     where: {
       userId,
+      ...(status ? { status } : {}),
       ...(normalizedQuery
         ? {
             OR: [

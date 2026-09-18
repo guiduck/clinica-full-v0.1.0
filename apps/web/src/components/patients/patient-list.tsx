@@ -45,11 +45,20 @@ function patientStatusLabel(status: PatientSummary["status"]) {
   return "Arquivado";
 }
 
-export function PatientList({ patients }: { patients: PatientSummary[] }) {
+export function PatientList({
+  patients,
+  initialQuery = "",
+  initialStatus = "todos",
+}: {
+  patients: PatientSummary[];
+  initialQuery?: string;
+  initialStatus?: string;
+}) {
   const router = useRouter();
   const params = useSearchParams();
-  const [query, setQuery] = React.useState("");
-  const [filter, setFilter] = React.useState("todos");
+  const [query, setQuery] = React.useState(initialQuery);
+  const [filter, setFilter] = React.useState(initialStatus);
+  const deferredQuery = React.useDeferredValue(query);
   const [wizard, setWizard] = React.useState(params.get("new") === "1");
   const filtered = patients.filter((patient) => {
     const matches = [patient.name, patient.email, patient.phone, patient.cpf]
@@ -57,6 +66,20 @@ export function PatientList({ patients }: { patients: PatientSummary[] }) {
       .some((value) => value!.toLowerCase().includes(query.toLowerCase()));
     return matches && (filter === "todos" || patient.status === filter);
   });
+  React.useEffect(() => {
+    const next = new URLSearchParams(params.toString());
+    const normalizedQuery = deferredQuery.trim();
+    if (normalizedQuery) next.set("q", normalizedQuery);
+    else next.delete("q");
+    if (filter !== "todos") next.set("status", filter);
+    else next.delete("status");
+    next.delete("new");
+    const current = params.toString();
+    const target = next.toString();
+    if (current !== target) {
+      router.replace(target ? `/pacientes?${target}` : "/pacientes", { scroll: false });
+    }
+  }, [deferredQuery, filter, params, router]);
   return (
     <main className="app-page space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">

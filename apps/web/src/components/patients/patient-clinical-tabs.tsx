@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { FileText, Plus, Save } from "lucide-react";
+import { saveAnamnesisAction, saveEvolutionAction } from "@/actions/clinical";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
-import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,18 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { formatBrazilianDate, formatTime24 } from "@/utils/formatters";
 import { maskBrazilianDate } from "@/utils/masks";
-import {
-  anamneseDraftSchema,
-  evolutionDraftSchema,
-} from "@/utils/validators/clinical-drafts";
-
-const clinicalUnavailable = {
-  key: "patients.clinical-save",
-  mode: "unavailable" as const,
-  affectedAction: "save" as const,
-  title: "Prontuário seguro ainda não conectado",
-  message: "O preenchimento desta tela é apenas uma revisão do fluxo. Nenhum conteúdo clínico foi salvo, transmitido ou incluído em logs.",
-};
+import { anamneseDraftSchema, evolutionDraftSchema, type AnamneseDraft } from "@/utils/validators/clinical-drafts";
 
 const sections = [
   { id: "hda", title: "Histórico da Queixa (HDA)", fields: [
@@ -60,95 +49,65 @@ const sections = [
 ] as const;
 
 type Draft = Record<string, Record<string, string>>;
+type Feedback = { ok: boolean; message: string } | null;
 
-export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
-  const [draft, setDraft] = React.useState<Draft>({});
-  const [error, setError] = React.useState("");
-  const [blocked, setBlocked] = React.useState(false);
+export function PatientAnamneseTab({ patientId, initialDraft = {}, onDirtyChange }: { patientId: string; initialDraft?: AnamneseDraft; onDirtyChange?: (dirty: boolean) => void }) {
+  const normalizedInitial = initialDraft as Draft;
+  const [draft, setDraft] = React.useState<Draft>(normalizedInitial);
+  const [savedDraft, setSavedDraft] = React.useState<Draft>(normalizedInitial);
+  const [feedback, setFeedback] = React.useState<Feedback>(null);
+  const [pending, startTransition] = React.useTransition();
   const total = sections.reduce((sum, section) => sum + section.fields.length, 0);
   const filled = sections.reduce((sum, section) => sum + section.fields.filter((field) => draft[section.id]?.[field.key]?.trim()).length, 0);
   const completion = Math.round((filled / total) * 100);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(savedDraft);
 
   React.useEffect(() => {
-    onDirtyChange?.(filled > 0);
+    onDirtyChange?.(dirty);
     return () => onDirtyChange?.(false);
-  }, [filled, onDirtyChange]);
+  }, [dirty, onDirtyChange]);
 
-  const change = (section: string, field: string, value: string) => {
-    setDraft((current) => ({ ...current, [section]: { ...current[section], [field]: value } }));
-  };
-  const validateAndBlockSave = () => {
-    const result = anamneseDraftSchema.safeParse(draft);
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Revise o rascunho.");
+  const change = (section: string, field: string, value: string) => setDraft((current) => ({ ...current, [section]: { ...current[section], [field]: value } }));
+  const save = () => {
+    const parsed = anamneseDraftSchema.safeParse(draft);
+    if (!parsed.success) {
+      setFeedback({ ok: false, message: parsed.error.issues[0]?.message ?? "Revise a anamnese." });
       return;
     }
-    setError("");
-    setBlocked(true);
+    startTransition(async () => {
+      const result = await saveAnamnesisAction(patientId, parsed.data);
+      setFeedback(result);
+      if (result.ok) setSavedDraft(draft);
+    });
   };
 
   return <div className="space-y-4">
-    <Card className="sticky top-16 z-20 p-5">
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <div className="mb-2 flex justify-between text-sm"><span className="font-medium">Progresso da anamnese</span><span className="text-muted-foreground">{completion}%</span></div>
-          <Progress value={completion} />
-        </div>
-        <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">{filled ? "Rascunho local não salvo" : "Pronto para preencher"}</span>
-        <Button size="sm" onClick={validateAndBlockSave}><Save className="size-4" />Salvar</Button>
-      </div>
-    </Card>
-    {error ? <Alert variant="destructive"><AlertTitle>Revise o rascunho</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
-    <Card className="p-2">
-      <Accordion type="multiple" defaultValue={[sections[0].id]}>
-        {sections.map((section) => {
-          const sectionFilled = section.fields.filter((field) => draft[section.id]?.[field.key]?.trim()).length;
-          const percentage = Math.round((sectionFilled / section.fields.length) * 100);
-          return <AccordionItem key={section.id} value={section.id}>
-            <AccordionTrigger className="px-4 hover:no-underline"><span className="flex w-full items-center justify-between pr-4"><span>{section.title}</span><Badge tone="neutral">{percentage}%</Badge></span></AccordionTrigger>
-            <AccordionContent className="px-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {section.fields.map((field) => <div key={field.key} className={"textarea" in field && field.textarea ? "sm:col-span-2" : ""}>
-                  <Label htmlFor={`anamnese-${section.id}-${field.key}`}>{field.label}</Label>
-                  {"textarea" in field && field.textarea
-                    ? <Textarea id={`anamnese-${section.id}-${field.key}`} className="mt-1.5 min-h-28" placeholder={"placeholder" in field ? field.placeholder : undefined} value={draft[section.id]?.[field.key] ?? ""} onChange={(event) => change(section.id, field.key, event.target.value)} />
-                    : <Input id={`anamnese-${section.id}-${field.key}`} className="mt-1.5" value={draft[section.id]?.[field.key] ?? ""} onChange={(event) => change(section.id, field.key, event.target.value)} />}
-                </div>)}
-              </div>
-            </AccordionContent>
-          </AccordionItem>;
-        })}
-      </Accordion>
-    </Card>
-    <CapabilityNotice descriptor={clinicalUnavailable} open={blocked} onOpenChange={setBlocked} />
+    <Card className="sticky top-16 z-20 p-5"><div className="flex items-center gap-4"><div className="flex-1"><div className="mb-2 flex justify-between text-sm"><span className="font-medium">Progresso da anamnese</span><span className="text-muted-foreground">{completion}%</span></div><Progress value={completion} /></div><span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">{dirty ? "Alterações não salvas" : "Dados protegidos e salvos"}</span><Button size="sm" onClick={save} disabled={pending || !dirty}><Save className="size-4" />{pending ? "Salvando..." : "Salvar"}</Button></div></Card>
+    {feedback ? <Alert variant={feedback.ok ? "default" : "destructive"}><AlertTitle>{feedback.ok ? "Anamnese salva" : "Revise o prontuário"}</AlertTitle><AlertDescription>{feedback.message}</AlertDescription></Alert> : null}
+    <Card className="p-2"><Accordion type="multiple" defaultValue={[sections[0].id]}>{sections.map((section) => {
+      const sectionFilled = section.fields.filter((field) => draft[section.id]?.[field.key]?.trim()).length;
+      const percentage = Math.round((sectionFilled / section.fields.length) * 100);
+      return <AccordionItem key={section.id} value={section.id}><AccordionTrigger className="px-4 hover:no-underline"><span className="flex w-full items-center justify-between pr-4"><span>{section.title}</span><Badge tone="neutral">{percentage}%</Badge></span></AccordionTrigger><AccordionContent className="px-4"><div className="grid gap-4 sm:grid-cols-2">{section.fields.map((field) => {
+        const isTextarea = "textarea" in field && field.textarea;
+        return <div key={field.key} className={isTextarea ? "sm:col-span-2" : ""}><Label htmlFor={`anamnese-${section.id}-${field.key}`}>{field.label}</Label>{isTextarea ? <Textarea id={`anamnese-${section.id}-${field.key}`} className="mt-1.5 min-h-28" placeholder={"placeholder" in field ? field.placeholder : undefined} value={draft[section.id]?.[field.key] ?? ""} onChange={(event) => change(section.id, field.key, event.target.value)} /> : <Input id={`anamnese-${section.id}-${field.key}`} className="mt-1.5" value={draft[section.id]?.[field.key] ?? ""} onChange={(event) => change(section.id, field.key, event.target.value)} />}</div>;
+      })}</div></AccordionContent></AccordionItem>;
+    })}</Accordion></Card>
   </div>;
 }
 
-type EvolutionDraft = { date: string; time: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string };
+type EvolutionDraftState = { date: string; time: string; mood: number; appointmentId?: string | null; free: string; subjective: string; objective: string; assessment: string; plan: string };
+type EvolutionView = { id: string; appointmentId: string | null; occurredAt: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string };
+const createEvolutionDraft = (): EvolutionDraftState => ({ date: formatBrazilianDate(new Date()), time: formatTime24(new Date()), mood: 5, appointmentId: null, free: "", subjective: "", objective: "", assessment: "", plan: "" });
 
-const createEvolutionDraft = (): EvolutionDraft => ({
-  date: formatBrazilianDate(new Date()),
-  time: formatTime24(new Date()),
-  mood: 5,
-  free: "",
-  subjective: "",
-  objective: "",
-  assessment: "",
-  plan: "",
-});
-
-export function PatientClinicalRecordTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
+export function PatientClinicalRecordTab({ patientId, initialEvolutions = [], onDirtyChange }: { patientId: string; initialEvolutions?: EvolutionView[]; onDirtyChange?: (dirty: boolean) => void }) {
   const [open, setOpen] = React.useState(false);
-  const [blocked, setBlocked] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const [draft, setDraft] = React.useState<EvolutionDraft>(createEvolutionDraft);
+  const [feedback, setFeedback] = React.useState<Feedback>(null);
+  const [draft, setDraft] = React.useState<EvolutionDraftState>(createEvolutionDraft);
+  const [evolutions, setEvolutions] = React.useState(initialEvolutions);
+  const [pending, startTransition] = React.useTransition();
   const hasMeaningfulContent = [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan].some((value) => value.trim().length > 0);
   const discard = useDiscardConfirmation(hasMeaningfulContent);
-  const closeEditor = React.useCallback(() => {
-    setDraft(createEvolutionDraft());
-    setError("");
-    setOpen(false);
-  }, []);
+  const closeEditor = React.useCallback(() => { setDraft(createEvolutionDraft()); setFeedback(null); setOpen(false); }, []);
 
   React.useEffect(() => {
     onDirtyChange?.(hasMeaningfulContent);
@@ -156,30 +115,32 @@ export function PatientClinicalRecordTab({ onDirtyChange }: { onDirtyChange?: (d
   }, [hasMeaningfulContent, onDirtyChange]);
 
   const requestClose = () => discard.requestDiscard(closeEditor);
-  const validateAndBlockSave = () => {
-    const result = evolutionDraftSchema.safeParse(draft);
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Revise a evolução.");
+  const save = () => {
+    const parsed = evolutionDraftSchema.safeParse(draft);
+    if (!parsed.success) {
+      setFeedback({ ok: false, message: parsed.error.issues[0]?.message ?? "Revise a evolução." });
       return;
     }
-    setError("");
-    setBlocked(true);
+    startTransition(async () => {
+      const result = await saveEvolutionAction(patientId, parsed.data);
+      setFeedback(result);
+      if (result.ok && result.data) {
+        setEvolutions((current) => [result.data, ...current.filter((item) => item.id !== result.data.id)]);
+        closeEditor();
+      }
+    });
   };
+
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evoluções clínicas</h2><p className="text-sm text-muted-foreground">Registro livre e/ou estruturado (SOAP) por sessão</p></div><Button onClick={() => setOpen(true)}><Plus className="size-4" />Nova evolução</Button></div>
-    <Card className="p-12 text-center"><FileText className="mx-auto size-10 text-muted-foreground/50" /><h3 className="mt-3 font-medium">Nenhuma evolução registrada</h3><p className="mt-1 text-sm text-muted-foreground">Comece registrando a primeira sessão deste paciente.</p><Button className="mt-4" onClick={() => setOpen(true)}>Criar primeira evolução</Button></Card>
-    <Dialog open={open} onOpenChange={(next) => { if (next) setOpen(true); else requestClose(); }}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O rascunho permanece somente nesta janela até que a persistência clínica seja liberada.</DialogDescription></DialogHeader>
-      <div className="space-y-4">
-        {error ? <Alert variant="destructive"><AlertTitle>Revise a evolução</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
-        <div className="grid gap-4 sm:grid-cols-3"><div><Label htmlFor="evolution-date">Data</Label><Input id="evolution-date" className="mt-1.5" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={draft.date} onChange={(event) => setDraft({ ...draft, date: maskBrazilianDate(event.target.value) })} /></div><AppointmentTimeSelect id="evolution-time" label="Horário" value={draft.time} onValueChange={(time) => setDraft({ ...draft, time })} /><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
-        <div><Label htmlFor="evolution-free">Registro livre</Label><Textarea id="evolution-free" className="mt-1.5 min-h-44" placeholder="Descreva o que aconteceu na sessão, observações clínicas e plano..." value={draft.free} onChange={(event) => setDraft({ ...draft, free: event.target.value })} /></div>
-        <Accordion type="single" collapsible><AccordionItem value="soap" className="rounded-md border"><AccordionTrigger className="px-4 hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger><AccordionContent className="space-y-3 px-4">
-          {([["subjective", "S", "Subjetivo"], ["objective", "O", "Objetivo"], ["assessment", "A", "Avaliação"], ["plan", "P", "Plano"]] as const).map(([key, letter, label]) => <div key={key}><Label htmlFor={`soap-${key}`} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">{letter}</span>{label}</Label><Textarea id={`soap-${key}`} className="mt-1.5" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></div>)}
-        </AccordionContent></AccordionItem></Accordion>
-      </div>
-      <DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={validateAndBlockSave}><Save className="size-4" />Salvar evolução</Button></DialogFooter>
-    </DialogContent></Dialog>
+    {feedback?.ok ? <Alert><AlertTitle>Evolução salva</AlertTitle><AlertDescription>{feedback.message}</AlertDescription></Alert> : null}
+    {evolutions.length ? <div className="space-y-3">{evolutions.map((item) => <Card key={item.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold">{formatBrazilianDate(item.occurredAt)} às {formatTime24(item.occurredAt)}</p><p className="mt-1 text-sm text-muted-foreground">Humor relatado: {item.mood}/10</p></div><Badge tone="neutral">Registro protegido</Badge></div><p className="mt-4 whitespace-pre-wrap text-sm">{item.free || item.assessment || "Registro SOAP"}</p></Card>)}</div> : <Card className="p-12 text-center"><FileText className="mx-auto size-10 text-muted-foreground/50" /><h3 className="mt-3 font-medium">Nenhuma evolução registrada</h3><p className="mt-1 text-sm text-muted-foreground">Comece registrando a primeira sessão deste paciente.</p><Button className="mt-4" onClick={() => setOpen(true)}>Criar primeira evolução</Button></Card>}
+    <Dialog open={open} onOpenChange={(next) => { if (next) setOpen(true); else requestClose(); }}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O conteúdo será criptografado antes de ser gravado no banco.</DialogDescription></DialogHeader><div className="space-y-4">
+      {feedback && !feedback.ok ? <Alert variant="destructive"><AlertTitle>Revise a evolução</AlertTitle><AlertDescription>{feedback.message}</AlertDescription></Alert> : null}
+      <div className="grid gap-4 sm:grid-cols-3"><div><Label htmlFor="evolution-date">Data</Label><Input id="evolution-date" className="mt-1.5" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={draft.date} onChange={(event) => setDraft({ ...draft, date: maskBrazilianDate(event.target.value) })} /></div><AppointmentTimeSelect id="evolution-time" label="Horário" value={draft.time} onValueChange={(time) => setDraft({ ...draft, time })} /><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
+      <div><Label htmlFor="evolution-free">Registro livre</Label><Textarea id="evolution-free" className="mt-1.5 min-h-44" placeholder="Descreva o que aconteceu na sessão, observações clínicas e plano..." value={draft.free} onChange={(event) => setDraft({ ...draft, free: event.target.value })} /></div>
+      <Accordion type="single" collapsible><AccordionItem value="soap" className="rounded-md border"><AccordionTrigger className="px-4 hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger><AccordionContent className="space-y-3 px-4">{([['subjective','S','Subjetivo'],['objective','O','Objetivo'],['assessment','A','Avaliação'],['plan','P','Plano']] as const).map(([key, letter, label]) => <div key={key}><Label htmlFor={`soap-${key}`} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">{letter}</span>{label}</Label><Textarea id={`soap-${key}`} className="mt-1.5" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></div>)}</AccordionContent></AccordionItem></Accordion>
+    </div><DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={save} disabled={pending}><Save className="size-4" />{pending ? "Salvando..." : "Salvar evolução"}</Button></DialogFooter></DialogContent></Dialog>
     <DiscardConfirmation open={discard.open} onCancel={discard.cancelDiscard} onConfirm={discard.confirmDiscard} />
-    <CapabilityNotice descriptor={clinicalUnavailable} open={blocked} onOpenChange={setBlocked} />
   </div>;
 }

@@ -41,6 +41,8 @@ export default async function AgendaPage({ searchParams }: Props) {
         status: appointment.status,
         type: appointment.type,
         videoUrl: appointment.videoUrl,
+        sessionStartedAt: appointment.sessionStartedAt?.toISOString() ?? null,
+        sessionEndedAt: appointment.sessionEndedAt?.toISOString() ?? null,
       }))}
       initialView={initialView}
       initialDate={query?.date}

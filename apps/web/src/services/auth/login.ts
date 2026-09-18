@@ -11,8 +11,12 @@ export async function loginUser(email: string, password: string): Promise<APIRes
     }
   });
 
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
     return createAPIError("E-mail ou senha inválidos.", 401);
+  }
+
+  if (process.env.EMAIL_REQUIRE_VERIFICATION === "true" && !user.emailVerifiedAt) {
+    return createAPIError("Confirme seu e-mail antes de entrar.", 403);
   }
 
   const session = await createSession(user.id);

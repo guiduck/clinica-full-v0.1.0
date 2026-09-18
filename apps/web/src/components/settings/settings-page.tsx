@@ -53,6 +53,7 @@ import {
   ONBOARDING_CPF_STEP_INDEX,
 } from "@/constants/onboarding-tour";
 import { useOnboardingTourActions } from "@/hooks/onboarding/use-onboarding-tour-actions";
+import { GoogleCalendarCard } from "@/components/settings/google-calendar-card";
 
 type Tab = "conta" | "contato" | "planos" | "mensagens" | "seguranca";
 type FormState = {
@@ -98,9 +99,11 @@ function maskCnpj(value: string) {
 export function SettingsPage({
   userName,
   userEmail,
+  googleCalendar = { connected: false, email: null, updatedAt: null },
 }: {
   userName: string;
   userEmail: string;
+  googleCalendar?: { connected: boolean; email: string | null; updatedAt: string | null };
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -403,7 +406,7 @@ export function SettingsPage({
           <MessagesManager />
         </TabsContent>
         <TabsContent value="seguranca" className="mt-6">
-          <SecuritySettings />
+          <SecuritySettings googleCalendar={googleCalendar} />
         </TabsContent>
       </Tabs>
       <CapabilityNotice
@@ -704,11 +707,12 @@ function MessagesManager() {
     </>
   );
 }
-function SecuritySettings() {
+function SecuritySettings({ googleCalendar }: { googleCalendar: { connected: boolean; email: string | null } }) {
   const [blocked, setBlocked] = React.useState(false);
   const [preferenceBlocked, setPreferenceBlocked] = React.useState(false);
   return (
     <div className="space-y-4">
+      <GoogleCalendarCard connected={googleCalendar.connected} email={googleCalendar.email} />
       <Card className="p-6">
         <div className="flex gap-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-primary">
