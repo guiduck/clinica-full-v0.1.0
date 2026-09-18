@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { loginSchema } from "../../utils/validators/login";
 import { registerSchema } from "../../utils/validators/register";
+import { passwordResetCodeSchema } from "../../utils/validators/auth-email";
 
 describe("auth validation", () => {
   it("rejects missing login credentials with Portuguese messages", () => {
@@ -40,5 +41,23 @@ describe("auth validation", () => {
       throw new Error("Expected validation to fail");
     }
     expect(result.error.flatten().fieldErrors.password).toContain("A senha precisa ter pelo menos 8 caracteres.");
+  });
+
+  it("accepts only a six-digit password reset code", () => {
+    const invalid = passwordResetCodeSchema.safeParse({
+      email: "ana@clinica.com.br",
+      code: "12ab",
+      password: "nova-senha",
+      confirmPassword: "nova-senha",
+    });
+    const valid = passwordResetCodeSchema.safeParse({
+      email: "ana@clinica.com.br",
+      code: "123456",
+      password: "nova-senha",
+      confirmPassword: "nova-senha",
+    });
+
+    expect(invalid.success).toBe(false);
+    expect(valid.success).toBe(true);
   });
 });

@@ -7,10 +7,10 @@ import { loginUser } from "@/services/auth/login";
 import { registerUser } from "@/services/auth/register";
 import type { APIResponse, AuthResponse } from "@/types/api";
 import { registerSchema, type RegisterInput } from "@/utils/validators/register";
-import { requestPasswordReset, resetPassword, sendAccountVerification } from "@/services/auth/email-flows";
+import { requestPasswordReset, resetPassword, resetPasswordWithCode, sendAccountVerification } from "@/services/auth/email-flows";
 import { prisma } from "@/lib/prisma";
 import { getDomainErrorMessage } from "@/lib/errors/domain-errors";
-import { passwordRecoverySchema, passwordResetSchema } from "@/utils/validators/auth-email";
+import { passwordRecoverySchema, passwordResetCodeSchema, passwordResetSchema } from "@/utils/validators/auth-email";
 
 export async function registerAndLogin(input: RegisterInput): Promise<APIResponse<AuthResponse & { next: "dashboard" | "verify-email" }>> {
   const parsed = registerSchema.safeParse(input);
@@ -63,9 +63,20 @@ export async function requestPasswordResetAction(input: { email: string }): Prom
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Informe um e-mail válido." };
   try {
     await requestPasswordReset(parsed.data.email);
-    return { ok: true, message: "Se existir uma conta com esse e-mail, enviaremos um link válido por 30 minutos." };
+    return { ok: true, message: "Se existir uma conta com esse e-mail, enviaremos um código válido por 15 minutos." };
   } catch (error) {
     return { ok: false, message: getDomainErrorMessage(error, "Não foi possível solicitar a redefinição agora.") };
+  }
+}
+
+export async function resetPasswordWithCodeAction(input: { email: string; code: string; password: string; confirmPassword: string }): Promise<PublicAuthActionState> {
+  const parsed = passwordResetCodeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Revise o código e a nova senha." };
+  try {
+    await resetPasswordWithCode(parsed.data.email, parsed.data.code, parsed.data.password);
+    return { ok: true, message: "Senha alterada. Agora você já pode entrar." };
+  } catch (error) {
+    return { ok: false, message: getDomainErrorMessage(error, "Não foi possível redefinir a senha.") };
   }
 }
 

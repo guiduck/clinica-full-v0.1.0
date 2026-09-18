@@ -3,7 +3,8 @@
 ## Núcleo operacional persistente — 2026-09-18
 
 O aplicativo possui autenticação por e-mail/senha e Google, confirmação de conta,
-recuperação de senha, pacientes, agenda, início/finalização de sessão, Anamnese,
+recuperação de senha por código numérico de uso único, pacientes, agenda,
+início/finalização de sessão, Anamnese,
 evolução/SOAP e financeiro básico persistidos. Registros clínicos são cifrados na
 aplicação com AES-256-GCM antes do PostgreSQL; a chave vem exclusivamente do
 ambiente e não pode ser perdida nem versionada.
@@ -11,7 +12,9 @@ ambiente e não pode ser perdida nem versionada.
 O OAuth Google permanece integrado à sessão HttpOnly já existente, sem introduzir
 um segundo modelo de sessão. A conexão opcional do Google Agenda usa consentimento
 separado e refresh token cifrado. O provedor de e-mail é uma fronteira configurável
-por ambiente (`resend` ou `sendgrid`) e os templates vivem no código.
+por ambiente (`resend` ou `sendgrid`) e os templates vivem no código. Códigos de
+recuperação duram 15 minutos, admitem 5 tentativas, ficam apenas como hash no banco
+e encerram as sessões existentes quando a senha é alterada.
 
 Ainda fora do núcleo real: documentos/uploads, assinatura, recibo PDF, edição e
 arquivamento de paciente, remarcação/cancelamento de consulta e hardening clínico

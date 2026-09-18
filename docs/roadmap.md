@@ -4,8 +4,9 @@
 
 - login Google real integrado à sessão própria do sistema, usando o callback
   `https://clinica-full.gfig.space/api/auth/callback/google`;
-- confirmação de conta e recuperação de senha com tokens únicos, expirados e
-  armazenados somente como hash; envio compatível com Resend ou SendGrid;
+- confirmação de conta por link e recuperação de senha por código de 6 dígitos,
+  expirado em 15 minutos, limitado a 5 tentativas e armazenado somente como hash;
+  envio compatível com Resend ou SendGrid;
 - Anamnese e evoluções clínicas persistidas no PostgreSQL com payload AES-256-GCM
   e autorização pelo profissional proprietário;
 - início/finalização de sessão persistidos; finalizar grava evolução vinculada e
@@ -14,9 +15,10 @@
   podem ser copiadas ao Google Agenda quando a integração estiver conectada;
 - busca/status de pacientes e data/visão da agenda agora usam query string
   canônica e sobrevivem a reload/compartilhamento;
-- migration `20260918000100_auth_email_clinical_calendar` adicionada; o ambiente
-  de produção deve mostrar **4 migrations** após o próximo deploy;
-- gate local aprovado: Prisma format/generate, lint, typecheck, 55 arquivos/161
+- migrations `20260918000100_auth_email_clinical_calendar` e
+  `20260918000200_password_reset_codes` adicionadas; o ambiente de produção deve
+  mostrar **5 migrations** após o próximo deploy;
+- gate local aprovado: Prisma generate, lint, typecheck, 55 arquivos/162
   testes e build de produção com 29 rotas/páginas geradas;
 - próximo slice recomendado: documentos clínicos, recibos PDF e assinatura
   simples, descrito em `docs/next-spec-documentos-recibos-assinatura.md`.

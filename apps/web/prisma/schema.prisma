@@ -31,14 +31,15 @@ model User {
 }
 
 model AuthToken {
-  id         String    @id @default(cuid())
-  userId     String
-  kind       String
-  tokenHash  String    @unique
-  expiresAt  DateTime
-  consumedAt DateTime?
-  createdAt  DateTime  @default(now())
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  userId       String
+  kind         String
+  tokenHash    String    @unique
+  attemptCount Int       @default(0)
+  expiresAt    DateTime
+  consumedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, kind, expiresAt])
 }
