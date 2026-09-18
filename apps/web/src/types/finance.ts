@@ -1,13 +1,14 @@
 export type FinanceEntryView = Readonly<{
   id: string;
-  appointmentId: string;
-  patientId: string;
+  appointmentId: string | null;
+  patientId: string | null;
   patientName: string;
   description: string;
   category: string;
   type: "receita" | "despesa";
-  paymentMethod: string;
+  paymentMethod: string | null;
   status: "previsto" | "efetivado" | "cancelado";
+  origin?: "appointment" | "manual";
   valueCents: number;
   date: string;
   dueDate: string;

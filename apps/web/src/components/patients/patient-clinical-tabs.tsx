@@ -6,6 +6,7 @@ import { AppointmentTimeSelect } from "@/components/appointments/appointment-tim
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { formatBrazilianDate, formatTime24 } from "@/utils/formatters";
 import { maskBrazilianDate } from "@/utils/masks";
+import {
+  anamneseDraftSchema,
+  evolutionDraftSchema,
+} from "@/utils/validators/clinical-drafts";
 
 const clinicalUnavailable = {
   key: "patients.clinical-save",
@@ -58,6 +63,8 @@ type Draft = Record<string, Record<string, string>>;
 
 export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
   const [draft, setDraft] = React.useState<Draft>({});
+  const [error, setError] = React.useState("");
+  const [blocked, setBlocked] = React.useState(false);
   const total = sections.reduce((sum, section) => sum + section.fields.length, 0);
   const filled = sections.reduce((sum, section) => sum + section.fields.filter((field) => draft[section.id]?.[field.key]?.trim()).length, 0);
   const completion = Math.round((filled / total) * 100);
@@ -70,6 +77,15 @@ export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: 
   const change = (section: string, field: string, value: string) => {
     setDraft((current) => ({ ...current, [section]: { ...current[section], [field]: value } }));
   };
+  const validateAndBlockSave = () => {
+    const result = anamneseDraftSchema.safeParse(draft);
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Revise o rascunho.");
+      return;
+    }
+    setError("");
+    setBlocked(true);
+  };
 
   return <div className="space-y-4">
     <Card className="sticky top-16 z-20 p-5">
@@ -79,9 +95,10 @@ export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: 
           <Progress value={completion} />
         </div>
         <span className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">{filled ? "Rascunho local não salvo" : "Pronto para preencher"}</span>
-        <CapabilityNotice descriptor={clinicalUnavailable} trigger={<Button size="sm"><Save className="size-4" />Salvar</Button>} />
+        <Button size="sm" onClick={validateAndBlockSave}><Save className="size-4" />Salvar</Button>
       </div>
     </Card>
+    {error ? <Alert variant="destructive"><AlertTitle>Revise o rascunho</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
     <Card className="p-2">
       <Accordion type="multiple" defaultValue={[sections[0].id]}>
         {sections.map((section) => {
@@ -103,6 +120,7 @@ export function PatientAnamneseTab({ onDirtyChange }: { onDirtyChange?: (dirty: 
         })}
       </Accordion>
     </Card>
+    <CapabilityNotice descriptor={clinicalUnavailable} open={blocked} onOpenChange={setBlocked} />
   </div>;
 }
 
@@ -122,11 +140,13 @@ const createEvolutionDraft = (): EvolutionDraft => ({
 export function PatientClinicalRecordTab({ onDirtyChange }: { onDirtyChange?: (dirty: boolean) => void }) {
   const [open, setOpen] = React.useState(false);
   const [blocked, setBlocked] = React.useState(false);
+  const [error, setError] = React.useState("");
   const [draft, setDraft] = React.useState<EvolutionDraft>(createEvolutionDraft);
   const hasMeaningfulContent = [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan].some((value) => value.trim().length > 0);
   const discard = useDiscardConfirmation(hasMeaningfulContent);
   const closeEditor = React.useCallback(() => {
     setDraft(createEvolutionDraft());
+    setError("");
     setOpen(false);
   }, []);
 
@@ -136,18 +156,28 @@ export function PatientClinicalRecordTab({ onDirtyChange }: { onDirtyChange?: (d
   }, [hasMeaningfulContent, onDirtyChange]);
 
   const requestClose = () => discard.requestDiscard(closeEditor);
+  const validateAndBlockSave = () => {
+    const result = evolutionDraftSchema.safeParse(draft);
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Revise a evolução.");
+      return;
+    }
+    setError("");
+    setBlocked(true);
+  };
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evoluções clínicas</h2><p className="text-sm text-muted-foreground">Registro livre e/ou estruturado (SOAP) por sessão</p></div><Button onClick={() => setOpen(true)}><Plus className="size-4" />Nova evolução</Button></div>
     <Card className="p-12 text-center"><FileText className="mx-auto size-10 text-muted-foreground/50" /><h3 className="mt-3 font-medium">Nenhuma evolução registrada</h3><p className="mt-1 text-sm text-muted-foreground">Comece registrando a primeira sessão deste paciente.</p><Button className="mt-4" onClick={() => setOpen(true)}>Criar primeira evolução</Button></Card>
     <Dialog open={open} onOpenChange={(next) => { if (next) setOpen(true); else requestClose(); }}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O rascunho permanece somente nesta janela até que a persistência clínica seja liberada.</DialogDescription></DialogHeader>
       <div className="space-y-4">
+        {error ? <Alert variant="destructive"><AlertTitle>Revise a evolução</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
         <div className="grid gap-4 sm:grid-cols-3"><div><Label htmlFor="evolution-date">Data</Label><Input id="evolution-date" className="mt-1.5" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={draft.date} onChange={(event) => setDraft({ ...draft, date: maskBrazilianDate(event.target.value) })} /></div><AppointmentTimeSelect id="evolution-time" label="Horário" value={draft.time} onValueChange={(time) => setDraft({ ...draft, time })} /><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
         <div><Label htmlFor="evolution-free">Registro livre</Label><Textarea id="evolution-free" className="mt-1.5 min-h-44" placeholder="Descreva o que aconteceu na sessão, observações clínicas e plano..." value={draft.free} onChange={(event) => setDraft({ ...draft, free: event.target.value })} /></div>
         <Accordion type="single" collapsible><AccordionItem value="soap" className="rounded-md border"><AccordionTrigger className="px-4 hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger><AccordionContent className="space-y-3 px-4">
           {([["subjective", "S", "Subjetivo"], ["objective", "O", "Objetivo"], ["assessment", "A", "Avaliação"], ["plan", "P", "Plano"]] as const).map(([key, letter, label]) => <div key={key}><Label htmlFor={`soap-${key}`} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">{letter}</span>{label}</Label><Textarea id={`soap-${key}`} className="mt-1.5" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></div>)}
         </AccordionContent></AccordionItem></Accordion>
       </div>
-      <DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={() => setBlocked(true)}><Save className="size-4" />Salvar evolução</Button></DialogFooter>
+      <DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={validateAndBlockSave}><Save className="size-4" />Salvar evolução</Button></DialogFooter>
     </DialogContent></Dialog>
     <DiscardConfirmation open={discard.open} onCancel={discard.cancelDiscard} onConfirm={discard.confirmDiscard} />
     <CapabilityNotice descriptor={clinicalUnavailable} open={blocked} onOpenChange={setBlocked} />

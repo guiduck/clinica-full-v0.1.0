@@ -1,9 +1,12 @@
 # Proxima Spec: Persistencia Clinica e Protecao de Dados Sensiveis
 
-> Brief revalidado com `specify-prompt-engineer` em 2026-09-01 contra as
+> Brief revalidado com `specify-prompt-engineer` em 2026-09-03 contra as
 > superfícies finais transitórias de Anamnese, Prontuário, sessão e Agenda.
 > A matriz da feature 003 está 384/384 decidida e este brief está pronto para
 > alimentar `/speckit.specify`.
+> Revalidado no encerramento formal da feature 003: 130/130 tarefas concluídas;
+> agenda sem WhatsApp continua permitida e o ledger financeiro permanece fora
+> deste slice, descrito em `docs/next-spec-financial-ledger-persistence.md`.
 > Preservar também o contrato de localização aprovado: datas em `dd/mm/aaaa`,
 > horários em 24 horas e seletores/dropdowns com largura integral do campo.
 > Revalidado após o checkpoint de identidade/onboarding de 2026-09-01: a marca
@@ -13,6 +16,14 @@
 > Revalidado após T047/T048: criação, listagem e perfil de pacientes já possuem
 > persistência/testes próprios; este brief começa nos registros clínicos e não deve
 > recriar o service de pacientes nem absorver edição/arquivamento/financeiro.
+> Revalidado em 2026-09-14 após a antecipação do ledger financeiro: Financeiro,
+> Previsibilidade, Dashboard e perfil do paciente já usam lançamentos
+> persistentes e auditáveis. A spec clínica não deve recriar esse ledger; deve
+> apenas integrar finalização da sessão/consulta por contratos explícitos.
+> O gate definitivo da 003 conectou os schemas Zod às telas transitórias e
+> validou a Agenda com criação/reload real sem WhatsApp. Esta spec deve substituir
+> somente os limites clínicos transitórios por persistência real; não deve
+> reimplementar a validação de interface nem incorporar o ledger financeiro.
 
 Create a feature specification for persistent clinical records with an explicit
 security, privacy, retention and audit model.

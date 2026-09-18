@@ -1,11 +1,95 @@
 # Handoff
 
+## Atualização de 2026-09-14 — financeiro persistente pronto para deploy
+
+Implementado:
+- modelos e migration `20260914000100_financial_ledger_persistence`;
+- receita prevista criada junto da consulta, na mesma transação;
+- backfill de consultas antigas com perfil financeiro completo;
+- receitas/despesas manuais, edição, efetivação e cancelamento com auditoria;
+- leitura canônica no Financeiro, Previsibilidade, Dashboard e perfil do paciente;
+- editor financeiro reutilizável e acessível em
+  `src/components/financeEntryEditor`;
+- cobertura E2E ampliada para consulta -> receita prevista -> efetivação e despesa.
+
+Validação:
+- Prisma schema válido;
+- lint e typecheck aprovados;
+- 35 arquivos/106 testes unitários e de integração aprovados;
+- 17 arquivos/50 testes de componentes aprovados;
+- build de produção aprovado com 22 rotas;
+- `git diff --check` sem erros (somente avisos de normalização LF/CRLF).
+
+Pendente antes do aceite:
+- aplicar a migration via `docker compose ... up -d --build` na VPS e confirmar o
+  backfill; o Docker Desktop local não ficou disponível para esse gate;
+- executar a jornada manual completa no domínio;
+- recibo PDF, Stripe, pagamentos parciais e planos recorrentes permanecem fora.
+
+Próximo passo recomendado:
+- publicar esta atualização, aplicar a migration no Compose da VPS e testar o
+  financeiro de ponta a ponta; depois iniciar a persistência clínica usando
+  `docs/next-spec-clinical-persistence-encryption.md`.
+
 ## Status atual
-Projeto com o `slice paciente/agenda/WhatsApp implementado`, a superfície da
-feature `003-prototype-front-reconstruction` aceita e o primeiro service
-pós-reconstrução entregue. A matriz está 100% decidida; não há `pending`.
-Restam 11 testes granulares de hardening em `tasks.md`, explicitamente não
-confundidos com lacunas ocultas de UI ou falso sucesso.
+Projeto com o `slice paciente/agenda/WhatsApp implementado` e a feature
+`003-prototype-front-reconstruction` concluída: 384/384 linhas de paridade e
+130/130 tarefas. O próximo gate é persistência clínica; o ledger financeiro
+persistente está documentado como slice subsequente.
+
+## Gate definitivo da feature 003 — 2026-09-03
+
+- Os schemas compartilhados de Anamnese, evolução, conta, contato, imagem,
+  planos e templates agora validam a interação real antes do aviso de
+  capacidade indisponível.
+- Datas clínicas impossíveis, como `31/02/2026`, são recusadas; conteúdo
+  clínico continua somente em memória e nunca é enviado ou persistido.
+- O Dashboard deixou de usar meses e valores financeiros fixos. Seus cartões,
+  gráfico e série temporal agora derivam da mesma projeção canônica
+  `consulta + perfil financeiro` usada pelo Financeiro.
+- Os cartões da Previsibilidade respeitam o mesmo intervalo, categoria e busca
+  aplicados às listas.
+- A projeção atual não é um ledger: consulta agendada gera visualização
+  `prevista` e consulta realizada gera visualização `efetivada`, sem criar
+  lançamento financeiro independente.
+- A jornada E2E passou a criar uma consulta real sem WhatsApp, verificar
+  horários finais desabilitados e recarregar a Agenda na data da consulta.
+
+Validação final:
+- `npm.cmd run lint`: aprovado;
+- `npm.cmd run typecheck`: aprovado;
+- `npm.cmd run test -- --maxWorkers=2 --reporter=dot`: 49 arquivos e 147/147
+  testes aprovados;
+- `npm.cmd run build`: aprovado, 22 rotas;
+- Playwright do produto: 11/11 cenários aprovados, incluindo a jornada de
+  Agenda em desktop `1440x900` e mobile `390x844`;
+- o smoke usou PostgreSQL efêmero na porta 5434 porque a porta 5433 pertence ao
+  container `opportunity_desk_freelance_postgres`; o banco efêmero foi
+  removido após o teste.
+
+Próximo passo recomendado: executar `/speckit.specify` com
+`docs/next-spec-clinical-persistence-encryption.md`.
+
+## Encerramento da feature 003 — 2026-09-01
+
+- `Sim, agendar` preserva o paciente criado e abre o diálogo real da Agenda.
+- O fim da consulta não aceita valores anteriores/iguais ao início.
+- Sem WhatsApp, a consulta é criada e o aviso explica que não haverá lembretes.
+- Calendário, dashboard e financeiro ganharam modelos puros e testes granulares.
+- Cash flow e previsibilidade usam a mesma fonte canônica de cálculo.
+- Rascunhos clínicos, documentos, assinatura, configurações e timer estão
+  cobertos sem falso sucesso; toggles sem service mantêm o estado original.
+- T070/T071, T081-T084, T097-T099 e T111/T112 foram concluídas.
+- O protótipo confirma o fluxo `previsto -> efetivado/cancelado`, mas sua store é
+  apenas memória. A produção ainda não possui tabela de ledger.
+- Brief financeiro: `docs/next-spec-financial-ledger-persistence.md`.
+
+Validação deste encerramento:
+- `npm.cmd run typecheck`: aprovado;
+- `npm.cmd run test -- --maxWorkers=2 --reporter=dot`: 48 arquivos e 141/141 testes aprovados;
+- `npm.cmd run lint`: aprovado;
+- `npm.cmd run build`: aprovado, 22 rotas;
+- avisos não bloqueantes: Recharts sem dimensões no jsdom e múltiplos lockfiles detectados pelo Next.
 
 ## Hardening de pacientes — 2026-09-01
 
@@ -86,7 +170,7 @@ Contrato durável:
 ## Reconciliação final e service inicial — 2026-08-31
 - Matriz: 384/384 linhas decididas — 284 equivalentes, 72 capacidades
   indisponíveis e 28 divergências compactas aprovadas pelo product owner.
-- Tarefas: 119/130 concluídas por resultado, inclusive implementações e E2E
+- Tarefas: 130/130 concluídas por resultado, incluindo hardening e E2E
   consolidados em arquivos diferentes dos nomes originalmente planejados.
 - Criação do wizard agora valida dados pessoais e financeiros antes de escrever
   e cria `Patient` + `PatientFinancialProfile` em uma única transação Prisma.
@@ -124,7 +208,7 @@ Contrato durável:
   ações finais exibem indisponibilidade sem persistir dados sensíveis.
 - Agenda possui visões dia/semana/mês, criação real, detalhes e workspace de
   sessão. Financeiro e Previsibilidade derivam registros de consultas e perfis
-  reais, sem inventar ledger.
+  reais; o ledger foi posteriormente implementado em 2026-09-14.
 - Configurações cobre Conta, Contato/endereço, Planos, Mensagens e Segurança com
   CPF/CNPJ/telefone/CEP e indisponibilidade explícita nas mutações sem service.
 - Playwright agora cria um paciente real idempotente e percorre as abas clínicas,
@@ -146,8 +230,7 @@ Validação deste checkpoint:
 
 Situação formal da feature 003:
 - 384 de 384 linhas da matriz estão decididas; 0 continuam `pending`;
-- 119 de 130 tarefas estão concluídas e 11 testes granulares permanecem como
-  hardening rastreado;
+- 130 de 130 tarefas estão concluídas;
 - divergências aceitas têm responsável/data e não ampliam capacidades reais;
 - descarte de rascunhos, auditorias, regressão, bundle e smoke responsivo foram
   executados e registrados.

@@ -126,5 +126,13 @@ feature is ready only when:
   `output/playwright/evidence`.
 - Matriz: 384/384 decididas, sem `pending`.
 
-Pendências não bloqueantes: 11 testes granulares de componente/unidade,
-Twilio sandbox real, CSP e decisão do workspace com múltiplos lockfiles.
+Hardening definitivo em 2026-09-03:
+- schemas clínicos/de configurações conectados às telas transitórias;
+- Dashboard e Previsibilidade derivados da projeção financeira canônica;
+- `npm.cmd run lint`, `npm.cmd run typecheck` e build de 22 rotas aprovados;
+- 49 arquivos/147 testes Vitest aprovados;
+- 11/11 cenários Playwright aprovados, incluindo criação real de consulta sem
+  WhatsApp, bloqueio de término inválido e recarga em desktop/mobile.
+
+Pendências da feature 003: nenhuma. Pendências externas: Twilio sandbox real,
+CSP e decisão do workspace com múltiplos lockfiles.

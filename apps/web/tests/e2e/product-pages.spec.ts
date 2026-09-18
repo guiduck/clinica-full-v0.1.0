@@ -86,13 +86,59 @@ test("core product pages expose the complete reconstructed interaction surface",
   await expect(startSelect).toContainText("09:00");
   await startSelect.click();
   await expect(page.getByRole("option", { name: "13:00", exact: true })).toBeVisible();
+  await page.getByRole("option", { name: "18:00", exact: true }).click();
+  const endSelect = appointmentDialog.getByRole("combobox", { name: "Fim" });
+  await expect(endSelect).toContainText("18:50");
+  await endSelect.click();
+  await expect(
+    page.getByRole("option", { name: "17:50", exact: true }),
+  ).toHaveAttribute("aria-disabled", "true");
   await page.keyboard.press("Escape");
+  const appointmentDate = new Date();
+  appointmentDate.setDate(
+    appointmentDate.getDate() + (testInfo.project.name === "desktop" ? 45 : 46),
+  );
+  const appointmentIso = [
+    appointmentDate.getFullYear(),
+    String(appointmentDate.getMonth() + 1).padStart(2, "0"),
+    String(appointmentDate.getDate()).padStart(2, "0"),
+  ].join("-");
+  const appointmentBr = [
+    String(appointmentDate.getDate()).padStart(2, "0"),
+    String(appointmentDate.getMonth() + 1).padStart(2, "0"),
+    appointmentDate.getFullYear(),
+  ].join("");
+  await appointmentDialog.getByLabel("Data").fill(appointmentBr);
+  await patientSelect.click();
+  await page.getByRole("option", { name: patientName, exact: true }).click();
+  await expect(
+    appointmentDialog.getByText(/WhatsApp não configurado/),
+  ).toBeVisible();
   await page.screenshot({ path: path.join(evidenceDir, `${testInfo.project.name}-agenda-dialog.png`), fullPage: true });
-  await page.getByRole("button", { name: "Cancelar" }).click();
+  await appointmentDialog.getByRole("button", { name: "Salvar" }).click();
+  await expect(appointmentDialog).not.toBeVisible();
+  await page.goto(`/agenda?view=dia&date=${appointmentIso}`);
+  await expect(page.getByRole("button", { name: new RegExp(patientName) })).toBeVisible();
 
-  await page.goto("/financeiro");
+  await page.goto(`/financeiro?period=custom&from=${appointmentIso}&to=${appointmentIso}`);
   await expect(page.getByRole("heading", { name: "Financeiro", exact: true })).toBeVisible();
   for (const name of ["Todos", "Receitas", "Despesas", "Recibos", "Categorias"]) await expect(page.getByRole("tab", { name })).toBeVisible();
+  const appointmentRevenue = page.getByRole("row").filter({ hasText: patientName });
+  await expect(appointmentRevenue).toContainText("Previsto");
+  await appointmentRevenue.getByRole("button", { name: "Efetivar lançamento" }).click();
+  await expect(appointmentRevenue).toContainText("Efetivado");
+
+  await page.getByRole("button", { name: "Nova despesa" }).click();
+  const financeDialog = page.getByRole("dialog", { name: "Registro financeiro" });
+  await financeDialog.getByRole("combobox", { name: "Categoria" }).click();
+  await page.getByRole("option", { name: "Materiais" }).click();
+  await financeDialog.getByLabel("Descrição").fill(`Material ${testInfo.project.name}`);
+  await financeDialog.getByLabel("Valor").fill("25,00");
+  await financeDialog.getByLabel("Data").fill(appointmentBr);
+  await financeDialog.getByLabel("Vencimento").fill(appointmentBr);
+  await financeDialog.getByRole("button", { name: "Salvar" }).click();
+  await expect(financeDialog).not.toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: `Material ${testInfo.project.name}` })).toBeVisible();
   await page.getByRole("button", { name: "Nova receita" }).click();
   await expect(page.getByRole("dialog").getByText("Registro financeiro")).toBeVisible();
   await page.screenshot({ path: path.join(evidenceDir, `${testInfo.project.name}-finance-dialog.png`), fullPage: true });

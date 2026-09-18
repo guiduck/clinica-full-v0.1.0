@@ -4,33 +4,43 @@ import { createAppointmentWithConfirmation } from "@/services/appointments/creat
 
 const prismaMock = vi.hoisted(() => ({
   patient: {
-    findFirst: vi.fn()
+    findFirst: vi.fn(),
   },
-  $transaction: vi.fn()
+  $transaction: vi.fn(),
 }));
 const financialReadyMock = vi.hoisted(() => vi.fn());
 const whatsappConfigMock = vi.hoisted(() => vi.fn());
 const overlapMock = vi.hoisted(() => vi.fn());
 const sendConfirmationMock = vi.hoisted(() => vi.fn());
+const appointmentCreateMock = vi.hoisted(() => vi.fn());
+const notificationCreateMock = vi.hoisted(() => vi.fn());
+const financeEntryCreateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/prisma", () => ({
-  prisma: prismaMock
+  prisma: prismaMock,
 }));
 
-vi.mock("@/services/patient-financial-profiles/patient-financial-profiles", () => ({
-  assertPatientFinancialReady: financialReadyMock
-}));
+vi.mock(
+  "@/services/patient-financial-profiles/patient-financial-profiles",
+  () => ({
+    assertPatientFinancialReady: financialReadyMock,
+  }),
+);
 
 vi.mock("@/services/notifications/whatsapp-config", () => ({
-  getWhatsAppConfig: whatsappConfigMock
+  getWhatsAppConfig: whatsappConfigMock,
 }));
 
 vi.mock("@/services/notifications/notification-attempts", () => ({
-  sendAppointmentConfirmation: sendConfirmationMock
+  sendAppointmentConfirmation: sendConfirmationMock,
 }));
 
 vi.mock("@/services/appointments/appointments", () => ({
-  hasAppointmentOverlap: overlapMock
+  hasAppointmentOverlap: overlapMock,
+}));
+
+vi.mock("@/services/finance/finance-entries", () => ({
+  createAppointmentFinanceEntry: financeEntryCreateMock,
 }));
 
 describe("appointment service", () => {
@@ -38,25 +48,30 @@ describe("appointment service", () => {
     vi.clearAllMocks();
     prismaMock.patient.findFirst.mockResolvedValue({
       id: "patient-1",
-      normalizedPhone: "5511999999999"
+      name: "Ana",
+      normalizedPhone: "5511999999999",
     });
-    financialReadyMock.mockResolvedValue({ id: "profile-1", isComplete: true });
+    financialReadyMock.mockResolvedValue({
+      id: "profile-1",
+      isComplete: true,
+      preferredPaymentMethod: "pix",
+      defaultSessionPriceCents: 15000,
+    });
     whatsappConfigMock.mockReturnValue({
       accountSid: "AC123",
       authToken: "secret",
-      from: "whatsapp:+14155238886"
+      from: "whatsapp:+14155238886",
     });
     overlapMock.mockResolvedValue(false);
     sendConfirmationMock.mockResolvedValue({ id: "notification-1" });
+    appointmentCreateMock.mockResolvedValue({ id: "appointment-1" });
+    notificationCreateMock.mockResolvedValue({ id: "notification-1" });
+    financeEntryCreateMock.mockResolvedValue({ id: "finance-1" });
     prismaMock.$transaction.mockImplementation(async (callback) =>
       callback({
-        appointment: {
-          create: vi.fn().mockResolvedValue({ id: "appointment-1" })
-        },
-        notificationAttempt: {
-          create: vi.fn().mockResolvedValue({ id: "notification-1" })
-        }
-      })
+        appointment: { create: appointmentCreateMock },
+        notificationAttempt: { create: notificationCreateMock },
+      }),
     );
   });
 
@@ -66,13 +81,28 @@ describe("appointment service", () => {
       {
         patientId: "patient-1",
         startsAt: "2026-06-10T12:00:00.000Z",
-        endsAt: "2026-06-10T13:00:00.000Z"
+        endsAt: "2026-06-10T13:00:00.000Z",
       },
-      { now: new Date("2026-06-01T12:00:00.000Z") }
+      { now: new Date("2026-06-01T12:00:00.000Z") },
     );
 
-    expect(appointment).toEqual({ id: "appointment-1" });
-    expect(sendConfirmationMock).toHaveBeenCalledWith("user-1", "appointment-1");
+    expect(appointment).toEqual({
+      id: "appointment-1",
+      notificationScheduled: true,
+    });
+    expect(notificationCreateMock).toHaveBeenCalledOnce();
+    expect(financeEntryCreateMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        appointmentId: "appointment-1",
+        patientId: "patient-1",
+        valueCents: 15000,
+      }),
+    );
+    expect(sendConfirmationMock).toHaveBeenCalledWith(
+      "user-1",
+      "appointment-1",
+    );
   });
 
   it("blocks inactive or foreign patients", async () => {
@@ -84,15 +114,17 @@ describe("appointment service", () => {
         {
           patientId: "patient-2",
           startsAt: "2026-06-10T12:00:00.000Z",
-          endsAt: "2026-06-10T13:00:00.000Z"
+          endsAt: "2026-06-10T13:00:00.000Z",
         },
-        { now: new Date("2026-06-01T12:00:00.000Z") }
-      )
+        { now: new Date("2026-06-01T12:00:00.000Z") },
+      ),
     ).rejects.toBeInstanceOf(DomainError);
   });
 
-  it("blocks missing financial profile and missing WhatsApp configuration", async () => {
-    financialReadyMock.mockRejectedValueOnce(new DomainError("PAYMENT_PROFILE_INCOMPLETE", "Financeiro pendente."));
+  it("blocks a missing financial profile", async () => {
+    financialReadyMock.mockRejectedValueOnce(
+      new DomainError("PAYMENT_PROFILE_INCOMPLETE", "Financeiro pendente."),
+    );
 
     await expect(
       createAppointmentWithConfirmation(
@@ -100,26 +132,32 @@ describe("appointment service", () => {
         {
           patientId: "patient-1",
           startsAt: "2026-06-10T12:00:00.000Z",
-          endsAt: "2026-06-10T13:00:00.000Z"
+          endsAt: "2026-06-10T13:00:00.000Z",
         },
-        { now: new Date("2026-06-01T12:00:00.000Z") }
-      )
+        { now: new Date("2026-06-01T12:00:00.000Z") },
+      ),
     ).rejects.toBeInstanceOf(DomainError);
+  });
 
-    financialReadyMock.mockResolvedValue({ id: "profile-1", isComplete: true });
-    whatsappConfigMock.mockReturnValueOnce(null);
+  it("creates the appointment without scheduling messages when WhatsApp is unavailable", async () => {
+    whatsappConfigMock.mockReturnValue(null);
 
-    await expect(
-      createAppointmentWithConfirmation(
-        "user-1",
-        {
-          patientId: "patient-1",
-          startsAt: "2026-06-10T12:00:00.000Z",
-          endsAt: "2026-06-10T13:00:00.000Z"
-        },
-        { now: new Date("2026-06-01T12:00:00.000Z") }
-      )
-    ).rejects.toBeInstanceOf(DomainError);
+    const appointment = await createAppointmentWithConfirmation(
+      "user-1",
+      {
+        patientId: "patient-1",
+        startsAt: "2026-06-10T12:00:00.000Z",
+        endsAt: "2026-06-10T13:00:00.000Z",
+      },
+      { now: new Date("2026-06-01T12:00:00.000Z") },
+    );
+
+    expect(appointment).toEqual({
+      id: "appointment-1",
+      notificationScheduled: false,
+    });
+    expect(notificationCreateMock).not.toHaveBeenCalled();
+    expect(sendConfirmationMock).not.toHaveBeenCalled();
   });
 
   it("blocks overlapping appointments", async () => {
@@ -131,10 +169,10 @@ describe("appointment service", () => {
         {
           patientId: "patient-1",
           startsAt: "2026-06-10T12:00:00.000Z",
-          endsAt: "2026-06-10T13:00:00.000Z"
+          endsAt: "2026-06-10T13:00:00.000Z",
         },
-        { now: new Date("2026-06-01T12:00:00.000Z") }
-      )
+        { now: new Date("2026-06-01T12:00:00.000Z") },
+      ),
     ).rejects.toBeInstanceOf(DomainError);
   });
 });

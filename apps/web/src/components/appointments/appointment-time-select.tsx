@@ -9,18 +9,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const TIME_OPTIONS = Array.from({ length: 24 * 6 }, (_, index) => {
-  const hours = Math.floor(index / 6);
-  const minutes = (index % 6) * 10;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-});
+import {
+  APPOINTMENT_TIME_OPTIONS,
+  isAppointmentTimeAfter,
+} from "@/components/appointments/appointment-time-options";
 
 type AppointmentTimeSelectProps = Readonly<{
   id: string;
   label: string;
   value: string;
   onValueChange: (value: string) => void;
+  minimumExclusive?: string;
 }>;
 
 export function AppointmentTimeSelect({
@@ -28,6 +27,7 @@ export function AppointmentTimeSelect({
   label,
   value,
   onValueChange,
+  minimumExclusive,
 }: AppointmentTimeSelectProps) {
   return (
     <div>
@@ -44,11 +44,18 @@ export function AppointmentTimeSelect({
             />
           }
         >
-          <SelectValue />
+          <SelectValue placeholder="Selecione" />
         </SelectTrigger>
         <SelectContent>
-          {TIME_OPTIONS.map((time) => (
-            <SelectItem key={time} value={time}>
+          {APPOINTMENT_TIME_OPTIONS.map((time) => (
+            <SelectItem
+              key={time}
+              value={time}
+              disabled={
+                minimumExclusive !== undefined &&
+                !isAppointmentTimeAfter(time, minimumExclusive)
+              }
+            >
               {time}
             </SelectItem>
           ))}

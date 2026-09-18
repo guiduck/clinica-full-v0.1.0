@@ -12,9 +12,16 @@
 Tasks were reconciled by observable behavior rather than planned filenames:
 consolidated components/services and the consolidated `product-pages.spec.ts`
 count as delivery evidence. Approved compact divergences are linked from the
-384/384 decided parity matrix. After patient component hardening, 119/130 tasks are
-complete; the 11 open tasks are explicit unit/component-test hardening and do
-not conceal a production mutation or an unreviewed parity row.
+384/384 decided parity matrix. After the final hardening pass, 130/130 tasks are
+complete; the final 11 unit/component hardening tasks are now delivery evidence
+alongside the existing browser and integration coverage.
+
+Final hardening on 2026-09-03 connected the shared clinical/settings schemas to
+their transient UI boundaries, replaced static Dashboard finance values with the
+canonical appointment projection, aligned Forecast cards with visible filters and
+extended the desktop/mobile Agenda journey through real creation and reload. The
+final gate is 49 Vitest files/147 tests, lint, typecheck, a 22-route build and
+11/11 Playwright scenarios.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -164,8 +171,8 @@ not conceal a production mutation or an unreviewed parity row.
 ### Tests for User Story 3
 
 - [X] T069 [P] [US3] Expand controlled-clock appointment tests for `dd/mm/aaaa`, 24-hour bounds, type, HTTPS video, past time, overlap and readiness in `apps/web/src/tests/unit/appointment-validation.test.ts`
-- [ ] T070 [P] [US3] Add pure Day/Week/Month range, positioning, navigation and timezone boundary tests in `apps/web/src/tests/unit/calendar-model.test.ts`
-- [ ] T071 [P] [US3] Add agenda component tests for view switching, empty grid, create dialog, detail sheet, unavailable mutations and block-draft discard in `apps/web/src/tests/component/agenda-calendar.test.tsx`
+- [X] T070 [P] [US3] Add pure Day/Week/Month range, positioning, navigation and timezone boundary tests in `apps/web/src/tests/unit/calendar-model.test.ts`
+- [X] T071 [P] [US3] Add agenda component tests for view switching, empty grid, create dialog, detail sheet, unavailable mutations and block-draft discard in `apps/web/src/tests/component/agenda-calendar.test.tsx`
 
 ### `/agenda` increment
 
@@ -191,10 +198,10 @@ not conceal a production mutation or an unreviewed parity row.
 
 ### Tests for User Story 4
 
-- [ ] T081 [P] [US4] Add dashboard aggregate, bucket and contextual-link tests using existing real records and empty states in `apps/web/src/tests/unit/dashboard-view-model.test.ts`
-- [ ] T082 [P] [US4] Add dashboard component tests for value privacy, banner dismissal, section order, quick actions and unavailable message controls in `apps/web/src/tests/component/dashboard.test.tsx`
-- [ ] T083 [P] [US4] Add finance parser/calculation tests proving one canonical recut for KPIs, tables, flow, balance and category charts in `apps/web/src/tests/unit/finance-view-model.test.ts`
-- [ ] T084 [P] [US4] Add finance component tests for responsive tabs/filters, transient entry/receipt/plan drafts and unavailable final actions in `apps/web/src/tests/component/finance.test.tsx`
+- [X] T081 [P] [US4] Add dashboard aggregate, bucket and contextual-link tests using existing real records and empty states in `apps/web/src/tests/unit/dashboard-view-model.test.ts`
+- [X] T082 [P] [US4] Add dashboard component tests for value privacy, banner dismissal, section order, quick actions and unavailable message controls in `apps/web/src/tests/component/dashboard.test.tsx`
+- [X] T083 [P] [US4] Add finance parser/calculation tests proving one canonical recut for KPIs, tables, flow, balance and category charts in `apps/web/src/tests/unit/finance-view-model.test.ts`
+- [X] T084 [P] [US4] Add finance component tests for responsive tabs/filters, transient entry/receipt/plan drafts and unavailable final actions in `apps/web/src/tests/component/finance.test.tsx`
 
 ### `/dashboard` increment
 
@@ -226,9 +233,9 @@ not conceal a production mutation or an unreviewed parity row.
 
 ### Tests for User Story 5
 
-- [ ] T097 [P] [US5] Add clinical schema tests for all Anamnese sections, manual DSM/CID, free/SOAP evolution, mood, appointment link and conditional fields in `apps/web/src/tests/unit/clinical-draft-validation.test.ts`
-- [ ] T098 [P] [US5] Add clinical component tests for transient state, timer pause/resume/finalize, blocked save/autosave and confirmed discard in `apps/web/src/tests/component/clinical-tabs.test.tsx`
-- [ ] T099 [P] [US5] Add document component tests for templates, editor, preview, upload selection, signature canvas, blocked final actions and no fake download in `apps/web/src/tests/component/documents-tab.test.tsx`
+- [X] T097 [P] [US5] Add clinical schema tests for all Anamnese sections, manual DSM/CID, free/SOAP evolution, mood, appointment link and conditional fields in `apps/web/src/tests/unit/clinical-draft-validation.test.ts`
+- [X] T098 [P] [US5] Add clinical component tests for transient state, timer pause/resume/finalize, blocked save/autosave and confirmed discard in `apps/web/src/tests/component/clinical-tabs.test.tsx`
+- [X] T099 [P] [US5] Add document component tests for templates, editor, preview, upload selection, signature canvas, blocked final actions and no fake download in `apps/web/src/tests/component/documents-tab.test.tsx`
 
 ### Anamnese and Prontuário tab increments
 
@@ -259,8 +266,8 @@ not conceal a production mutation or an unreviewed parity row.
 
 ### Tests for User Story 6
 
-- [ ] T111 [P] [US6] Add settings schema tests for CPF, CNPJ, phone, CEP, optional clinic, 2 MB image constraint, plan duration/value and message placeholders in `apps/web/src/tests/unit/settings-validation.test.ts`
-- [ ] T112 [P] [US6] Add settings component tests for section navigation, conditional clinic fields, transient drafts and unavailable saves/toggles in `apps/web/src/tests/component/settings.test.tsx`
+- [X] T111 [P] [US6] Add settings schema tests for CPF, CNPJ, phone, CEP, optional clinic, 2 MB image constraint, plan duration/value and message placeholders in `apps/web/src/tests/unit/settings-validation.test.ts`
+- [X] T112 [P] [US6] Add settings component tests for section navigation, conditional clinic fields, transient drafts and unavailable saves/toggles in `apps/web/src/tests/component/settings.test.tsx`
 
 ### `/configuracoes` increment
 

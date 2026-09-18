@@ -13,32 +13,51 @@ export type AppointmentActionState = {
 
 export async function createAppointmentAction(
   _state: AppointmentActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<AppointmentActionState> {
   const user = await requireUser();
-  const parsed = appointmentSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = appointmentSchema.safeParse(
+    Object.fromEntries(formData.entries()),
+  );
 
   if (!parsed.success) {
     return {
       ok: false,
-      message: parsed.error.issues[0]?.message ?? "Revise os dados da consulta."
+      message:
+        parsed.error.issues[0]?.message ?? "Revise os dados da consulta.",
     };
   }
 
   try {
-    await createAppointmentWithConfirmation(user.id, parsed.data);
+    const result = await createAppointmentWithConfirmation(
+      user.id,
+      parsed.data,
+    );
     revalidatePath("/agenda");
     revalidatePath("/dashboard");
+    revalidatePath("/financeiro");
+    revalidatePath("/financeiro/previsibilidade");
     revalidatePath(`/pacientes/${parsed.data.patientId}`);
+
+    if (!result.notificationScheduled) {
+      return {
+        ok: true,
+        message:
+          "Consulta criada. O WhatsApp não está configurado, então não haverá confirmação nem lembretes automáticos.",
+      };
+    }
 
     return {
       ok: true,
-      message: "Consulta criada e confirmação enviada para processamento."
+      message: "Consulta criada e confirmação enviada para processamento.",
     };
   } catch (error) {
     return {
       ok: false,
-      message: getDomainErrorMessage(error, "Não foi possível criar a consulta.")
+      message: getDomainErrorMessage(
+        error,
+        "Não foi possível criar a consulta.",
+      ),
     };
   }
 }

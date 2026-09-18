@@ -68,6 +68,9 @@ export async function getPatient(userId: string, patientId: string) {
     },
     include: {
       financialProfile: true,
+      financeEntries: {
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      },
       appointments: {
         orderBy: {
           startsAt: "asc"

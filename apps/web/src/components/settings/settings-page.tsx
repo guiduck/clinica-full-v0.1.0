@@ -39,6 +39,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { isValidCpf } from "@/utils/validators/brazilian-documents";
 import { maskCep, maskCpf, maskPhone } from "@/utils/masks";
+import { normalizeBrlCents } from "@/utils/normalizers";
+import {
+  messageTemplateSchema,
+  settingsAccountSchema,
+  settingsContactSchema,
+  settingsImageSchema,
+  settingsPlanSchema,
+} from "@/utils/validators/settings";
 import { useOnboardingTourStore } from "@/components/onboardingTour";
 import {
   ONBOARDING_ADVANCE,
@@ -134,24 +142,21 @@ export function SettingsPage({
     if (next === "contato") advanceFrom(ONBOARDING_ADVANCE.CLICK_TARGET);
   };
   const accountSave = () => {
-    if (!form.name.trim()) return setError("Nome é obrigatório.");
-    if (!form.email.includes("@")) return setError("Informe um e-mail válido.");
-    if (!isValidCpf(form.cpf)) return setError("Informe um CPF válido.");
+    const result = settingsAccountSchema.safeParse(form);
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Revise os dados da conta.");
+      return;
+    }
     setError("");
     advanceFrom(ONBOARDING_ADVANCE.ACCOUNT_SAVE);
     setBlocked(true);
   };
   const contactSave = () => {
-    const phone = form.phone.replace(/\D/g, "");
-    if (![10, 11].includes(phone.length))
-      return setError("Informe um telefone brasileiro válido.");
-    if (
-      !form.street.trim() ||
-      !form.city.trim() ||
-      form.state.length !== 2 ||
-      form.zip.replace(/\D/g, "").length !== 8
-    )
-      return setError("Preencha o endereço completo com uma UF e CEP válidos.");
+    const result = settingsContactSchema.safeParse(form);
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Revise os dados de contato.");
+      return;
+    }
     setError("");
     advanceFrom(ONBOARDING_ADVANCE.CONTACT_SAVE);
     setBlocked(true);
@@ -360,7 +365,23 @@ export function SettingsPage({
                 hidden
                 type="file"
                 accept="image/*"
-                onChange={() => setBlocked(true)}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const result = settingsImageSchema.safeParse({
+                    size: file.size,
+                    type: file.type,
+                  });
+                  if (!result.success) {
+                    setError(
+                      "Escolha uma imagem PNG ou JPG com no máximo 2 MB.",
+                    );
+                    event.target.value = "";
+                    return;
+                  }
+                  setError("");
+                  setBlocked(true);
+                }}
               />
               <Button variant="outline" onClick={() => upload.current?.click()}>
                 <Upload className="size-4" /> Enviar imagem
@@ -433,6 +454,21 @@ function PlansManager({ onBlocked }: { onBlocked: () => void }) {
     months: "1",
     value: "",
   });
+  const [error, setError] = React.useState("");
+  const validateAndBlock = () => {
+    const result = settingsPlanSchema.safeParse({
+      name: draft.name,
+      sessions: draft.sessions,
+      months: draft.months,
+      valueCents: normalizeBrlCents(draft.value) ?? 0,
+    });
+    if (!result.success) {
+      setError(result.error.issues[0]?.message ?? "Revise os dados do plano.");
+      return;
+    }
+    setError("");
+    onBlocked();
+  };
   return (
     <div className="space-y-4">
       <Card className="space-y-4 p-6">
@@ -453,6 +489,7 @@ function PlansManager({ onBlocked }: { onBlocked: () => void }) {
       </Card>
       <Card className="space-y-4 p-6">
         <h2 className="font-semibold">Cadastrar novo plano</h2>
+        {error ? <Alert variant="destructive"><AlertTitle>Revise o plano</AlertTitle><AlertDescription>{error}</AlertDescription></Alert> : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
             label="Nome do plano"
@@ -489,7 +526,7 @@ function PlansManager({ onBlocked }: { onBlocked: () => void }) {
           Resumo: {draft.sessions || 0} sessões/mês × {draft.months || 0} meses.
           O plano só será criado após a conexão do serviço de cobrança.
         </div>
-        <Button onClick={onBlocked}>
+        <Button onClick={validateAndBlock}>
           <Plus className="size-4" /> Cadastrar plano
         </Button>
       </Card>
@@ -535,9 +572,11 @@ function MessagesManager() {
   >(null);
   const [text, setText] = React.useState("");
   const [blocked, setBlocked] = React.useState(false);
+  const [error, setError] = React.useState("");
   const open = (item: (typeof messageTemplates)[number]) => {
     setEditing(item);
     setText(item.body);
+    setError("");
   };
   return (
     <>
@@ -616,6 +655,7 @@ function MessagesManager() {
             </DialogDescription>
           </DialogHeader>
           <Textarea
+            aria-label="Texto do template"
             className="min-h-48"
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -638,8 +678,17 @@ function MessagesManager() {
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancelar
             </Button>
-            <Button onClick={() => setBlocked(true)}>Salvar template</Button>
+            <Button onClick={() => {
+              const result = messageTemplateSchema.safeParse(text);
+              if (!result.success) {
+                setError(result.error.issues[0]?.message ?? "Revise o template.");
+                return;
+              }
+              setError("");
+              setBlocked(true);
+            }}>Salvar template</Button>
           </DialogFooter>
+          {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
         </DialogContent>
       </Dialog>
       <CapabilityNotice
@@ -657,6 +706,7 @@ function MessagesManager() {
 }
 function SecuritySettings() {
   const [blocked, setBlocked] = React.useState(false);
+  const [preferenceBlocked, setPreferenceBlocked] = React.useState(false);
   return (
     <div className="space-y-4">
       <Card className="p-6">
@@ -687,13 +737,21 @@ function SecuritySettings() {
           <Label htmlFor="opt-whatsapp" className="font-normal">
             Permitir lembretes automáticos por WhatsApp
           </Label>
-          <Switch id="opt-whatsapp" defaultChecked />
+          <Switch
+            id="opt-whatsapp"
+            checked
+            onCheckedChange={() => setPreferenceBlocked(true)}
+          />
         </div>
         <div className="flex items-center justify-between gap-4">
           <Label htmlFor="opt-email" className="font-normal">
             Permitir notificações por e-mail
           </Label>
-          <Switch id="opt-email" defaultChecked />
+          <Switch
+            id="opt-email"
+            checked
+            onCheckedChange={() => setPreferenceBlocked(true)}
+          />
         </div>
       </Card>
       <CapabilityNotice
@@ -706,6 +764,17 @@ function SecuritySettings() {
         }}
         open={blocked}
         onOpenChange={setBlocked}
+      />
+      <CapabilityNotice
+        descriptor={{
+          ...unavailable,
+          key: "communication-preferences",
+          title: "Preferências de comunicação em preparação",
+          message:
+            "As preferências continuam como estavam. Elas poderão ser alteradas quando o serviço de configurações estiver conectado.",
+        }}
+        open={preferenceBlocked}
+        onOpenChange={setPreferenceBlocked}
       />
     </div>
   );

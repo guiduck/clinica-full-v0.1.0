@@ -5,7 +5,17 @@ export const appointmentSchema = z
   .object({
     patientId: z.string().trim().min(1, "Selecione um paciente."),
     startsAt: z.string().trim().min(1, "Informe o inicio da consulta."),
-    endsAt: z.string().trim().min(1, "Informe o fim da consulta.")
+    endsAt: z.string().trim().min(1, "Informe o fim da consulta."),
+    type: z.string().trim().min(1, "Informe o tipo da consulta.").max(80).default("Consulta"),
+    videoUrl: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => value || undefined)
+      .refine(
+        (value) => !value || /^https:\/\//i.test(value),
+        "Informe um link HTTPS válido para a videochamada.",
+      ),
   })
   .superRefine((value, ctx) => {
     const startsAt = new Date(value.startsAt);

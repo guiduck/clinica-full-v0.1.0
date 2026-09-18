@@ -1,6 +1,34 @@
 # Roadmap
 
+## Checkpoint financeiro persistente — 2026-09-14
+
+- ledger financeiro real adicionado ao PostgreSQL com receitas, despesas,
+  origem manual/consulta, status previsto/efetivado/cancelado e auditoria;
+- criação de consulta elegível passa a criar exatamente uma receita prevista na
+  mesma transação, usando valor e método do perfil financeiro do paciente;
+- migration converte consultas antigas elegíveis sem apagar ou reescrever agenda;
+- Financeiro, Previsibilidade, Dashboard e aba Financeiro do paciente leem a
+  mesma fonte canônica persistida;
+- criação manual, correção, efetivação e cancelamento são ações reais, isoladas
+  pelo usuário autenticado e revalidam todos os consumidores;
+- gate local: Prisma schema, lint, typecheck, build de 22 rotas e 52 arquivos/
+  156 testes aprovados; aplicação da migration ficou pendente para o Compose/VPS
+  porque o Docker Desktop local não concluiu a inicialização;
+- recibo PDF, cobrança Stripe, pagamentos parciais e planos recorrentes continuam
+  em slices próprios, sem sucesso simulado.
+
 ## Status geral
+
+Checkpoint definitivo da feature 003 em 2026-09-03:
+- validação compartilhada conectada às telas clínicas e de Configurações;
+- Dashboard e Previsibilidade sem números financeiros estáticos e com recortes
+  derivados da projeção canônica de consultas elegíveis;
+- jornada real de Agenda aprovada sem WhatsApp, com bloqueio de término
+  anterior/igual ao início e persistência verificada após recarga;
+- gate aprovado com lint, typecheck, 49 arquivos/147 testes, build de 22 rotas
+  e Playwright 11/11 em desktop/mobile;
+- próxima entrega: persistência clínica e proteção de dados sensíveis; o ledger
+  financeiro foi antecipado e implementado em 2026-09-14.
 Projeto com o `slice paciente/agenda/WhatsApp implementado`, a superfície
 principal do protótipo reconstruída em Next.js e o gate visual da feature `003`
 formalmente reconciliado. As 384 linhas da matriz estão decididas, os gates
@@ -10,8 +38,7 @@ de paciente + perfil financeiro uma única transação Prisma.
 Checkpoint final da feature 003 em 2026-08-31:
 - matriz: 384/384 decididas (`284 equivalent`, `72 unavailable-capability`,
   `28 approved-divergence`, `0 pending`);
-- tarefas: 119/130 concluídas após reconciliação por comportamento; as 11
-  restantes são testes unitários/de componente granulares de hardening;
+- tarefas: 130/130 concluídas após o hardening unitário/de componente final;
 - qualidade: lint, typecheck, 87 testes Vitest, build de 22 rotas e Playwright
   com 17 aprovados/2 pulados intencionalmente;
 - segurança: audit de produção zerado após upgrade compatível de Next/PostCSS/
@@ -49,6 +76,15 @@ Checkpoint de hardening de pacientes de 2026-09-01:
 - [x] cobrir filtros, estados vazios, abas/URL, dados legados e ações contextuais;
 - [x] distinguir `Restaurar paciente` de `Arquivar paciente` sem simular mutação;
 - [x] validar lint, typecheck, 35 arquivos/102 testes e build de 22 rotas.
+
+Checkpoint de encerramento da feature 003 em 2026-09-01:
+- [x] abrir a Agenda com o paciente criado sem corrida com o fechamento do wizard;
+- [x] desabilitar horários finais anteriores ou iguais ao início;
+- [x] permitir consulta sem WhatsApp com aviso e sem notificação falsa;
+- [x] concluir T070/T071, T081-T084, T097-T099 e T111/T112;
+- [x] documentar o ledger futuro em `docs/next-spec-financial-ledger-persistence.md`;
+- [x] encerrar a feature com 130/130 tarefas e 384/384 linhas decididas.
+- [x] validar typecheck, lint, 48 arquivos/141 testes e build de 22 rotas.
 
 Marco atual:
 - documentacao base pronta
@@ -93,8 +129,9 @@ Marco atual:
   editor, preview e assinatura em canvas mantidos somente em memória
 - agenda reconstruída em dia/semana/mês, com criação real, detalhes e workspace
   de sessão; mutações sem service continuam explicitamente indisponíveis
-- financeiro e previsibilidade reconstruídos a partir de pacientes,
-  perfis financeiros e consultas reais, sem inventar ledger, recibo ou cobrança
+- financeiro e previsibilidade foram inicialmente reconstruídos a partir de
+  pacientes/perfis/consultas; desde 2026-09-14 usam o ledger real, enquanto
+  recibo e cobrança externa continuam sem simulação
 - configurações reconstruídas nas cinco abas, com validações brasileiras e
   bloqueio honesto das persistências ainda não implementadas
 - checkpoint automatizado de 2026-08-31: 79/79 testes Vitest, lint, typecheck e
@@ -173,7 +210,7 @@ Entregas esperadas:
 - [ ] validar fluxo manual completo com banco e credenciais/sandbox de WhatsApp
 
 ### Fase 1.2 - Reconstrucao integral do frontend
-Status: `superfície funcional reconstruída; fechamento formal da matriz e auditorias finais em andamento`
+Status: `concluída`
 
 Slice alvo:
 - `paridade integral do frontend Lovable -> arquitetura reutilizavel -> services progressivos`
@@ -200,12 +237,11 @@ Entregas esperadas:
 - [x] fluxos clínicos/documentais transitórios completos, sem persistência sensível
 - [x] evidência Playwright central em desktop e mobile em
   `output/playwright/evidence`
-- [ ] fechamento integral da matriz e validacao final da feature
+- [x] fechamento integral da matriz e validacao final da feature
 
 Métricas do fechamento formal em 2026-09-01:
 - 384/384 linhas da matriz decididas e nenhuma `pending`;
-- 119/130 tarefas concluídas; as 11 abertas são testes granulares de hardening
-  já identificados em `tasks.md`, não lacunas funcionais ocultas;
+- 130/130 tarefas concluídas;
 - descarte de rascunhos, auditorias transversais, regressão, bundle e smoke
   desktop/mobile foram executados.
 
@@ -221,7 +257,7 @@ Modulos:
 - [ ] agenda
 - [ ] notificacoes via WhatsApp
 - [ ] prontuario
-- [ ] financeiro
+- [x] financeiro básico persistente (ledger, previsão, efetivação e despesas)
 - [ ] documentos
 - [ ] assinatura simples
 - [ ] dashboard
@@ -290,8 +326,7 @@ Possiveis frentes:
 - nivel de auditoria/versionamento do prontuario no primeiro corte
 
 ## Proxima acao recomendada
-Concluir as 11 tarefas abertas da feature `003` como hardening testável e iniciar
-o próximo slice executando `/speckit.specify` com
+Iniciar o próximo slice executando `/speckit.specify` com
 `docs/next-spec-clinical-persistence-encryption.md`. Esse slice transforma
 Anamnese, evolução/SOAP e finalização de sessão em registros clínicos reais,
 versionados e auditáveis sem reabrir o frontend já aceito.
@@ -303,6 +338,11 @@ services será o clínico (Anamnese, evolução/SOAP e finalização de sessão)
 após especificar e esclarecer retenção, versionamento, autorização, auditoria e
 criptografia. Edição/arquivamento de paciente, financeiro operacional, documentos
 e mensagens permanecem slices posteriores e não devem ser misturados nesse gate.
+
+O ledger persistente está descrito em
+`docs/next-spec-financial-ledger-persistence.md`: uma consulta elegível gera
+receita prevista e o profissional pode efetivar, cancelar ou corrigir o
+lançamento. Ele vem depois do gate clínico, salvo repriorização explícita.
 
 O service de mensagens deve entrar em slice próprio depois desse gate clínico.
 Antes de implementá-lo, a spec deve congelar um catálogo tipado de variáveis

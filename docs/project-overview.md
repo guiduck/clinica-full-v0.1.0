@@ -12,6 +12,33 @@ O diferencial desejado e conveniencia operacional, com `WhatsApp transacional` n
 
 ## Estado técnico consolidado — 2026-08-31
 
+### Ledger financeiro persistente — 2026-09-14
+
+- `FinanceEntry` e `FinanceEntryEvent` são a fonte canônica de receitas e
+  despesas, com valores em centavos, status rastreáveis e histórico de mudanças.
+- Consultas criam receita prevista atomicamente; o índice único por
+  `appointmentId` impede duplicação do lançamento canônico.
+- Lançamentos manuais, correções, efetivação e cancelamento usam Server Actions,
+  services com autorização por proprietário e transações Prisma.
+- Dashboard, Financeiro, Previsibilidade e perfil do paciente foram conectados ao
+  mesmo ledger. Projeções derivadas em memória deixaram de ser a fonte de produção.
+- A migration inclui backfill não destrutivo das consultas elegíveis existentes.
+- Recibo PDF, Stripe, conciliação, pagamento parcial e planos recorrentes não são
+  alegados como disponíveis nesta entrega.
+
+### Gate definitivo da reconstrução — 2026-09-03
+
+- Os validadores Zod transitórios estão conectados às telas clínicas e de
+  Configurações; entradas inválidas são barradas antes de qualquer aviso de
+  serviço indisponível.
+- Dashboard, Financeiro e Previsibilidade compartilham cálculos derivados de
+  consultas e perfis financeiros reais. Não existe lançamento financeiro
+  persistente nesta etapa.
+- A Agenda foi validada em navegador com criação real sem WhatsApp, seleção de
+  término posterior ao início e persistência após recarga.
+- Gate técnico: lint e typecheck aprovados, 49 arquivos/147 testes Vitest,
+  build de 22 rotas e 11/11 cenários Playwright desktop/mobile.
+
 A reconstrução visual da feature 003 foi aceita com 384/384 linhas decididas.
 O frontend preserva operações sem service como transitórias ou indisponíveis e
 não simula persistência. A camada de domínio iniciou a próxima fase com
@@ -40,6 +67,18 @@ auditoria e estratégia real de criptografia/chaves.
   obrigatória do passo correspondente.
 - Validação: lint e typecheck aprovados; 33 arquivos/96 testes Vitest aprovados;
   jornada Playwright completa aprovada em desktop `1440x900` e mobile `390x844`.
+
+### Encerramento da reconstrução e contrato financeiro — 2026-09-01
+
+- A feature 003 foi encerrada com 130/130 tarefas e 384/384 linhas decididas.
+- O pós-cadastro abre o agendamento associado, horários finais inválidos ficam
+  indisponíveis e ausência de WhatsApp não bloqueia a consulta.
+- Calendário, dashboard e finanças usam modelos puros testáveis; cash flow e
+  previsibilidade compartilham o mesmo recorte de totais.
+- Naquele checkpoint, o financeiro ainda era derivado de consulta + perfil;
+  esse limite foi substituído pelo ledger persistente em 2026-09-14.
+- O contrato futuro foi congelado: a receita nasce `prevista`, pode ser
+  efetivada/cancelada/corrigida e só a efetivada entra no saldo realizado.
 
 Conclusao objetiva:
 - o MVP deve nascer como `plataforma web confiavel para autonomos individuais`
@@ -214,8 +253,7 @@ Pontos fortes:
   passou a crescer conforme os registros, e a Agenda usa dropdowns com largura
   integral e seletores controlados de horário brasileiro em 24 horas.
 - O fechamento formal foi reconciliado: 384 de 384 linhas estão decididas e
-  119 de 130 tarefas estão concluídas. As 11 tarefas abertas são cobertura
-  granular de hardening já identificada, não implementação visual ausente.
+  130 de 130 tarefas estão concluídas.
 - A lista e o perfil de pacientes ganharam seis testes de componente para filtros,
   estados vazios, abas/URL, dados legados e fronteiras de capacidade. A criação
   permanece realmente persistida; edição, arquivamento/restauração e contato

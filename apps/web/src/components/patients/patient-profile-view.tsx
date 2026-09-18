@@ -31,12 +31,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { formatBrazilianDate, formatStatusLabel, formatTime24 } from "@/utils/formatters";
+import {
+  FinanceEntryControls,
+  FinanceEntryDialog,
+} from "@/components/financeEntryEditor";
+import type { FinanceEntryView } from "@/types/finance";
 
 type AppointmentView = { id: string; startsAt: string; endsAt: string; status: string; type: string };
 type PatientView = {
   id: string; name: string; phone: string; email: string | null; cpf: string | null;
   birthDate: string | null; notes: string | null; whatsappConsent: boolean; emailConsent: boolean;
   status: string; financialComplete: boolean; defaultSessionPriceCents: number | null;
+  financeEntries?: FinanceEntryView[];
   appointments: AppointmentView[];
 };
 type Tab = "geral" | "anamnese" | "agenda" | "prontuario" | "financeiro" | "documentos";
@@ -116,7 +122,19 @@ function AppointmentList({ title, items, empty }: { title: string; items: Appoin
 
 function FinanceTab({ patient }: { patient: PatientView }) {
   const value = patient.defaultSessionPriceCents ? (patient.defaultSessionPriceCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00";
-  return <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-3"><Metric label="Total pago" value="R$ 0,00" /><Metric label="Em aberto" value={patient.financialComplete ? value : "R$ 0,00"} /><Metric label="Valor por sessão" value={value} /></div><Card className="p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Histórico financeiro</h2><p className="text-sm text-muted-foreground">Lançamentos e recibos relacionados ao paciente</p></div><div className="flex gap-2"><Button asChild variant="outline"><Link href={`/pacientes/${patient.id}/financeiro?focus=payment`}><Wallet className="size-4" />Dados de pagamento</Link></Button><Button asChild><Link href={`/financeiro?new=receita&patientId=${patient.id}`}><Plus className="size-4" />Novo lançamento</Link></Button></div></div><p className="py-14 text-center text-sm text-muted-foreground">Nenhum lançamento efetivado.</p></Card></div>;
+  const entries = patient.financeEntries ?? [];
+  const [editingEntry, setEditingEntry] = React.useState<FinanceEntryView | null>(null);
+  const paid = entries.filter((entry) => entry.type === "receita" && entry.status === "efetivado").reduce((sum, entry) => sum + entry.valueCents, 0);
+  const open = entries.filter((entry) => entry.type === "receita" && entry.status === "previsto").reduce((sum, entry) => sum + entry.valueCents, 0);
+  const money = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return <div className="space-y-6">
+    <div className="grid gap-4 sm:grid-cols-3"><Metric label="Total pago" value={money(paid)} /><Metric label="Em aberto" value={money(open)} /><Metric label="Valor por sessão" value={value} /></div>
+    <Card className="p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Histórico financeiro</h2><p className="text-sm text-muted-foreground">Lançamentos relacionados ao paciente</p></div><div className="flex gap-2"><Button asChild variant="outline"><Link href={`/pacientes/${patient.id}/financeiro?focus=payment`}><Wallet className="size-4" />Dados de pagamento</Link></Button><Button asChild><Link href={`/financeiro?new=receita&patientId=${patient.id}`}><Plus className="size-4" />Novo lançamento</Link></Button></div></div>
+      {entries.length ? <ul className="mt-5 divide-y">{entries.map((entry) => <li key={entry.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="font-medium">{entry.description}</p><p className="text-xs text-muted-foreground">{formatBrazilianDate(entry.date)} · {entry.category} · {formatStatusLabel(entry.status)}</p></div><div className="flex items-center gap-3"><strong>{money(entry.valueCents)}</strong><FinanceEntryControls entry={entry} onEdit={() => setEditingEntry(entry)} /></div></li>)}</ul> : <p className="py-14 text-center text-sm text-muted-foreground">Nenhum lançamento para este paciente.</p>}
+    </Card>
+    <FinanceEntryDialog open={editingEntry !== null} onOpenChange={(next) => !next && setEditingEntry(null)} initialType={editingEntry?.type ?? "receita"} patients={[{ id: patient.id, name: patient.name }]} defaultPatientId={patient.id} entry={editingEntry} />
+  </div>;
 }
 
 function Info({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) { return <div className="flex gap-3"><Icon className="mt-0.5 size-4 text-muted-foreground" /><div><p className="text-xs text-muted-foreground">{label}</p><p className="text-sm">{value}</p></div></div>; }
