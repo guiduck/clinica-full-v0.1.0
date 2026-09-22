@@ -38,7 +38,7 @@ describe("clinical draft validation", () => {
     ).toBe(true);
   });
 
-  it("accepts free or SOAP evolution, mood and optional appointment link", () => {
+  it("accepts free or SOAP evolution linked to an appointment", () => {
     expect(
       evolutionDraftSchema.safeParse({
         date: "01/09/2026",
@@ -53,6 +53,7 @@ describe("clinical draft validation", () => {
         date: "01/09/2026",
         time: "18:00",
         mood: 10,
+        appointmentId: "apt-2",
         subjective: "Relato",
         objective: "Observação",
         assessment: "Avaliação",
@@ -74,6 +75,7 @@ describe("clinical draft validation", () => {
         date: "31/02/2026",
         time: "18:00",
         mood: 5,
+        appointmentId: "apt-1",
         free: "Registro",
       }).success,
     ).toBe(false);
@@ -82,6 +84,7 @@ describe("clinical draft validation", () => {
         date: "01/09/2026",
         time: "18:00",
         mood: 5,
+        appointmentId: "apt-1",
       }).success,
     ).toBe(false);
   });

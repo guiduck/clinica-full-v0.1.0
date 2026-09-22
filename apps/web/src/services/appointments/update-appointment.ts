@@ -5,7 +5,11 @@ import { syncAppointmentToGoogleCalendar } from "@/services/integrations/google-
 import type { ParsedAppointmentInput } from "@/utils/validators/appointment";
 import { hasAppointmentOverlap } from "./appointments";
 
-export async function updateAppointment(userId: string, appointmentId: string, input: ParsedAppointmentInput) {
+export async function updateAppointment(
+  userId: string,
+  appointmentId: string,
+  input: Omit<ParsedAppointmentInput, "recurrenceCount"> & { recurrenceCount?: number },
+) {
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
   if (startsAt < new Date()) {

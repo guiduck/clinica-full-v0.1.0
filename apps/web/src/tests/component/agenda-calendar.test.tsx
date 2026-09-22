@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AgendaCalendar } from "@/components/appointments/agenda-calendar";
+import { AppointmentComposerProvider } from "@/components/appointmentComposer";
 
 const navigationMocks = vi.hoisted(() => ({ refresh: vi.fn(), replace: vi.fn() }));
 
@@ -24,10 +25,15 @@ const patient = {
   name: "Ana Teste",
   hasCompleteFinancialProfile: true,
 };
+const renderAgenda = (element: React.ReactNode) => render(
+  <AppointmentComposerProvider patients={[patient]} whatsappConfigured={false}>
+    {element}
+  </AppointmentComposerProvider>,
+);
 
 describe("AgendaCalendar", () => {
   it("renders the empty month view and exposes unavailable blocking", () => {
-    render(
+    renderAgenda(
       <AgendaCalendar
         patients={[]}
         appointments={[]}
@@ -46,7 +52,7 @@ describe("AgendaCalendar", () => {
   });
 
   it("opens appointment details and the persisted edit form", () => {
-    render(
+    renderAgenda(
       <AgendaCalendar
         patients={[]}
         initialView="dia"
@@ -74,7 +80,7 @@ describe("AgendaCalendar", () => {
     expect(screen.getByLabelText("Início")).toHaveTextContent("09:00");
   });
   it("opens the create dialog from canonical URL state with the patient selected", () => {
-    render(
+    renderAgenda(
       <AgendaCalendar
         patients={[patient]}
         appointments={[]}
@@ -92,7 +98,7 @@ describe("AgendaCalendar", () => {
   });
 
   it("warns without blocking when WhatsApp is not configured", () => {
-    render(
+    renderAgenda(
       <AgendaCalendar
         patients={[patient]}
         appointments={[]}
@@ -109,7 +115,7 @@ describe("AgendaCalendar", () => {
   });
 
   it("disables end-time choices that are not after the selected start", () => {
-    render(
+    renderAgenda(
       <AgendaCalendar
         patients={[patient]}
         appointments={[]}

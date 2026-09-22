@@ -202,6 +202,9 @@ model Appointment {
   status                AppointmentStatus     @default(agendada)
   sessionStartedAt      DateTime?
   sessionEndedAt        DateTime?
+  recurrenceGroupId     String?
+  recurrenceIndex       Int?
+  recurrenceCount       Int?
   googleCalendarEventId String?
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
@@ -213,6 +216,7 @@ model Appointment {
 
   @@index([userId, startsAt])
   @@index([patientId, startsAt])
+  @@index([recurrenceGroupId])
 }
 
 model ClinicalAnamnesis {

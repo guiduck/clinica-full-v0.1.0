@@ -42,6 +42,7 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { updateUserUiPreferenceAction } from "@/actions/ui-preferences";
+import { useAppointmentComposer } from "@/components/appointmentComposer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -126,6 +127,7 @@ export function DashboardView({
   showNews: boolean;
 }>) {
   const router = useRouter();
+  const { openAppointmentComposer } = useAppointmentComposer();
   const [order, setOrder] = React.useState<DashboardSectionKey[]>(
     initialOrder?.length ? initialOrder : DEFAULT_ORDER,
   );
@@ -248,8 +250,8 @@ export function DashboardView({
               title="Sem atendimentos próximos"
               description="Você não tem sessões agendadas. Que tal criar uma?"
               action={
-                <Button asChild size="sm">
-                  <Link href="/agenda?new=1">Novo agendamento</Link>
+                <Button size="sm" onClick={() => openAppointmentComposer()}>
+                  Novo agendamento
                 </Button>
               }
             />
@@ -586,15 +588,16 @@ export function DashboardView({
         >
           <Plus className="size-4" /> Novo paciente
         </Link>
-        <Link
-          href="/agenda?new=1"
+        <button
+          type="button"
+          onClick={() => openAppointmentComposer()}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "h-auto justify-start py-3",
           )}
         >
           <CalendarDays className="size-4" /> Novo agendamento
-        </Link>
+        </button>
         <Link
           href="/financeiro?new=receita"
           className={cn(

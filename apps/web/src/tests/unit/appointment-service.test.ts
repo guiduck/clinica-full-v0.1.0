@@ -90,11 +90,12 @@ describe("appointment service", () => {
       { now: new Date("2026-06-01T12:00:00.000Z") },
     );
 
-    expect(appointment).toEqual({
+    expect(appointment).toEqual(expect.objectContaining({
       id: "appointment-1",
       notificationScheduled: true,
       calendarSynced: false,
-    });
+      createdCount: 1,
+    }));
     expect(notificationCreateMock).toHaveBeenCalledOnce();
     expect(financeEntryCreateMock).toHaveBeenCalledWith(
       expect.anything(),
@@ -108,6 +109,41 @@ describe("appointment service", () => {
       "user-1",
       "appointment-1",
     );
+  });
+
+  it("creates every weekly occurrence and its finance entry atomically", async () => {
+    appointmentCreateMock
+      .mockResolvedValueOnce({ id: "appointment-1" })
+      .mockResolvedValueOnce({ id: "appointment-2" })
+      .mockResolvedValueOnce({ id: "appointment-3" });
+
+    const appointment = await createAppointmentWithConfirmation(
+      "user-1",
+      {
+        patientId: "patient-1",
+        startsAt: "2026-06-10T12:00:00.000Z",
+        endsAt: "2026-06-10T13:00:00.000Z",
+        recurrenceCount: 3,
+      },
+      { now: new Date("2026-06-01T12:00:00.000Z") },
+    );
+
+    expect(appointment.createdCount).toBe(3);
+    expect(appointmentCreateMock).toHaveBeenCalledTimes(3);
+    expect(financeEntryCreateMock).toHaveBeenCalledTimes(3);
+    expect(overlapMock).toHaveBeenCalledTimes(3);
+    expect(appointmentCreateMock).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        data: expect.objectContaining({
+          startsAt: new Date("2026-06-24T12:00:00.000Z"),
+          recurrenceIndex: 3,
+          recurrenceCount: 3,
+        }),
+      }),
+    );
+    expect(notificationCreateMock).toHaveBeenCalledOnce();
+    expect(sendConfirmationMock).toHaveBeenCalledOnce();
   });
 
   it("blocks inactive or foreign patients", async () => {
@@ -157,11 +193,12 @@ describe("appointment service", () => {
       { now: new Date("2026-06-01T12:00:00.000Z") },
     );
 
-    expect(appointment).toEqual({
+    expect(appointment).toEqual(expect.objectContaining({
       id: "appointment-1",
       notificationScheduled: false,
       calendarSynced: false,
-    });
+      createdCount: 1,
+    }));
     expect(notificationCreateMock).not.toHaveBeenCalled();
     expect(sendConfirmationMock).not.toHaveBeenCalled();
   });

@@ -3,7 +3,6 @@
 import * as React from "react";
 import { FileText, Plus, Save } from "lucide-react";
 import { saveAnamnesisAction, saveEvolutionAction } from "@/actions/clinical";
-import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -16,9 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { formatBrazilianDate, formatTime24 } from "@/utils/formatters";
-import { maskBrazilianDate } from "@/utils/masks";
 import { anamneseDraftSchema, evolutionDraftSchema, type AnamneseDraft } from "@/utils/validators/clinical-drafts";
 
 const sections = [
@@ -95,11 +94,12 @@ export function PatientAnamneseTab({ patientId, initialDraft = {}, onDirtyChange
   </div>;
 }
 
-type EvolutionDraftState = { date: string; time: string; mood: number; appointmentId?: string | null; free: string; subjective: string; objective: string; assessment: string; plan: string };
+type EvolutionDraftState = { date: string; time: string; mood: number; appointmentId: string; free: string; subjective: string; objective: string; assessment: string; plan: string };
 type EvolutionView = { id: string; appointmentId: string | null; occurredAt: string; mood: number; free: string; subjective: string; objective: string; assessment: string; plan: string };
-const createEvolutionDraft = (): EvolutionDraftState => ({ date: formatBrazilianDate(new Date()), time: formatTime24(new Date()), mood: 5, appointmentId: null, free: "", subjective: "", objective: "", assessment: "", plan: "" });
+type ClinicalAppointmentOption = { id: string; startsAt: string; type: string; status: string };
+const createEvolutionDraft = (): EvolutionDraftState => ({ date: formatBrazilianDate(new Date()), time: formatTime24(new Date()), mood: 5, appointmentId: "", free: "", subjective: "", objective: "", assessment: "", plan: "" });
 
-export function PatientClinicalRecordTab({ patientId, initialEvolutions = [], onDirtyChange }: { patientId: string; initialEvolutions?: EvolutionView[]; onDirtyChange?: (dirty: boolean) => void }) {
+export function PatientClinicalRecordTab({ patientId, appointments = [], initialEvolutions = [], onDirtyChange }: { patientId: string; appointments?: ClinicalAppointmentOption[]; initialEvolutions?: EvolutionView[]; onDirtyChange?: (dirty: boolean) => void }) {
   const [open, setOpen] = React.useState(false);
   const [feedback, setFeedback] = React.useState<Feedback>(null);
   const [draft, setDraft] = React.useState<EvolutionDraftState>(createEvolutionDraft);
@@ -107,6 +107,8 @@ export function PatientClinicalRecordTab({ patientId, initialEvolutions = [], on
   const [pending, startTransition] = React.useTransition();
   const hasMeaningfulContent = [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan].some((value) => value.trim().length > 0);
   const discard = useDiscardConfirmation(hasMeaningfulContent);
+  const linkedAppointmentIds = new Set(evolutions.map((item) => item.appointmentId).filter(Boolean));
+  const availableAppointments = appointments.filter((appointment) => !linkedAppointmentIds.has(appointment.id));
   const closeEditor = React.useCallback(() => { setDraft(createEvolutionDraft()); setFeedback(null); setOpen(false); }, []);
 
   React.useEffect(() => {
@@ -132,12 +134,12 @@ export function PatientClinicalRecordTab({ patientId, initialEvolutions = [], on
   };
 
   return <div className="space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evoluções clínicas</h2><p className="text-sm text-muted-foreground">Registro livre e/ou estruturado (SOAP) por sessão</p></div><Button onClick={() => setOpen(true)}><Plus className="size-4" />Nova evolução</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Evoluções clínicas</h2><p className="text-sm text-muted-foreground">Cada registro fica associado à consulta correspondente</p></div><Button onClick={() => setOpen(true)} disabled={availableAppointments.length === 0}><Plus className="size-4" />Nova evolução</Button></div>
     {feedback?.ok ? <Alert><AlertTitle>Evolução salva</AlertTitle><AlertDescription>{feedback.message}</AlertDescription></Alert> : null}
     {evolutions.length ? <div className="space-y-3">{evolutions.map((item) => <Card key={item.id} className="p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-semibold">{formatBrazilianDate(item.occurredAt)} às {formatTime24(item.occurredAt)}</p><p className="mt-1 text-sm text-muted-foreground">Humor relatado: {item.mood}/10</p></div><Badge tone="neutral">Registro protegido</Badge></div><p className="mt-4 whitespace-pre-wrap text-sm">{item.free || item.assessment || "Registro SOAP"}</p></Card>)}</div> : <Card className="p-12 text-center"><FileText className="mx-auto size-10 text-muted-foreground/50" /><h3 className="mt-3 font-medium">Nenhuma evolução registrada</h3><p className="mt-1 text-sm text-muted-foreground">Comece registrando a primeira sessão deste paciente.</p><Button className="mt-4" onClick={() => setOpen(true)}>Criar primeira evolução</Button></Card>}
     <Dialog open={open} onOpenChange={(next) => { if (next) setOpen(true); else requestClose(); }}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Nova evolução</DialogTitle><DialogDescription>O conteúdo será criptografado antes de ser gravado no banco.</DialogDescription></DialogHeader><div className="space-y-4">
       {feedback && !feedback.ok ? <Alert variant="destructive"><AlertTitle>Revise a evolução</AlertTitle><AlertDescription>{feedback.message}</AlertDescription></Alert> : null}
-      <div className="grid gap-4 sm:grid-cols-3"><div><Label htmlFor="evolution-date">Data</Label><Input id="evolution-date" className="mt-1.5" inputMode="numeric" placeholder="dd/mm/aaaa" maxLength={10} value={draft.date} onChange={(event) => setDraft({ ...draft, date: maskBrazilianDate(event.target.value) })} /></div><AppointmentTimeSelect id="evolution-time" label="Horário" value={draft.time} onValueChange={(time) => setDraft({ ...draft, time })} /><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
+      <div className="grid gap-4 sm:grid-cols-[2fr_1fr]"><div><Label htmlFor="evolution-appointment">Consulta relacionada</Label><Select value={draft.appointmentId} onValueChange={(appointmentId) => { const appointment = availableAppointments.find((item) => item.id === appointmentId); if (!appointment) return; setDraft({ ...draft, appointmentId, date: formatBrazilianDate(appointment.startsAt), time: formatTime24(appointment.startsAt) }); }}><SelectTrigger id="evolution-appointment" className="mt-1.5"><SelectValue placeholder="Selecione uma consulta marcada" /></SelectTrigger><SelectContent>{availableAppointments.map((appointment) => <SelectItem key={appointment.id} value={appointment.id}>{formatBrazilianDate(appointment.startsAt)} · {formatTime24(appointment.startsAt)} · {appointment.type}</SelectItem>)}</SelectContent></Select>{draft.appointmentId && <p className="mt-2 text-xs text-muted-foreground">Data do registro: {draft.date} às {draft.time}</p>}</div><div><Label>Humor relatado: <strong>{draft.mood}/10</strong></Label><Slider className="mt-4" min={1} max={10} step={1} value={[draft.mood]} onValueChange={([mood]) => setDraft({ ...draft, mood })} /></div></div>
       <div><Label htmlFor="evolution-free">Registro livre</Label><Textarea id="evolution-free" className="mt-1.5 min-h-44" placeholder="Descreva o que aconteceu na sessão, observações clínicas e plano..." value={draft.free} onChange={(event) => setDraft({ ...draft, free: event.target.value })} /></div>
       <Accordion type="single" collapsible><AccordionItem value="soap" className="rounded-md border"><AccordionTrigger className="px-4 hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger><AccordionContent className="space-y-3 px-4">{([['subjective','S','Subjetivo'],['objective','O','Objetivo'],['assessment','A','Avaliação'],['plan','P','Plano']] as const).map(([key, letter, label]) => <div key={key}><Label htmlFor={`soap-${key}`} className="flex items-center gap-2"><span className="grid size-5 place-items-center rounded bg-primary text-[10px] font-bold text-primary-foreground">{letter}</span>{label}</Label><Textarea id={`soap-${key}`} className="mt-1.5" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })} /></div>)}</AccordionContent></AccordionItem></Accordion>
     </div><DialogFooter><Button variant="outline" onClick={requestClose}>Cancelar</Button><Button onClick={save} disabled={pending}><Save className="size-4" />{pending ? "Salvando..." : "Salvar evolução"}</Button></DialogFooter></DialogContent></Dialog>

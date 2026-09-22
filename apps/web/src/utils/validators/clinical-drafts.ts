@@ -53,27 +53,27 @@ const brazilianDate = z
   .refine((value) => parseBrazilianDate(value) !== null, "Informe uma data válida em dd/mm/aaaa.");
 const time24 = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm.");
 
+const evolutionContentFields = {
+  mood: z.number().int().min(1).max(10),
+  free: optionalClinicalText,
+  subjective: optionalClinicalText,
+  objective: optionalClinicalText,
+  assessment: optionalClinicalText,
+  plan: optionalClinicalText,
+};
+
+const hasClinicalContent = (draft: { free: string; subjective: string; objective: string; assessment: string; plan: string }) =>
+  [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan].some((value) => value.trim());
+
 export const evolutionDraftSchema = z
   .object({
     date: brazilianDate,
     time: time24,
-    mood: z.number().int().min(1).max(10),
-    appointmentId: z.string().min(1).nullable().optional(),
-    free: optionalClinicalText,
-    subjective: optionalClinicalText,
-    objective: optionalClinicalText,
-    assessment: optionalClinicalText,
-    plan: optionalClinicalText,
+    appointmentId: z.string().trim().min(1, "Selecione a consulta relacionada."),
+    ...evolutionContentFields,
   })
-  .refine(
-    (draft) =>
-      [
-        draft.free,
-        draft.subjective,
-        draft.objective,
-        draft.assessment,
-        draft.plan,
-      ].some((value) => value.trim()),
-    { message: "Informe um registro livre ou ao menos um campo SOAP." },
-  );
+  .refine(hasClinicalContent, { message: "Informe um registro livre ou ao menos um campo SOAP." });
 export type EvolutionDraft = z.output<typeof evolutionDraftSchema>;
+
+export const sessionFinishDraftSchema = z.object(evolutionContentFields);
+export type SessionFinishDraft = z.output<typeof sessionFinishDraftSchema>;

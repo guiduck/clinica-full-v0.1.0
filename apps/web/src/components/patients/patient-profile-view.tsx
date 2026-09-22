@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { PatientAnamneseTab, PatientClinicalRecordTab } from "@/components/patients/patient-clinical-tabs";
+import { useAppointmentComposer } from "@/components/appointmentComposer";
 import { PatientDocumentsTab } from "@/components/patients/patient-documents-tab";
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
@@ -87,7 +88,7 @@ export function PatientProfileView({ patient, clinicalRecord = { anamnesis: {}, 
         <TabsContent value="geral"><GeneralTab patient={patient} onDirtyChange={handleDirtyChange} /></TabsContent>
         <TabsContent value="anamnese"><PatientAnamneseTab patientId={patient.id} initialDraft={clinicalRecord.anamnesis} onDirtyChange={handleDirtyChange} /></TabsContent>
         <TabsContent value="agenda"><AgendaTab patient={patient} /></TabsContent>
-        <TabsContent value="prontuario"><PatientClinicalRecordTab patientId={patient.id} initialEvolutions={clinicalRecord.evolutions} onDirtyChange={handleDirtyChange} /></TabsContent>
+        <TabsContent value="prontuario"><PatientClinicalRecordTab patientId={patient.id} appointments={patient.appointments} initialEvolutions={clinicalRecord.evolutions} onDirtyChange={handleDirtyChange} /></TabsContent>
         <TabsContent value="financeiro"><FinanceTab patient={patient} /></TabsContent>
         <TabsContent value="documentos"><PatientDocumentsTab patientName={patient.name} onDirtyChange={handleDirtyChange} /></TabsContent>
       </Tabs>
@@ -125,10 +126,11 @@ function GeneralTab({ patient, onDirtyChange }: { patient: PatientView; onDirtyC
 }
 
 function AgendaTab({ patient }: { patient: PatientView }) {
+  const { openAppointmentComposer } = useAppointmentComposer();
   const now = new Date();
   const upcoming = patient.appointments.filter((item) => new Date(item.startsAt) >= now);
   const past = patient.appointments.filter((item) => new Date(item.startsAt) < now);
-  return <div className="grid gap-6 lg:grid-cols-[1fr_2fr]"><Card className="p-6"><h2 className="font-semibold">Horário fixo</h2><p className="mt-1 text-sm text-muted-foreground">Configure a recorrência semanal deste paciente.</p><CapabilityNotice descriptor={unavailable} trigger={<Button className="mt-5 w-full" variant="outline"><CalendarPlus className="size-4" />Configurar horário fixo</Button>} /></Card><div className="space-y-6"><AppointmentList title="Próximas sessões" items={upcoming} empty="Nenhuma sessão futura." /><AppointmentList title="Sessões anteriores" items={past} empty="Nenhuma sessão anterior." /><Button asChild><Link href={`/agenda?new=1&patientId=${patient.id}`}><Plus className="size-4" />Agendar sessão</Link></Button></div></div>;
+  return <div className="grid gap-6 lg:grid-cols-[1fr_2fr]"><Card className="p-6"><h2 className="font-semibold">Horário fixo</h2><p className="mt-1 text-sm text-muted-foreground">Configure a recorrência semanal deste paciente.</p><Button className="mt-5 w-full" variant="outline" onClick={() => openAppointmentComposer({ patientId: patient.id })}><CalendarPlus className="size-4" />Configurar horário fixo</Button></Card><div className="space-y-6"><AppointmentList title="Próximas sessões" items={upcoming} empty="Nenhuma sessão futura." /><AppointmentList title="Sessões anteriores" items={past} empty="Nenhuma sessão anterior." /><Button onClick={() => openAppointmentComposer({ patientId: patient.id })}><Plus className="size-4" />Agendar sessão</Button></div></div>;
 }
 function AppointmentList({ title, items, empty }: { title: string; items: AppointmentView[]; empty: string }) { return <Card className="p-6"><h2 className="mb-4 font-semibold">{title}</h2>{items.length ? <ul className="divide-y">{items.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 py-3"><div><p className="font-medium">{formatBrazilianDate(item.startsAt)} · {formatTime24(item.startsAt)}–{formatTime24(item.endsAt)}</p><p className="text-xs text-muted-foreground">{item.type}</p></div><Badge>{formatStatusLabel(item.status)}</Badge></li>)}</ul> : <p className="py-6 text-sm text-muted-foreground">{empty}</p>}</Card>; }
 

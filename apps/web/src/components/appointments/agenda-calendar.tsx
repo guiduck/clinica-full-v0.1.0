@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { syncUpcomingAppointmentsAction } from "@/actions/integrations";
+import { getClinicalSessionContextAction } from "@/actions/clinical";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Ban,
@@ -28,6 +29,8 @@ import {
   type AppointmentActionState,
 } from "@/actions/appointments";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
+import { useAppointmentComposer } from "@/components/appointmentComposer";
+import { DatePickerInput } from "@/components/datePicker";
 import { keepOrAdvanceAppointmentEnd } from "@/components/appointments/appointment-time-options";
 import {
   agendaDateKey,
@@ -41,6 +44,7 @@ import {
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -72,7 +76,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
-import { maskBrazilianDate } from "@/utils/masks";
 import { brazilianAppointmentDateTime } from "@/utils/appointment-datetime";
 import {
   formatBrazilianDate,
@@ -96,6 +99,10 @@ type AppointmentView = {
   videoUrl: string | null;
   sessionStartedAt: string | null;
   sessionEndedAt: string | null;
+};
+type ClinicalSessionContext = {
+  anamnesis: Record<string, Record<string, string> | undefined>;
+  evolutions: Array<{ id: string; occurredAt: string; mood: number; free: string; assessment: string }>;
 };
 const initialAction: AppointmentActionState = { ok: false, message: "" };
 const unavailable = {
@@ -128,13 +135,13 @@ export function AgendaCalendar({
   googleCalendarConnected?: boolean;
 }) {
   const router = useRouter();
+  const { openAppointmentComposer } = useAppointmentComposer();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [view, setView] = React.useState<AgendaView>(initialView);
   const [referenceDate, setReferenceDate] = React.useState(() =>
     initialDate ? new Date(`${initialDate}T12:00:00`) : new Date(),
   );
-  const [newOpen, setNewOpen] = React.useState(initialOpen === "1");
   const [editing, setEditing] = React.useState<AppointmentView | null>(null);
   const [blockOpen, setBlockOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<AppointmentView | null>(
@@ -142,6 +149,9 @@ export function AgendaCalendar({
   );
   const [session, setSession] = React.useState<AppointmentView | null>(null);
   const [syncPending, startSync] = React.useTransition();
+  React.useEffect(() => {
+    if (initialOpen === "1") openAppointmentComposer({ patientId: defaultPatientId });
+  }, [defaultPatientId, initialOpen, openAppointmentComposer]);
   const syncCalendar = () => startSync(async () => {
     const result = await syncUpcomingAppointmentsAction();
     if (!result.ok) { toast.error(result.message); return; }
@@ -184,7 +194,7 @@ export function AgendaCalendar({
             <Ban className="size-4" />
             Bloquear horário
           </Button>
-          <Button onClick={() => setNewOpen(true)}>
+          <Button onClick={() => openAppointmentComposer()}>
             <Plus className="size-4" />
             Novo agendamento
           </Button>
@@ -251,13 +261,6 @@ export function AgendaCalendar({
           />
         )}
       </section>
-      <NewAppointmentDialog
-        open={newOpen}
-        onOpenChange={setNewOpen}
-        patients={patients}
-        defaultPatientId={defaultPatientId}
-        whatsappConfigured={whatsappConfigured}
-      />
       {editing && (
         <NewAppointmentDialog
           key={editing.id}
@@ -542,14 +545,11 @@ function NewAppointmentDialog({
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <Label htmlFor="appointment-date">Data</Label>
-              <Input
+              <DatePickerInput
                 id="appointment-date"
-                className="mt-1.5"
-                inputMode="numeric"
                 value={date}
-                onChange={(event) =>
-                  setDate(maskBrazilianDate(event.target.value))
-                }
+                onValueChange={setDate}
+                aria-label="Data da consulta"
               />
             </div>
             <AppointmentTimeSelect
@@ -751,11 +751,28 @@ function SessionDialog({
   const [paused, setPaused] = React.useState(false);
   const [mood, setMood] = React.useState([5]);
   const [free, setFree] = React.useState("");
+  const [subjective, setSubjective] = React.useState("");
+  const [objective, setObjective] = React.useState("");
+  const [assessment, setAssessment] = React.useState("");
+  const [plan, setPlan] = React.useState("");
+  const [clinicalContext, setClinicalContext] = React.useState<ClinicalSessionContext | null>(null);
+  const [contextPending, startContextTransition] = React.useTransition();
   const [feedback, setFeedback] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const discard = useDiscardConfirmation(
-    free.trim().length > 0 || mood[0] !== 5,
+    [free, subjective, objective, assessment, plan].some((value) => value.trim().length > 0) || mood[0] !== 5,
   );
+  React.useEffect(() => {
+    if (!appointment) return;
+    startContextTransition(async () => {
+      const result = await getClinicalSessionContextAction(appointment.patientId);
+      if (result.ok) {
+        setClinicalContext(result.data as ClinicalSessionContext);
+        return;
+      }
+      setFeedback(result.message);
+    });
+  }, [appointment]);
   React.useEffect(() => {
     if (!appointment || paused) return;
     const timer = window.setInterval(
@@ -770,6 +787,11 @@ function SessionDialog({
       setPaused(false);
       setMood([5]);
       setFree("");
+      setSubjective("");
+      setObjective("");
+      setAssessment("");
+      setPlan("");
+      setClinicalContext(null);
       setFeedback(null);
     }
   }, [appointment]);
@@ -778,24 +800,25 @@ function SessionDialog({
     setPaused(false);
     setMood([5]);
     setFree("");
+    setSubjective("");
+    setObjective("");
+    setAssessment("");
+    setPlan("");
+    setClinicalContext(null);
     onOpenChange(false);
   }, [onOpenChange]);
   const requestClose = () => discard.requestDiscard(close);
   const finish = () => {
     if (!appointment) return;
     setFeedback(null);
-    const now = new Date();
     startTransition(async () => {
       const result = await finishAppointmentSessionAction(appointment.id, {
-        appointmentId: appointment.id,
-        date: formatBrazilianDate(now),
-        time: formatTime24(now),
         mood: mood[0],
         free,
-        subjective: "",
-        objective: "",
-        assessment: "",
-        plan: "",
+        subjective,
+        objective,
+        assessment,
+        plan,
       });
       if (!result.ok) {
         setFeedback(result.message);
@@ -838,15 +861,22 @@ function SessionDialog({
                 )}
                 {paused ? "Retomar" : "Pausar"}
               </Button>
-              <Button onClick={finish} disabled={pending || !free.trim()}>
+              <Button onClick={finish} disabled={pending}>
                 {pending ? "Finalizando..." : "Finalizar sessão"}
               </Button>
             </div>
           </div>
           <div className="max-h-[calc(100dvh-12rem)] space-y-5 overflow-y-auto p-6">
-            <div className="rounded-lg border p-4 text-sm">
-              Resumo da anamnese <span className="float-right">⌄</span>
-            </div>
+            <Accordion type="multiple" className="space-y-3">
+              <AccordionItem value="anamnesis" className="rounded-lg border px-4">
+                <AccordionTrigger className="hover:no-underline">Resumo da anamnese</AccordionTrigger>
+                <AccordionContent>
+                  {contextPending && <p className="text-muted-foreground">Carregando prontuário...</p>}
+                  {!contextPending && clinicalContext && <ClinicalAnamnesisSummary anamnesis={clinicalContext.anamnesis} />}
+                  {!contextPending && !clinicalContext && <p className="text-muted-foreground">Nenhuma anamnese disponível.</p>}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             <div>
               <h3 className="mb-4 font-semibold">Nova evolução</h3>
               <Label>Humor relatado: {mood[0]}/10</Label>
@@ -870,13 +900,23 @@ function SessionDialog({
                 placeholder="Anote livremente o que aconteceu na sessão..."
               />
             </div>
-            <div className="rounded-lg border p-4 text-sm">
-              Registro estruturado (SOAP) — opcional{" "}
-              <span className="float-right">⌄</span>
-            </div>
-            <div className="rounded-lg border p-4 text-sm">
-              Histórico de evoluções (0) <span className="float-right">⌄</span>
-            </div>
+            <Accordion type="multiple" className="space-y-3">
+              <AccordionItem value="soap" className="rounded-lg border px-4">
+                <AccordionTrigger className="hover:no-underline">Registro estruturado (SOAP) — opcional</AccordionTrigger>
+                <AccordionContent className="space-y-3">
+                  <ClinicalTextArea id="session-subjective" label="Subjetivo" value={subjective} onValueChange={setSubjective} />
+                  <ClinicalTextArea id="session-objective" label="Objetivo" value={objective} onValueChange={setObjective} />
+                  <ClinicalTextArea id="session-assessment" label="Avaliação" value={assessment} onValueChange={setAssessment} />
+                  <ClinicalTextArea id="session-plan" label="Plano" value={plan} onValueChange={setPlan} />
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="history" className="rounded-lg border px-4">
+                <AccordionTrigger className="hover:no-underline">Histórico de evoluções ({clinicalContext?.evolutions.length ?? 0})</AccordionTrigger>
+                <AccordionContent className="space-y-3">
+                  {clinicalContext?.evolutions.length ? clinicalContext.evolutions.map((evolution) => <div key={evolution.id} className="rounded-md bg-muted/40 p-3"><p className="text-xs text-muted-foreground">{formatBrazilianDate(evolution.occurredAt)} · Humor {evolution.mood}/10</p><p className="mt-1 whitespace-pre-wrap">{evolution.free || evolution.assessment || "Registro SOAP"}</p></div>) : <p className="text-muted-foreground">Nenhuma evolução anterior.</p>}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </DialogContent>
       </Dialog>
@@ -887,6 +927,14 @@ function SessionDialog({
       />
     </>
   );
+}
+function ClinicalTextArea({ id, label, value, onValueChange }: { id: string; label: string; value: string; onValueChange: (value: string) => void }) {
+  return <div><Label htmlFor={id}>{label}</Label><Textarea id={id} className="mt-1.5" value={value} onChange={(event) => onValueChange(event.target.value)} /></div>;
+}
+function ClinicalAnamnesisSummary({ anamnesis }: { anamnesis: Record<string, Record<string, string> | undefined> }) {
+  const values = Object.values(anamnesis).flatMap((section) => Object.values(section ?? {})).filter((value) => value.trim());
+  if (!values.length) return <p className="text-muted-foreground">A anamnese ainda não possui conteúdo preenchido.</p>;
+  return <ul className="space-y-2">{values.map((value, index) => <li key={`${index}-${value.slice(0, 16)}`} className="rounded-md bg-muted/40 p-3 whitespace-pre-wrap">{value}</li>)}</ul>;
 }
 function Detail({ label, value }: { label: string; value: string }) {
   return (

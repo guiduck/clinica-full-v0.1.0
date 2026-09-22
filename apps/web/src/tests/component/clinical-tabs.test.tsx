@@ -11,6 +11,7 @@ const actionMocks = vi.hoisted(() => ({
   saveEvolution: vi.fn(),
   startSession: vi.fn(),
   finishSession: vi.fn(),
+  getSessionContext: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -26,9 +27,11 @@ vi.mock("@/actions/appointments", () => ({
 vi.mock("@/actions/clinical", () => ({
   saveAnamnesisAction: actionMocks.saveAnamnesis,
   saveEvolutionAction: actionMocks.saveEvolution,
+  getClinicalSessionContextAction: actionMocks.getSessionContext,
 }));
 
 afterEach(() => vi.useRealTimers());
+const clinicalAppointments = [{ id: "appointment-1", startsAt: "2026-09-01T09:00:00-03:00", type: "Sessão individual", status: "agendada" }];
 
 describe("clinical tabs", () => {
   it("updates anamnesis progress and persists the encrypted record", async () => {
@@ -45,11 +48,8 @@ describe("clinical tabs", () => {
   });
 
   it("validates clinical drafts before opening the unavailable notice", () => {
-    render(<PatientClinicalRecordTab patientId="patient-1" />);
+    render(<PatientClinicalRecordTab patientId="patient-1" appointments={clinicalAppointments} />);
     fireEvent.click(screen.getByRole("button", { name: "Nova evolução" }));
-    fireEvent.change(screen.getByLabelText("Data"), {
-      target: { value: "31/02/2026" },
-    });
     fireEvent.change(screen.getByLabelText("Registro livre"), {
       target: { value: "Registro clínico" },
     });
@@ -66,10 +66,16 @@ describe("clinical tabs", () => {
     actionMocks.saveEvolution.mockResolvedValue({
       ok: true,
       message: "Evolução salva com criptografia.",
-      data: { id: "evolution-1", appointmentId: null, occurredAt: new Date().toISOString(), mood: 5, free: "Registro clínico", subjective: "", objective: "", assessment: "", plan: "" },
+      data: { id: "evolution-1", appointmentId: "appointment-1", occurredAt: new Date().toISOString(), mood: 5, free: "Registro clínico", subjective: "", objective: "", assessment: "", plan: "" },
     });
-    render(<PatientClinicalRecordTab patientId="patient-1" />);
+    render(<PatientClinicalRecordTab patientId="patient-1" appointments={clinicalAppointments} />);
     fireEvent.click(screen.getByRole("button", { name: "Nova evolução" }));
+    const appointmentSelect = screen.getByRole("combobox", {
+      name: "Consulta relacionada",
+    });
+    appointmentSelect.focus();
+    fireEvent.keyDown(appointmentSelect, { key: "ArrowDown" });
+    fireEvent.click(screen.getByRole("option", { name: /01\/09\/2026/ }));
     fireEvent.change(screen.getByLabelText("Registro livre"), {
       target: { value: "Registro clínico" },
     });
@@ -82,6 +88,7 @@ describe("clinical tabs", () => {
     vi.useFakeTimers();
     actionMocks.startSession.mockResolvedValue({ ok: true, message: "Sessão iniciada." });
     actionMocks.finishSession.mockResolvedValue({ ok: true, message: "Sessão finalizada." });
+    actionMocks.getSessionContext.mockResolvedValue({ ok: true, data: { anamnesis: {}, evolutions: [] } });
     render(
       <AgendaCalendar
         patients={[]}
@@ -116,5 +123,41 @@ describe("clinical tabs", () => {
     fireEvent.change(screen.getByLabelText("Registro livre"), { target: { value: "Sessão concluída" } });
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Finalizar sessão" })));
     expect(actionMocks.finishSession).toHaveBeenCalledWith("appointment-1", expect.objectContaining({ free: "Sessão concluída" }));
+  });
+
+  it("allows an early finish without forcing an empty evolution", async () => {
+    actionMocks.startSession.mockResolvedValue({ ok: true, message: "Sessão iniciada." });
+    actionMocks.finishSession.mockResolvedValue({ ok: true, message: "Sessão finalizada sem evolução." });
+    actionMocks.getSessionContext.mockResolvedValue({ ok: true, data: { anamnesis: {}, evolutions: [] } });
+    render(
+      <AgendaCalendar
+        patients={[]}
+        initialView="dia"
+        initialDate="2026-09-01"
+        appointments={[
+          {
+            id: "appointment-2",
+            patientId: "patient-1",
+            patientName: "Ana Teste",
+            startsAt: "2026-09-01T10:00:00",
+            endsAt: "2026-09-01T10:50:00",
+            status: "agendada",
+            type: "Sessão individual",
+            videoUrl: null,
+            sessionStartedAt: null,
+            sessionEndedAt: null,
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Ana Teste/ }));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Iniciar sessão" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Finalizar sessão" })));
+
+    expect(actionMocks.finishSession).toHaveBeenCalledWith(
+      "appointment-2",
+      expect.objectContaining({ free: "", subjective: "", objective: "", assessment: "", plan: "" }),
+    );
   });
 });

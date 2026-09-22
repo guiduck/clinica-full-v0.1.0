@@ -15,6 +15,12 @@ export type AppShellProps = Readonly<{
   children: React.ReactNode;
   userName: string;
   shell: AppShellView;
+  appointmentPatients: ReadonlyArray<{
+    id: string;
+    name: string;
+    hasCompleteFinancialProfile: boolean;
+  }>;
+  whatsappConfigured: boolean;
   initialStep: number;
   initiallyOpen: boolean;
 }>;

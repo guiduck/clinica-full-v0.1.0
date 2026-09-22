@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, CreditCard, Save, Wallet } from "lucide-react";
 import { createPatientWizardAction } from "@/actions/patients";
+import { useAppointmentComposer } from "@/components/appointmentComposer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,6 +90,7 @@ export function PatientWizard({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const { openAppointmentComposer } = useAppointmentComposer();
   const [step, setStep] = React.useState<1 | 2>(1);
   const [draft, setDraft] = React.useState(INITIAL);
   const [billing, setBilling] = React.useState<"avulso" | "plano">("avulso");
@@ -103,6 +105,7 @@ export function PatientWizard({
   const [created, setCreated] = React.useState<{
     id: string;
     name: string;
+    welcomeMessage?: string;
   } | null>(null);
 
   const update = <K extends keyof PatientDraft>(
@@ -157,6 +160,7 @@ export function PatientWizard({
       }
       if (draft.whatsappConsent) patientData.set("whatsappConsent", "on");
       if (draft.emailConsent) patientData.set("emailConsent", "on");
+      if (welcome && draft.emailConsent && draft.email) patientData.set("sendWelcomeEmail", "on");
       patientData.set("preferredPaymentMethod", method);
       patientData.set(
         "defaultSessionPrice",
@@ -168,7 +172,7 @@ export function PatientWizard({
       }
       const result = await createPatientWizardAction(patientData);
       if (!result.ok) return setError(result.message);
-      setCreated({ id: result.patientId, name: result.patientName });
+      setCreated({ id: result.patientId, name: result.patientName, welcomeMessage: result.welcomeMessage });
       router.refresh();
     });
   };
@@ -186,7 +190,19 @@ export function PatientWizard({
   ) => {
     event.preventDefault();
     if (!created) return;
-    router.push(`/agenda?new=1&patientId=${encodeURIComponent(created.id)}`);
+    const patientId = created.id;
+    const patientName = created.name;
+    setCreated(null);
+    setStep(1);
+    setDraft(INITIAL);
+    setPrice("");
+    setPixKey("");
+    setError("");
+    onOpenChange(false);
+    window.setTimeout(
+      () => openAppointmentComposer({ patientId, patientName }),
+      0,
+    );
   };
   return (
     <>
@@ -427,6 +443,7 @@ export function PatientWizard({
                   <label className="flex items-start gap-2">
                     <Checkbox
                       checked={welcome}
+                      disabled={!draft.emailConsent || !draft.email}
                       onCheckedChange={(value) => setWelcome(value === true)}
                     />
                     <span>
@@ -434,8 +451,8 @@ export function PatientWizard({
                         Enviar mensagem de boas-vindas ao paciente
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        A mensagem só será enviada quando o serviço de mensagens
-                        estiver conectado.
+                        Enviaremos agora por e-mail quando houver consentimento e
+                        o provedor estiver configurado.
                       </span>
                     </span>
                   </label>
@@ -506,7 +523,7 @@ export function PatientWizard({
             <AlertDialogTitle>Paciente cadastrado com sucesso</AlertDialogTitle>
             <AlertDialogDescription>
               {created?.name} foi adicionado. Deseja já criar um agendamento
-              para este paciente?
+              para este paciente?{created?.welcomeMessage ? ` ${created.welcomeMessage}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

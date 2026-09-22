@@ -65,9 +65,7 @@ describe("PatientProfileView", () => {
     expect(screen.getByText("Nenhum endereço cadastrado.")).toBeInTheDocument();
 
     selectTab("Agenda");
-    expect(
-      screen.getByRole("link", { name: "Agendar sessão" }),
-    ).toHaveAttribute("href", "/agenda?new=1&patientId=patient-legacy");
+    expect(screen.getByRole("button", { name: "Agendar sessão" })).toBeEnabled();
 
     selectTab("Financeiro");
     expect(

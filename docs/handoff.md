@@ -1,5 +1,47 @@
 # Handoff
 
+## Atualização de 2026-09-22 — agenda modular, recorrência e clínica por consulta
+
+Implementado neste workspace, ainda não publicado:
+- calendário pt-BR reutilizável para data e compositor global de agendamento
+  aberto no Dashboard, Agenda, perfil do paciente e pós-cadastro;
+- recorrência semanal de 2 a 52 consultas, com grupo/posição persistidos,
+  validação de conflitos e uma receita prevista por ocorrência na mesma transação;
+- e-mail real de boas-vindas após o cadastro, condicionado a endereço e
+  consentimento, sem rollback do paciente se o provider falhar;
+- evolução manual vinculada obrigatoriamente a uma consulta e datada por ela;
+- sessão com Anamnese, SOAP e histórico funcionais, encerramento antecipado e
+  autosave da evolução quando houver conteúdo; sessão vazia pode ser finalizada;
+- orientação visual com callback e escopo exatos da integração Google Agenda.
+
+Migration nova: `20260922000100_appointment_recurrence`. Após o deploy, o banco
+deve mostrar sete migrations aplicadas. Validação local aprovada: Prisma schema,
+lint, typecheck, 59 arquivos/176 testes Vitest, build com 29 rotas e
+`git diff --check`. Não houve smoke de navegador nem deploy nesta rodada.
+
+Bloqueios/configuração de produção:
+- `SENSITIVE_DATA_ENCRYPTION_KEY` deve decodificar em exatamente 32 bytes; o
+  formato operacional recomendado é 64 caracteres hexadecimais gerados por
+  `openssl rand -hex 32`. Antes de trocar, contar Anamneses, Evoluções e conexões
+  Google cifradas. Se houver dado clínico, recuperar a chave original; trocar a
+  chave torna os registros existentes irrecuperáveis. Depois de editar `.env`,
+  recriar o container web, pois apenas reiniciá-lo não recarrega o ambiente;
+- no OAuth Client do Google, adicionar exatamente
+  `https://clinica-full.gfig.space/api/integrations/google-calendar/callback` e
+  `http://localhost:3000/api/integrations/google-calendar/callback`; manter os
+  callbacks de login existentes, habilitar Google Calendar API e adicionar
+  `https://www.googleapis.com/auth/calendar.events` em Acesso a dados;
+- configurar Resend/SendGrid e remetente verificado para que boas-vindas sejam
+  entregues; o cadastro continua válido quando o provider rejeita o envio.
+
+Arquitetura futura de mensagens: usar primeiro uma outbox/fila durável no
+PostgreSQL, criada na mesma transação do evento de domínio, e um worker Docker
+separado com lease, `FOR UPDATE SKIP LOCKED`, idempotência, retry exponencial e
+dead-letter. Escalar adicionando réplicas do worker. Migrar o transporte para
+Redis/BullMQ ou fila gerenciada somente quando throughput/latência medidos
+justificarem; manter a outbox como fonte de verdade. Brief pronto em
+`docs/next-spec-reliable-message-queue.md`.
+
 ## Atualização de 2026-09-19 — correções locais após smoke visual
 
 Implementado neste workspace, ainda não publicado:

@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/lib/errors/domain-errors";
 import { encryptSensitiveValue } from "@/lib/security/encryption";
-import { parseBrazilianDate } from "@/utils/normalizers";
-import type { EvolutionDraft } from "@/utils/validators/clinical-drafts";
+import type { SessionFinishDraft } from "@/utils/validators/clinical-drafts";
 
 export async function listAppointments(userId: string) {
   return prisma.appointment.findMany({
@@ -71,43 +70,43 @@ export async function startAppointmentSession(userId: string, appointmentId: str
 export async function finishAppointmentSession(
   userId: string,
   appointmentId: string,
-  draft: EvolutionDraft,
+  draft: SessionFinishDraft,
 ) {
   const appointment = await prisma.appointment.findFirst({
     where: { id: appointmentId, userId },
-    select: { id: true, patientId: true, sessionStartedAt: true },
+    select: { id: true, patientId: true, sessionStartedAt: true, startsAt: true },
   });
 
   if (!appointment) {
     throw new DomainError("NOT_FOUND", "Consulta não encontrada.");
   }
 
-  const date = parseBrazilianDate(draft.date);
-  if (!date) throw new DomainError("VALIDATION", "Informe uma data válida.");
-  const isoDate = date.toISOString().slice(0, 10);
-  const occurredAt = new Date(`${isoDate}T${draft.time}:00-03:00`);
-  const encryptedPayload = encryptSensitiveValue({
+  const hasClinicalContent = [draft.free, draft.subjective, draft.objective, draft.assessment, draft.plan]
+    .some((value) => value.trim().length > 0);
+  const encryptedPayload = hasClinicalContent ? encryptSensitiveValue({
     free: draft.free,
     subjective: draft.subjective,
     objective: draft.objective,
     assessment: draft.assessment,
     plan: draft.plan,
-  });
+  }) : null;
   const endedAt = new Date();
 
   return prisma.$transaction(async (tx) => {
-    const evolution = await tx.clinicalEvolution.upsert({
-      where: { appointmentId },
-      update: { occurredAt, mood: draft.mood, encryptedPayload },
-      create: {
-        userId,
-        patientId: appointment.patientId,
-        appointmentId,
-        occurredAt,
-        mood: draft.mood,
-        encryptedPayload,
-      },
-    });
+    const evolution = encryptedPayload
+      ? await tx.clinicalEvolution.upsert({
+          where: { appointmentId },
+          update: { occurredAt: appointment.startsAt, mood: draft.mood, encryptedPayload },
+          create: {
+            userId,
+            patientId: appointment.patientId,
+            appointmentId,
+            occurredAt: appointment.startsAt,
+            mood: draft.mood,
+            encryptedPayload,
+          },
+        })
+      : null;
     await tx.appointment.update({
       where: { id: appointmentId },
       data: {

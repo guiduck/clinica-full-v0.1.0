@@ -10,7 +10,7 @@ import {
   startAppointmentSession,
 } from "@/services/appointments/appointments";
 import { appointmentSchema } from "@/utils/validators/appointment";
-import { evolutionDraftSchema } from "@/utils/validators/clinical-drafts";
+import { sessionFinishDraftSchema } from "@/utils/validators/clinical-drafts";
 
 export type AppointmentActionState = {
   ok: boolean;
@@ -45,21 +45,22 @@ export async function createAppointmentAction(
     revalidatePath("/financeiro/previsibilidade");
     revalidatePath(`/pacientes/${parsed.data.patientId}`);
 
+    const countMessage = result.createdCount > 1 ? `${result.createdCount} consultas semanais criadas.` : "Consulta criada.";
     const calendarMessage = result.calendarSynced
-      ? " Google Agenda sincronizado."
-      : " Google Agenda não sincronizado; conecte ou verifique a integração em Configurações → Segurança.";
+      ? ` ${result.createdCount > 1 ? "Todas foram sincronizadas" : "Google Agenda sincronizado"}.`
+      : ` Google Agenda: ${result.calendarSyncedCount} de ${result.createdCount} sincronizada(s); conecte ou use “Sincronizar consultas pendentes”.`;
 
     if (!result.notificationScheduled) {
       return {
         ok: true,
         message:
-          `Consulta criada. O WhatsApp não está configurado, então não haverá confirmação nem lembretes automáticos.${calendarMessage}`,
+          `${countMessage} O WhatsApp não está configurado, então não haverá confirmação nem lembretes automáticos.${calendarMessage}`,
       };
     }
 
     return {
       ok: true,
-      message: `Consulta criada e confirmação enviada para processamento.${calendarMessage}`,
+      message: `${countMessage} Confirmação da primeira consulta enviada para processamento.${calendarMessage}`,
     };
   } catch (error) {
     return {
@@ -121,7 +122,7 @@ export async function finishAppointmentSessionAction(
   input: unknown,
 ) {
   const user = await requireUser();
-  const parsed = evolutionDraftSchema.safeParse(input);
+  const parsed = sessionFinishDraftSchema.safeParse(input);
   if (!parsed.success) {
     return {
       ok: false as const,
@@ -136,7 +137,9 @@ export async function finishAppointmentSessionAction(
     revalidatePath("/financeiro");
     return {
       ok: true as const,
-      message: "Sessão finalizada e evolução salva com segurança.",
+      message: result.evolution
+        ? "Sessão finalizada e evolução salva com segurança."
+        : "Sessão finalizada sem evolução clínica.",
     };
   } catch (error) {
     return {

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PatientWizard } from "@/components/patients/patient-wizard";
+import { AppointmentComposerProvider } from "@/components/appointmentComposer";
 
 const pushMock = vi.hoisted(() => vi.fn());
 const refreshMock = vi.hoisted(() => vi.fn());
@@ -15,13 +16,13 @@ vi.mock("@/actions/patients", () => ({
 }));
 
 describe("PatientWizard navigation", () => {
-  it("opens Agenda with the newly created patient instead of racing back to the list", async () => {
+  it("opens the shared appointment modal with the newly created patient", async () => {
     createPatientMock.mockResolvedValue({
       ok: true,
       patientId: "patient-created",
       patientName: "Ana Teste",
     });
-    render(<PatientWizard open onOpenChange={vi.fn()} />);
+    render(<AppointmentComposerProvider patients={[]} whatsappConfigured={false}><PatientWizard open onOpenChange={vi.fn()} /></AppointmentComposerProvider>);
 
     fireEvent.change(screen.getByLabelText("Nome completo *"), {
       target: { value: "Ana Teste" },
@@ -64,10 +65,8 @@ describe("PatientWizard navigation", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sim, agendar" }));
 
-    await waitFor(() =>
-      expect(pushMock).toHaveBeenCalledWith(
-        "/agenda?new=1&patientId=patient-created",
-      ),
-    );
-  });
+    expect(await screen.findByRole("dialog", { name: "Novo agendamento" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Paciente" })).toHaveTextContent("Ana Teste");
+    expect(pushMock).not.toHaveBeenCalled();
+  }, 15_000);
 });

@@ -6,6 +6,7 @@ export const appointmentSchema = z
     patientId: z.string().trim().min(1, "Selecione um paciente."),
     startsAt: z.string().trim().min(1, "Informe o inicio da consulta."),
     endsAt: z.string().trim().min(1, "Informe o fim da consulta."),
+    recurrenceCount: z.coerce.number().int().min(1).max(52).default(1),
     type: z.string().trim().min(1, "Informe o tipo da consulta.").max(80).default("Consulta"),
     videoUrl: z
       .string()

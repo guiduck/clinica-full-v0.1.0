@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/lib/errors/domain-errors";
 import { decryptSensitiveValue, encryptSensitiveValue } from "@/lib/security/encryption";
-import { parseBrazilianDate } from "@/utils/normalizers";
 import type { AnamneseDraft, EvolutionDraft } from "@/utils/validators/clinical-drafts";
 
 type EvolutionPayload = Pick<EvolutionDraft, "free" | "subjective" | "objective" | "assessment" | "plan">;
@@ -40,29 +39,25 @@ export async function saveAnamnesis(userId: string, patientId: string, draft: An
 
 export async function saveClinicalEvolution(userId: string, patientId: string, draft: EvolutionDraft) {
   await assertPatientOwner(userId, patientId);
-  if (draft.appointmentId) {
-    const appointment = await prisma.appointment.findFirst({ where: { id: draft.appointmentId, userId, patientId }, select: { id: true } });
-    if (!appointment) throw new DomainError("NOT_FOUND", "A consulta vinculada não foi encontrada.");
-  }
-  const date = parseBrazilianDate(draft.date);
-  if (!date) throw new DomainError("VALIDATION", "Informe uma data válida.");
-  const isoDate = date.toISOString().slice(0, 10);
-  const occurredAt = new Date(`${isoDate}T${draft.time}:00-03:00`);
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: draft.appointmentId, userId, patientId },
+    select: { id: true, startsAt: true },
+  });
+  if (!appointment) throw new DomainError("NOT_FOUND", "A consulta vinculada não foi encontrada.");
+  const occurredAt = appointment.startsAt;
   const payload: EvolutionPayload = { free: draft.free, subjective: draft.subjective, objective: draft.objective, assessment: draft.assessment, plan: draft.plan };
   const data = {
     userId,
     patientId,
-    appointmentId: draft.appointmentId ?? null,
+    appointmentId: draft.appointmentId,
     occurredAt,
     mood: draft.mood,
     encryptedPayload: encryptSensitiveValue(payload),
   };
-  const saved = draft.appointmentId
-    ? await prisma.clinicalEvolution.upsert({
-        where: { appointmentId: draft.appointmentId },
-        update: { occurredAt, mood: draft.mood, encryptedPayload: data.encryptedPayload },
-        create: data,
-      })
-    : await prisma.clinicalEvolution.create({ data });
+  const saved = await prisma.clinicalEvolution.upsert({
+    where: { appointmentId: draft.appointmentId },
+    update: { occurredAt, mood: draft.mood, encryptedPayload: data.encryptedPayload },
+    create: data,
+  });
   return { id: saved.id, appointmentId: saved.appointmentId, occurredAt: saved.occurredAt.toISOString(), mood: saved.mood, ...payload };
 }

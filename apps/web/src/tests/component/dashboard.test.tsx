@@ -62,9 +62,7 @@ describe("DashboardView", () => {
       "href",
       "/pacientes?new=1",
     );
-    expect(
-      screen.getAllByRole("link", { name: /Novo agendamento/ })[0],
-    ).toHaveAttribute("href", "/agenda?new=1");
+    expect(screen.getAllByRole("button", { name: /Novo agendamento/ }).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Ocultar valores" }));
     expect(screen.getByText(/Valores ocultos/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Fechar novidade" }));

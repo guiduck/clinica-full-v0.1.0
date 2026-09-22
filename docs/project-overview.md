@@ -1,5 +1,33 @@
 # Overview do Projeto e Plano de MVP
 
+## Agendamento reutilizável, recorrência e prontuário por consulta — 2026-09-22
+
+O frontend agora possui um compositor global de agendamento: Dashboard, Agenda,
+perfil do paciente e pós-cadastro abrem o mesmo modal no contexto atual, sem
+redirecionar para outra página. A data é escolhida por calendário em português,
+mantendo `dd/mm/aaaa` como valor visível. O fluxo aceita recorrência semanal de
+2 a 52 consultas e cria cada consulta e sua receita prevista na mesma transação.
+
+A evolução manual exige uma consulta pertencente ao paciente e usa a data/hora
+canônica dessa consulta. O workspace de sessão carrega Anamnese, SOAP e histórico
+em accordions funcionais, permite encerramento antecipado e salva a evolução
+automaticamente quando houver conteúdo; uma sessão vazia ainda pode ser
+finalizada sem criar registro clínico vazio. A Anamnese continua aceitando campos
+opcionais em branco.
+
+O checkbox de boas-vindas do cadastro passou a enviar e-mail real, respeitando
+endereço e consentimento. A falha do provedor não desfaz o paciente já salvo.
+A conexão com Google Agenda usa o callback separado
+`/api/integrations/google-calendar/callback`; o Console Google precisa autorizar
+essa URI, habilitar a Calendar API e conceder o escopo `calendar.events`.
+
+Mensagens ainda são chamadas diretamente pelos fluxos atuais. Antes de habilitar
+lembretes, reengajamento e mensagens agendadas em escala, o próximo slice de
+infraestrutura deve adicionar outbox/fila durável no PostgreSQL e um worker
+separado, conforme `docs/next-spec-reliable-message-queue.md`. Redis/BullMQ ou
+fila gerenciada fica como evolução orientada por métricas, não como dependência
+prematura.
+
 ## Correções operacionais locais — 2026-09-19
 
 A Agenda agora usa offset explícito `-03:00` ao receber horário brasileiro e
@@ -41,7 +69,7 @@ recuperação duram 15 minutos, admitem 5 tentativas, ficam apenas como hash no 
 e encerram as sessões existentes quando a senha é alterada.
 
 Ainda fora do núcleo real: documentos/uploads, assinatura, recibo PDF, edição e
-arquivamento de paciente, cancelamento de consulta, recorrência/horário fixo e
+arquivamento de paciente, cancelamento de consulta e horário fixo configurável e
 hardening clínico de versionamento/auditoria/retenção. Esses limites não devem
 reportar sucesso falso.
 

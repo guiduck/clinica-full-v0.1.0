@@ -102,11 +102,13 @@ export function SettingsPage({
   userEmail,
   professional = { cpf: null, specialty: null, council: null },
   googleCalendar = { connected: false, email: null, updatedAt: null },
+  googleCalendarCallbackUri = "",
 }: {
   userName: string;
   userEmail: string;
   professional?: { cpf: string | null; specialty: string | null; council: string | null };
   googleCalendar?: { connected: boolean; email: string | null; updatedAt: string | null };
+  googleCalendarCallbackUri?: string;
 }) {
   const params = useSearchParams();
   const router = useRouter();
@@ -420,7 +422,7 @@ export function SettingsPage({
           <MessagesManager />
         </TabsContent>
         <TabsContent value="seguranca" className="mt-6">
-          <SecuritySettings googleCalendar={googleCalendar} />
+          <SecuritySettings googleCalendar={googleCalendar} callbackUri={googleCalendarCallbackUri} />
         </TabsContent>
       </Tabs>
       <CapabilityNotice
@@ -724,12 +726,12 @@ function MessagesManager() {
     </>
   );
 }
-function SecuritySettings({ googleCalendar }: { googleCalendar: { connected: boolean; email: string | null } }) {
+function SecuritySettings({ googleCalendar, callbackUri }: { googleCalendar: { connected: boolean; email: string | null }; callbackUri: string }) {
   const [blocked, setBlocked] = React.useState(false);
   const [preferenceBlocked, setPreferenceBlocked] = React.useState(false);
   return (
     <div className="space-y-4">
-      <GoogleCalendarCard connected={googleCalendar.connected} email={googleCalendar.email} />
+      <GoogleCalendarCard connected={googleCalendar.connected} email={googleCalendar.email} callbackUri={callbackUri} />
       <Card className="p-6">
         <div className="flex gap-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-primary">

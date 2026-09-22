@@ -1,5 +1,33 @@
 # Roadmap
 
+## Checkpoint de agenda modular, recorrência e sessão clínica — 2026-09-22
+
+Status: `implementado e validado localmente; migration, configuração e smoke na VPS pendentes`.
+
+- Um `AppointmentComposerProvider` no shell tornou o modal de agendamento
+  reutilizável no Dashboard, Agenda, perfil do paciente e pós-cadastro, sem
+  navegação intermediária. O campo de data usa calendário acessível em pt-BR.
+- Recorrência semanal cria de 2 a 52 consultas com grupo/índice próprios,
+  valida conflito em todas as ocorrências e cria uma receita prevista para cada
+  uma na mesma transação. A migration
+  `20260922000100_appointment_recurrence` eleva o total do repositório para sete.
+- O cadastro envia e-mail real de boas-vindas quando há consentimento; falha do
+  provider é reportada sem desfazer o cadastro.
+- Evoluções manuais exigem vínculo com consulta. Sessões podem terminar antes do
+  horário, salvam evolução automaticamente somente quando existe conteúdo e
+  exibem Anamnese, SOAP e histórico em accordions funcionais.
+- A tela do Google Agenda agora informa o callback separado correto. Produção
+  ainda precisa autorizar
+  `https://clinica-full.gfig.space/api/integrations/google-calendar/callback`,
+  habilitar a Calendar API e adicionar o escopo `calendar.events`.
+- Gate local aprovado: schema Prisma válido, lint, typecheck, 59 arquivos/176
+  testes Vitest, build de produção com 29 rotas e `git diff --check` sem erros.
+  Permanecem apenas avisos conhecidos do Recharts no jsdom e múltiplos lockfiles.
+- Próximo passo: corrigir/confirmar a chave clínica da VPS sem destruir dados
+  cifrados, publicar e executar smoke. Depois, especificar a fila durável em
+  `docs/next-spec-reliable-message-queue.md`; documentos/recibos/assinatura
+  continuam como o próximo slice de produto após a confiabilidade operacional.
+
 ## Checkpoint corretivo de agenda e cadastro — 2026-09-19
 
 Status: `implementado e validado localmente; publicação e smoke na VPS pendentes`.
@@ -381,11 +409,14 @@ Possiveis frentes:
 - nivel de auditoria/versionamento do prontuario no primeiro corte
 
 ## Proxima acao recomendada
-Concluir primeiro o gate de produção do checkpoint de 2026-09-19, incluindo
-migration, chave clínica, smoke manual e diagnóstico do carregamento de chunks.
-O próximo slice de produto é `docs/next-spec-documentos-recibos-assinatura.md`;
-usar `/speckit.specify` após estabilizar o ambiente. Mensageria de remarcação,
-horário fixo e cancelamento continuam decisões separadas, sem sucesso simulado.
+Concluir primeiro o gate de produção do checkpoint de 2026-09-22, incluindo a
+sétima migration, chave clínica, callback/escopo do Google Agenda e smoke manual.
+Depois, executar `/speckit.specify` com
+`docs/next-spec-reliable-message-queue.md` para tornar e-mail/WhatsApp agendáveis
+e resilientes. O slice de produto
+`docs/next-spec-documentos-recibos-assinatura.md` permanece na sequência.
+Horário fixo configurável e cancelamento continuam decisões separadas, sem
+sucesso simulado.
 
 Checkpoint funcional de 2026-08-31:
 - rotas centrais do protótipo reconstruídas com shell, tour de 16 passos,

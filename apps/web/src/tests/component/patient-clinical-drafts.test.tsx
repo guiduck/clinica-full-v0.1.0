@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PatientAnamneseTab, PatientClinicalRecordTab } from "@/components/patients/patient-clinical-tabs";
 
 describe("clinical draft protection", () => {
+  const appointments = [{ id: "appointment-1", startsAt: "2026-09-01T09:00:00-03:00", type: "Sessão individual", status: "agendada" }];
   it("reports meaningful anamnesis content to the profile guard", async () => {
     const onDirtyChange = vi.fn();
     render(<PatientAnamneseTab patientId="patient-1" onDirtyChange={onDirtyChange} />);
@@ -16,7 +17,7 @@ describe("clinical draft protection", () => {
 
   it("keeps an evolution draft until discard is explicitly confirmed", async () => {
     const onDirtyChange = vi.fn();
-    render(<PatientClinicalRecordTab patientId="patient-1" onDirtyChange={onDirtyChange} />);
+    render(<PatientClinicalRecordTab patientId="patient-1" appointments={appointments} onDirtyChange={onDirtyChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Nova evolução" }));
     fireEvent.change(screen.getByLabelText("Registro livre"), {

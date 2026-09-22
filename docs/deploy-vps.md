@@ -157,6 +157,68 @@ cd apps/web
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 ```
 
+## 8. Corrigir a chave de criptografia clínica
+
+A chave aceita pelo app deve representar exatamente 32 bytes. O formato mais
+simples é uma string hexadecimal com exatamente 64 caracteres. Antes de trocar
+qualquer chave, conte os registros que dependem dela:
+
+```bash
+cd /srv/projects/clinica-full-v0.1.0/apps/web
+set -a
+. ./.env
+set +a
+docker compose -f docker-compose.prod.yml --env-file .env exec -T postgres \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c \
+  'SELECT (SELECT COUNT(*) FROM "ClinicalAnamnesis") AS anamneses, (SELECT COUNT(*) FROM "ClinicalEvolution") AS evolutions, (SELECT COUNT(*) FROM "GoogleCalendarConnection") AS google_connections;'
+```
+
+Se `anamneses` ou `evolutions` for maior que zero, não gere uma chave nova:
+recupere a chave original correta. Sem ela, o conteúdo já cifrado não pode ser
+aberto. Uma conexão Google também usa essa chave e terá de ser reconectada se a
+chave original for irrecuperável.
+
+Se não houver dados que precisem ser preservados, gere a chave sem publicá-la em
+chat, log ou Git:
+
+```bash
+openssl rand -hex 32
+nano .env
+```
+
+Cole o resultado em `SENSITIVE_DATA_ENCRYPTION_KEY`. Valide apenas o formato,
+sem imprimir o segredo:
+
+```bash
+set -a
+. ./.env
+set +a
+test ${#SENSITIVE_DATA_ENCRYPTION_KEY} -eq 64 && echo 'chave com 64 caracteres' || echo 'chave inválida'
+```
+
+Depois recrie o app para carregar o novo ambiente. `docker compose restart`
+sozinho não atualiza variáveis:
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build --force-recreate web
+docker compose -f docker-compose.prod.yml --env-file .env logs --tail=100 web
+```
+
+## 9. Autorizar o callback do Google Agenda
+
+No mesmo OAuth Client Web do Google Cloud, mantenha os callbacks de login e
+adicione também em **URIs de redirecionamento autorizados**:
+
+```text
+https://clinica-full.gfig.space/api/integrations/google-calendar/callback
+http://localhost:3000/api/integrations/google-calendar/callback
+```
+
+Em **Acesso a dados**, adicione o escopo
+`https://www.googleapis.com/auth/calendar.events` e confirme que a Google
+Calendar API está habilitada. A URI `/api/auth/callback/google` é do login e não
+substitui o callback separado da agenda.
+
 ## Submodulos, explicado de forma simples
 
 Um submodulo e um repositorio Git colocado dentro de outro repositorio Git. O
