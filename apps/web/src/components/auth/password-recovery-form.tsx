@@ -60,8 +60,9 @@ function PasswordCodeResetForm({ email, onUseAnotherEmail }: { email: string; on
   </form>;
 }
 
-export function PasswordRecoveryForm() {
-  const [requestedEmail, setRequestedEmail] = React.useState("");
+export function PasswordRecoveryForm({ initialEmail = "" }: { initialEmail?: string }) {
+  const router = useRouter();
+  const [requestedEmail, setRequestedEmail] = React.useState(initialEmail);
   const [result, setResult] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = React.useTransition();
   const { register, handleSubmit, formState: { errors } } = useForm<RecoveryValues>({
@@ -79,7 +80,7 @@ export function PasswordRecoveryForm() {
   }
 
   if (requestedEmail) {
-    return <PasswordCodeResetForm email={requestedEmail} onUseAnotherEmail={() => setRequestedEmail("")} />;
+    return <PasswordCodeResetForm email={requestedEmail} onUseAnotherEmail={() => { setRequestedEmail(""); router.replace("/recuperar-senha"); }} />;
   }
 
   return <form className="space-y-5" noValidate onSubmit={handleSubmit(onSubmit)}>

@@ -61,7 +61,7 @@ describe("PatientProfileView", () => {
   it("renders incomplete legacy identity safely and preserves contextual links", () => {
     render(<PatientProfileView patient={patient} initialTab="geral" />);
 
-    expect(screen.getAllByText("Não informado")).toHaveLength(3);
+    expect(screen.getAllByText("Não informado")).toHaveLength(4);
     expect(screen.getByText("Nenhum endereço cadastrado.")).toBeInTheDocument();
 
     selectTab("Agenda");

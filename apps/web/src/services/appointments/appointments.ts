@@ -25,10 +25,11 @@ export async function listAppointments(userId: string) {
   });
 }
 
-export async function hasAppointmentOverlap(userId: string, startsAt: Date, endsAt: Date) {
+export async function hasAppointmentOverlap(userId: string, startsAt: Date, endsAt: Date, excludeId?: string) {
   const overlap = await prisma.appointment.findFirst({
     where: {
       userId,
+      ...(excludeId ? { id: { not: excludeId } } : {}),
       startsAt: {
         lt: endsAt
       },

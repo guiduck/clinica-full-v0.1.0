@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { isValidNormalizedCpf, isValidNormalizedPhone, normalizeCpf, normalizePhone } from "@/services/patients/normalization";
+import { isValidNormalizedPhone, normalizeCpf, normalizePhone } from "@/services/patients/normalization";
+import { isValidCpf } from "@/utils/validators/brazilian-documents";
 
 export const patientSchema = z
   .object({
@@ -40,12 +41,20 @@ export const patientSchema = z
     }
 
     const cpf = normalizeCpf(value.cpf);
-    if (cpf && !isValidNormalizedCpf(cpf)) {
+    if (cpf && !isValidCpf(cpf)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Informe um CPF valido com 11 digitos.",
         path: ["cpf"]
       });
+    }
+
+    if (value.addressZipCode && value.addressZipCode.replace(/\D/g, "").length !== 8) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe um CEP válido com 8 dígitos.", path: ["addressZipCode"] });
+    }
+
+    if (value.emergencyContactPhone && ![10, 11].includes(normalizePhone(value.emergencyContactPhone).length)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe um telefone de emergência válido.", path: ["emergencyContactPhone"] });
     }
 
     if (value.birthDate) {

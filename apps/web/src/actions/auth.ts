@@ -18,7 +18,7 @@ export async function registerAndLogin(input: RegisterInput): Promise<APIRespons
     return { status: 400, error: true, errorUserMessage: parsed.error.issues[0]?.message ?? "Revise os dados informados.", data: null, headers: null };
   }
 
-  const registerResult = await registerUser({ name: parsed.data.name, email: parsed.data.email, password: parsed.data.password });
+  const registerResult = await registerUser({ name: parsed.data.name, email: parsed.data.email, cpf: parsed.data.cpf, password: parsed.data.password });
 
   if (registerResult.error) {
     return { status: registerResult.status, error: true, errorUserMessage: registerResult.errorUserMessage, headers: null, data: null };

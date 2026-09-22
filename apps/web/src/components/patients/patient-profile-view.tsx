@@ -41,6 +41,9 @@ import type { AnamneseDraft } from "@/utils/validators/clinical-drafts";
 type AppointmentView = { id: string; startsAt: string; endsAt: string; status: string; type: string };
 type PatientView = {
   id: string; name: string; phone: string; email: string | null; cpf: string | null;
+  addressZipCode?: string | null; addressStreet?: string | null; addressNumber?: string | null;
+  addressComplement?: string | null; addressCity?: string | null; addressState?: string | null;
+  emergencyContactName?: string | null; emergencyContactPhone?: string | null; emergencyContactRelationship?: string | null;
   birthDate: string | null; notes: string | null; whatsappConsent: boolean; emailConsent: boolean;
   status: string; financialComplete: boolean; defaultSessionPriceCents: number | null;
   financeEntries?: FinanceEntryView[];
@@ -94,6 +97,13 @@ export function PatientProfileView({ patient, clinicalRecord = { anamnesis: {}, 
 }
 
 function GeneralTab({ patient, onDirtyChange }: { patient: PatientView; onDirtyChange?: (dirty: boolean) => void }) {
+  const address = [
+    [patient.addressStreet, patient.addressNumber].filter(Boolean).join(", "),
+    patient.addressComplement,
+    [patient.addressCity, patient.addressState].filter(Boolean).join("/") ,
+    patient.addressZipCode,
+  ].filter(Boolean).join(" · ");
+  const emergencyContact = [patient.emergencyContactName, patient.emergencyContactRelationship, patient.emergencyContactPhone].filter(Boolean).join(" · ");
   const initialComplaint = patient.notes ?? "";
   const [complaint, setComplaint] = React.useState(initialComplaint);
   const [internalNotes, setInternalNotes] = React.useState("");
@@ -104,7 +114,7 @@ function GeneralTab({ patient, onDirtyChange }: { patient: PatientView; onDirtyC
   }, [dirty, onDirtyChange]);
   return <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
     <div className="space-y-6">
-      <Card className="p-6"><div className="mb-5 flex justify-between"><h2 className="font-semibold">Contato, identificação e endereço</h2><CapabilityNotice descriptor={unavailable} trigger={<Button variant="ghost" size="icon" aria-label="Editar paciente"><Edit3 className="size-4" /></Button>} /></div><div className="grid gap-6 sm:grid-cols-2"><div className="space-y-4"><Info icon={Mail} label="E-mail" value={patient.email ?? "Não informado"} /><Info icon={Phone} label="Telefone" value={patient.phone} /><Info icon={FileText} label="CPF" value={patient.cpf ?? "Não informado"} /><Info icon={Calendar} label="Nascimento" value={patient.birthDate ? formatBrazilianDate(patient.birthDate) : "Não informado"} /></div><div><Info icon={MapPin} label="Endereço" value="Nenhum endereço cadastrado." /></div></div></Card>
+      <Card className="p-6"><div className="mb-5 flex justify-between"><h2 className="font-semibold">Contato, identificação e endereço</h2><CapabilityNotice descriptor={unavailable} trigger={<Button variant="ghost" size="icon" aria-label="Editar paciente"><Edit3 className="size-4" /></Button>} /></div><div className="grid gap-6 sm:grid-cols-2"><div className="space-y-4"><Info icon={Mail} label="E-mail" value={patient.email ?? "Não informado"} /><Info icon={Phone} label="Telefone" value={patient.phone} /><Info icon={FileText} label="CPF" value={patient.cpf ?? "Não informado"} /><Info icon={Calendar} label="Nascimento" value={patient.birthDate ? formatBrazilianDate(patient.birthDate) : "Não informado"} /></div><div className="space-y-4"><Info icon={MapPin} label="Endereço" value={address || "Nenhum endereço cadastrado."} /><Info icon={Phone} label="Contato de emergência" value={emergencyContact || "Não informado"} /></div></div></Card>
       <Card className="p-6"><h2 className="mb-3 font-semibold">Queixa principal</h2><Textarea aria-label="Queixa principal" value={complaint} onChange={(event) => setComplaint(event.target.value)} placeholder="Motivo da busca..." /><p className="mt-2 text-xs text-muted-foreground">As alterações clínicas não são salvas nesta etapa.</p></Card>
     </div>
     <div className="space-y-6">

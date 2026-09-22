@@ -46,18 +46,29 @@ export function useOnboardingTarget({
     if (!open) return;
 
     let frame = 0;
+    let lastTarget = "";
+    let lastViewport = "";
+    let lastCardSize = "";
     const measure = () => {
-      onViewportChange({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-      onTargetChange(findVisibleTargetRect(resolvedTargetIds));
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const viewportKey = `${viewport.width}:${viewport.height}`;
+      if (viewportKey !== lastViewport) {
+        lastViewport = viewportKey;
+        onViewportChange(viewport);
+      }
+      const targetRect = findVisibleTargetRect(resolvedTargetIds);
+      const targetRectKey = JSON.stringify(targetRect);
+      if (targetRectKey !== lastTarget) {
+        lastTarget = targetRectKey;
+        onTargetChange(targetRect);
+      }
       const card = cardRef.current;
       if (card?.offsetWidth && card.offsetHeight) {
-        onCardSizeChange({
-          width: card.offsetWidth,
-          height: card.offsetHeight,
-        });
+        const cardSizeKey = `${card.offsetWidth}:${card.offsetHeight}`;
+        if (cardSizeKey !== lastCardSize) {
+          lastCardSize = cardSizeKey;
+          onCardSizeChange({ width: card.offsetWidth, height: card.offsetHeight });
+        }
       }
     };
     const scheduleMeasure = () => {
@@ -85,8 +96,12 @@ export function useOnboardingTarget({
     }
 
     measure();
+    const settleTimer = window.setTimeout(scheduleMeasure, 360);
+    const lateTimer = window.setTimeout(scheduleMeasure, 700);
     window.addEventListener("resize", scheduleMeasure);
     window.addEventListener("scroll", scheduleMeasure, true);
+    document.addEventListener("animationend", scheduleMeasure, true);
+    document.addEventListener("transitionend", scheduleMeasure, true);
 
     const resizeObserver =
       typeof ResizeObserver === "undefined"
@@ -106,10 +121,14 @@ export function useOnboardingTarget({
 
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
+      window.clearTimeout(lateTimer);
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
       window.removeEventListener("resize", scheduleMeasure);
       window.removeEventListener("scroll", scheduleMeasure, true);
+      document.removeEventListener("animationend", scheduleMeasure, true);
+      document.removeEventListener("transitionend", scheduleMeasure, true);
     };
   }, [
     cardRef,

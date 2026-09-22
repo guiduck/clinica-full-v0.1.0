@@ -12,9 +12,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/actions/appointments", () => ({
   createAppointmentAction: vi.fn(),
+  updateAppointmentAction: vi.fn(),
   startAppointmentSessionAction: vi.fn(),
   finishAppointmentSessionAction: vi.fn(),
 }));
+
+vi.mock("@/actions/integrations", () => ({ syncUpcomingAppointmentsAction: vi.fn() }));
 
 const patient = {
   id: "patient-1",
@@ -42,7 +45,7 @@ describe("AgendaCalendar", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens appointment details and blocks unsupported mutations", () => {
+  it("opens appointment details and the persisted edit form", () => {
     render(
       <AgendaCalendar
         patients={[]}
@@ -53,8 +56,8 @@ describe("AgendaCalendar", () => {
             id: "appointment-1",
             patientId: "patient-1",
             patientName: "Ana Teste",
-            startsAt: "2026-09-01T09:00:00",
-            endsAt: "2026-09-01T09:50:00",
+            startsAt: "2026-09-01T09:00:00-03:00",
+            endsAt: "2026-09-01T09:50:00-03:00",
             status: "agendada",
             type: "Sessão individual",
             videoUrl: null,
@@ -67,9 +70,8 @@ describe("AgendaCalendar", () => {
     fireEvent.click(screen.getByRole("button", { name: /Ana Teste/ }));
     expect(screen.getByText("Detalhes do agendamento")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Editar" }));
-    expect(
-      screen.getByRole("dialog", { name: "Ação ainda não disponível" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Editar agendamento" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Início")).toHaveTextContent("09:00");
   });
   it("opens the create dialog from canonical URL state with the patient selected", () => {
     render(

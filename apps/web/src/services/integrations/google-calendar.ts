@@ -68,8 +68,11 @@ export async function syncAppointmentToGoogleCalendar(userId: string, appointmen
   if (!access) return { synced: false as const };
   const appointment = await prisma.appointment.findFirst({ where: { id: appointmentId, userId }, include: { patient: { select: { name: true } } } });
   if (!appointment) throw new DomainError("NOT_FOUND", "Consulta não encontrada para sincronização.");
-  const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(access.calendarId)}/events`, {
-    method: "POST",
+  const eventUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(access.calendarId)}/events`;
+  const response = await fetch(appointment.googleCalendarEventId
+    ? `${eventUrl}/${encodeURIComponent(appointment.googleCalendarEventId)}`
+    : eventUrl, {
+    method: appointment.googleCalendarEventId ? "PATCH" : "POST",
     headers: { Authorization: `Bearer ${access.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       summary: `Consulta — ${appointment.patient.name}`,
@@ -80,6 +83,34 @@ export async function syncAppointmentToGoogleCalendar(userId: string, appointmen
   });
   if (!response.ok) throw new DomainError("PROVIDER_FAILURE", "A consulta foi criada, mas o Google Agenda recusou a sincronização.");
   const event = await response.json() as { id?: string };
-  if (event.id) await prisma.appointment.update({ where: { id: appointment.id }, data: { googleCalendarEventId: event.id } });
-  return { synced: Boolean(event.id) };
+  if (event.id && event.id !== appointment.googleCalendarEventId) {
+    await prisma.appointment.update({ where: { id: appointment.id }, data: { googleCalendarEventId: event.id } });
+  }
+  return { synced: Boolean(event.id || appointment.googleCalendarEventId) };
+}
+
+export async function syncUpcomingAppointmentsToGoogleCalendar(userId: string) {
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      userId,
+      startsAt: { gte: new Date() },
+      googleCalendarEventId: null,
+      status: { notIn: ["cancelada", "recusada"] },
+    },
+    select: { id: true },
+    orderBy: { startsAt: "asc" },
+    take: 25,
+  });
+  let synced = 0;
+  let failed = 0;
+  for (const appointment of appointments) {
+    try {
+      const result = await syncAppointmentToGoogleCalendar(userId, appointment.id);
+      if (result.synced) synced += 1;
+      else failed += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+  return { synced, failed, considered: appointments.length };
 }

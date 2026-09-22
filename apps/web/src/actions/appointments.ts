@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { getDomainErrorMessage } from "@/lib/errors/domain-errors";
 import { createAppointmentWithConfirmation } from "@/services/appointments/create-appointment-with-confirmation";
+import { updateAppointment } from "@/services/appointments/update-appointment";
 import {
   finishAppointmentSession,
   startAppointmentSession,
@@ -44,17 +45,21 @@ export async function createAppointmentAction(
     revalidatePath("/financeiro/previsibilidade");
     revalidatePath(`/pacientes/${parsed.data.patientId}`);
 
+    const calendarMessage = result.calendarSynced
+      ? " Google Agenda sincronizado."
+      : " Google Agenda não sincronizado; conecte ou verifique a integração em Configurações → Segurança.";
+
     if (!result.notificationScheduled) {
       return {
         ok: true,
         message:
-          "Consulta criada. O WhatsApp não está configurado, então não haverá confirmação nem lembretes automáticos.",
+          `Consulta criada. O WhatsApp não está configurado, então não haverá confirmação nem lembretes automáticos.${calendarMessage}`,
       };
     }
 
     return {
       ok: true,
-      message: "Consulta criada e confirmação enviada para processamento.",
+      message: `Consulta criada e confirmação enviada para processamento.${calendarMessage}`,
     };
   } catch (error) {
     return {
@@ -64,6 +69,36 @@ export async function createAppointmentAction(
         "Não foi possível criar a consulta.",
       ),
     };
+  }
+}
+
+export async function updateAppointmentAction(
+  _state: AppointmentActionState,
+  formData: FormData,
+): Promise<AppointmentActionState> {
+  const user = await requireUser();
+  const appointmentId = formData.get("appointmentId");
+  if (typeof appointmentId !== "string" || !appointmentId) {
+    return { ok: false, message: "Consulta não encontrada." };
+  }
+  const parsed = appointmentSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Revise os dados da consulta." };
+  }
+  try {
+    const updated = await updateAppointment(user.id, appointmentId, parsed.data);
+    revalidatePath("/agenda");
+    revalidatePath("/dashboard");
+    revalidatePath("/financeiro");
+    revalidatePath("/financeiro/previsibilidade");
+    revalidatePath(`/pacientes/${parsed.data.patientId}`);
+    const calendarMessage = updated.calendarSynced
+      ? " Google Agenda atualizado."
+      : " Google Agenda não atualizado; conecte ou verifique a integração em Configurações → Segurança.";
+    const notificationMessage = updated.timeChanged ? " Avise o paciente sobre o novo horário; nenhum WhatsApp automático foi enviado." : "";
+    return { ok: true, message: `Consulta atualizada.${notificationMessage}${calendarMessage}` };
+  } catch (error) {
+    return { ok: false, message: getDomainErrorMessage(error, "Não foi possível atualizar a consulta.") };
   }
 }
 

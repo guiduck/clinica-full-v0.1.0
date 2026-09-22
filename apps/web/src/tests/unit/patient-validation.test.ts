@@ -24,7 +24,7 @@ describe("patient validation", () => {
       name: "Maria Silva",
       phone: "(11) 99999-9999",
       email: "maria@example.com",
-      cpf: "123.456.789-01",
+      cpf: "529.982.247-25",
       birthDate: "1990-01-01",
       notes: "Prefere WhatsApp",
       whatsappConsent: true,
@@ -36,5 +36,21 @@ describe("patient validation", () => {
 
   it("normalizes phone digits for duplicate checks", () => {
     expect(normalizePhone("+55 (11) 99999-9999")).toBe("5511999999999");
+  });
+
+  it("rejects invalid CPF, CEP and emergency phone in the shared server schema", () => {
+    const result = patientSchema.safeParse({
+      name: "Maria Silva",
+      phone: "(11) 99999-9999",
+      cpf: "123.456.789-01",
+      addressZipCode: "12345-6",
+      emergencyContactPhone: "1234",
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) throw new Error("Expected validation to fail");
+    expect(result.error.flatten().fieldErrors).toHaveProperty("cpf");
+    expect(result.error.flatten().fieldErrors).toHaveProperty("addressZipCode");
+    expect(result.error.flatten().fieldErrors).toHaveProperty("emergencyContactPhone");
   });
 });

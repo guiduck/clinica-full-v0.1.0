@@ -38,6 +38,11 @@ describe("PatientWizard navigation", () => {
     fireEvent.change(screen.getByLabelText("Telefone / WhatsApp *"), {
       target: { value: "(11) 99999-9999" },
     });
+    fireEvent.click(screen.getByText(/Endereço \(opcional\)/));
+    fireEvent.change(screen.getByLabelText("CEP"), { target: { value: "01310-100" } });
+    fireEvent.change(screen.getByLabelText("Logradouro"), { target: { value: "Avenida Paulista" } });
+    fireEvent.click(screen.getByText("Contato de emergência (opcional)"));
+    fireEvent.change(screen.getByLabelText("Telefone"), { target: { value: "11988887777" } });
     fireEvent.click(screen.getByRole("button", { name: "Próximo" }));
     fireEvent.change(screen.getByLabelText("Valor por sessão (R$)"), {
       target: { value: "25000" },
@@ -46,6 +51,11 @@ describe("PatientWizard navigation", () => {
       target: { value: "52998224725" },
     });
     fireEvent.click(screen.getByRole("button", { name: /Salvar paciente/i }));
+
+    await waitFor(() => expect(createPatientMock).toHaveBeenCalled());
+    const submitted = createPatientMock.mock.calls[0][0] as FormData;
+    expect(submitted.get("addressZipCode")).toBe("01310-100");
+    expect(submitted.get("emergencyContactPhone")).toBe("(11) 98888-7777");
 
     expect(
       await screen.findByRole("alertdialog", {

@@ -54,6 +54,7 @@ import {
 } from "@/constants/onboarding-tour";
 import { useOnboardingTourActions } from "@/hooks/onboarding/use-onboarding-tour-actions";
 import { GoogleCalendarCard } from "@/components/settings/google-calendar-card";
+import { saveProfessionalProfileAction } from "@/actions/settings";
 
 type Tab = "conta" | "contato" | "planos" | "mensagens" | "seguranca";
 type FormState = {
@@ -99,10 +100,12 @@ function maskCnpj(value: string) {
 export function SettingsPage({
   userName,
   userEmail,
+  professional = { cpf: null, specialty: null, council: null },
   googleCalendar = { connected: false, email: null, updatedAt: null },
 }: {
   userName: string;
   userEmail: string;
+  professional?: { cpf: string | null; specialty: string | null; council: string | null };
   googleCalendar?: { connected: boolean; email: string | null; updatedAt: string | null };
 }) {
   const params = useSearchParams();
@@ -119,13 +122,15 @@ export function SettingsPage({
   const [tab, setTab] = React.useState<Tab>(initial);
   const [blocked, setBlocked] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [success, setSuccess] = React.useState("");
+  const [savingAccount, startSavingAccount] = React.useTransition();
   const upload = React.useRef<HTMLInputElement>(null);
   const [form, setForm] = React.useState<FormState>({
     name: userName,
     email: userEmail,
-    specialty: "",
-    cpf: "",
-    council: "",
+    specialty: professional.specialty ?? "",
+    cpf: professional.cpf ? maskCpf(professional.cpf) : "",
+    council: professional.council ?? "",
     phone: "",
     street: "",
     city: "",
@@ -151,8 +156,14 @@ export function SettingsPage({
       return;
     }
     setError("");
-    advanceFrom(ONBOARDING_ADVANCE.ACCOUNT_SAVE);
-    setBlocked(true);
+    setSuccess("");
+    startSavingAccount(async () => {
+      const saved = await saveProfessionalProfileAction(result.data);
+      if (!saved.ok) { setError(saved.message); return; }
+      setSuccess(saved.message);
+      advanceFrom(ONBOARDING_ADVANCE.ACCOUNT_SAVE);
+      router.refresh();
+    });
   };
   const contactSave = () => {
     const result = settingsContactSchema.safeParse(form);
@@ -178,6 +189,7 @@ export function SettingsPage({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
+      {success && <Alert><AlertTitle>Dados salvos</AlertTitle><AlertDescription>{success}</AlertDescription></Alert>}
       <Tabs value={tab} onValueChange={changeTab}>
         <TabsList
           id="tour-settings-tabs"
@@ -206,7 +218,8 @@ export function SettingsPage({
                 label="E-mail *"
                 type="email"
                 value={form.email}
-                onChange={(email) => setForm({ ...form, email })}
+                onChange={() => undefined}
+                readOnly
               />
               <div id="tour-settings-cpf">
                 <Field
@@ -240,6 +253,7 @@ export function SettingsPage({
               id="tour-settings-account-save"
               className="w-fit"
               onClick={accountSave}
+              disabled={savingAccount}
             >
               <Save className="size-4" /> Salvar
             </Button>
@@ -425,6 +439,7 @@ function Field({
   placeholder,
   type = "text",
   className,
+  readOnly = false,
 }: {
   label: string;
   value: string;
@@ -432,6 +447,7 @@ function Field({
   placeholder?: string;
   type?: string;
   className?: string;
+  readOnly?: boolean;
 }) {
   const id = React.useId();
   return (
@@ -444,6 +460,7 @@ function Field({
         type={type}
         value={value}
         placeholder={placeholder}
+        readOnly={readOnly}
         onChange={(event) => onChange(event.target.value)}
       />
     </div>

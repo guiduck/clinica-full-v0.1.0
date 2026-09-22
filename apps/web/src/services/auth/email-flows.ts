@@ -28,7 +28,7 @@ export async function requestPasswordReset(email: string) {
   const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
   if (!user) return;
   const code = await issueAuthCode(user.id, user.email, AUTH_TOKEN_KINDS.passwordReset, 15);
-  const url = `${getPublicAppUrl()}/recuperar-senha`;
+  const url = `${getPublicAppUrl()}/recuperar-senha?email=${encodeURIComponent(user.email)}`;
   await sendTransactionalEmail({ to: user.email, ...passwordResetEmail(user.name, code, url) });
 }
 

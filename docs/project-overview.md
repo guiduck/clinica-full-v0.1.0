@@ -1,5 +1,29 @@
 # Overview do Projeto e Plano de MVP
 
+## Correções operacionais locais — 2026-09-19
+
+A Agenda agora usa offset explícito `-03:00` ao receber horário brasileiro e
+converte os eventos para São Paulo na grade. Edição/remarcação de consultas
+futuras, pertencentes ao profissional e ainda não iniciadas passou a ser uma
+operação server-side real. Ela mantém o lançamento financeiro previsto alinhado,
+registra a mudança no ledger e tenta atualizar o mesmo evento no Google Agenda.
+Existe reconciliação manual de consultas futuras ainda não sincronizadas; conectar
+Google Agenda exige consentimento separado do login Google. WhatsApp novo na
+remarcação não é automático: o profissional recebe orientação para avisar o paciente.
+
+CPF cadastrado no registro passa a ser persistido na conta, com índice único no
+PostgreSQL. A aba Conta salva nome, CPF, especialidade e conselho de forma real;
+alterar e-mail exige verificação futura. No wizard do paciente, endereço e contato
+de emergência opcionais passam a ser campos persistidos, com CEP/telefone e CPF
+validados no servidor. O link do e-mail de recuperação retoma o passo do código.
+
+Estas mudanças ainda não foram publicadas na VPS. A migration de perfil é
+obrigatória. Uma chave `SENSITIVE_DATA_ENCRYPTION_KEY` inválida continua impedindo
+salvar/ler conteúdo clínico; a mensagem ao usuário agora omite detalhes internos.
+A chave original não deve ser trocada se já houver dados cifrados. Consultas
+antigas com horário incorreto precisam de revisão individual, não backfill cego.
+O timeout de chunk observado no navegador ainda requer logs/rede da produção.
+
 ## Núcleo operacional persistente — 2026-09-18
 
 O aplicativo possui autenticação por e-mail/senha e Google, confirmação de conta,
@@ -17,8 +41,9 @@ recuperação duram 15 minutos, admitem 5 tentativas, ficam apenas como hash no 
 e encerram as sessões existentes quando a senha é alterada.
 
 Ainda fora do núcleo real: documentos/uploads, assinatura, recibo PDF, edição e
-arquivamento de paciente, remarcação/cancelamento de consulta e hardening clínico
-de versionamento/auditoria/retenção. Esses limites não devem reportar sucesso falso.
+arquivamento de paciente, cancelamento de consulta, recorrência/horário fixo e
+hardening clínico de versionamento/auditoria/retenção. Esses limites não devem
+reportar sucesso falso.
 
 ## Resumo Executivo
 O produto faz sentido como um SaaS nichado para terapeutas e psicologos autonomos, com foco em operacao diaria de um profissional individual. Pelo prototipo, o nucleo do sistema e:

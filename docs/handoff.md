@@ -1,5 +1,48 @@
 # Handoff
 
+## Atualização de 2026-09-19 — correções locais após smoke visual
+
+Implementado neste workspace, ainda não publicado:
+- criação/edição de consultas com horário `dd/mm/aaaa HH:mm` convertido por
+  offset explícito de São Paulo; grade e testes agora tratam o mesmo fuso;
+- edição/remarcação real de consulta futura não iniciada com autorização,
+  verificação de conflito, atualização/auditoria da receita prevista e tentativa
+  best-effort de atualizar o evento Google existente;
+- banner de estado do Google Agenda, link para conexão separada do login Google
+  e ação explícita para sincronizar até 25 consultas futuras sem evento;
+- CPF no registro de profissional, campos profissionais salvos na aba Conta,
+  migration `20260919000100_professional_profile`, campos opcionais reais de
+  endereço e contato de emergência do paciente com validação no servidor;
+- retomada do passo de código pelo link do e-mail de recuperação; tour mede
+  novamente o alvo após animações; erro clínico de chave não divulga configuração.
+
+Validação local: Prisma Client regenerado; lint e typecheck aprovados; 58 arquivos,
+172 testes Vitest aprovados; build de produção aprovado com 29 rotas;
+`git diff --check` sem erros (avisos de LF/CRLF no Windows). Não houve smoke de
+navegador nem deploy nesta rodada. Uma tentativa somente de leitura dos containers
+na VPS por SSH falhou em autenticação, então não há logs que confirmem a causa
+do `ChunkLoadError`/lentidão. O erro de WebSocket em `localhost:1815` visto no
+console pertence à extensão de navegador `field-assistant`, não ao app.
+
+Gate antes de publicar: confirmar backup do banco e da chave clínica atual;
+aplicar migrations (serão seis se as cinco anteriores já estiverem aplicadas),
+conferir que `SENSITIVE_DATA_ENCRYPTION_KEY` decodifica em 32 bytes sem substituí-la
+caso já haja prontuário cifrado; rebuild/deploy e smoke em `/login`, `/agenda`,
+Google Agenda, Configurações, Anamnese e recuperação de senha. CPF antigo não foi
+armazenado e precisa ser informado novamente na Conta. Consultas antigas
+deslocadas não são migradas automaticamente. Acompanhar rede/logs para o erro
+de chunk e comparar se o login e a Conta mostrados nas capturas pertencem ao
+mesmo e-mail/usuário antes de investigar dados que parecem desaparecer.
+
+Limites/segurança: horário fixo, excluir/cancelar consulta, edição do paciente e
+documentos continuam indisponíveis; conexão Google requer consentimento do usuário.
+Nenhuma mensagem WhatsApp nova é enviada ao remarcar: o profissional deve avisar
+o paciente. A automação desse envio ficou fora deste checkpoint por exigir
+aprovação explícita do risco de contato com dado sensível. Receita `prevista`
+continua pendente; `efetivada` só após confirmação financeira, não por apenas
+realizar a sessão. O próximo brief é
+`docs/next-spec-documentos-recibos-assinatura.md` após estabilização em produção.
+
 ## Atualização de 2026-09-18 — auth Google/e-mail, clínica e sessão prontos
 
 Implementado:

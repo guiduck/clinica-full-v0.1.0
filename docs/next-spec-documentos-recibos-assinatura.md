@@ -1,8 +1,10 @@
 # Próxima Spec: Documentos, Recibos PDF e Assinatura Simples
 
-> Brief preparado com o fluxo `specify-prompt-engineer` em 2026-09-18. Está pronto
-> para alimentar `/speckit.specify` depois do smoke de auth (incluindo recuperação
-> por código), clínica, agenda e financeiro na VPS.
+> Brief revisado com `specify-prompt-engineer` em 2026-09-19, com base no roadmap,
+> handoff, product spec, ADR, protótipo Lovable e inventário em `references/`.
+> Está pronto para `/speckit.specify` depois do deploy/migration e do smoke de
+> auth (incluindo recuperação por código), clínica, agenda/Google e financeiro
+> na VPS, mais diagnóstico do timeout de chunk observado no navegador.
 
 Crie uma feature specification para transformar os fluxos transitórios de
 Documentos do paciente, recibos e assinatura simples em capacidades reais,

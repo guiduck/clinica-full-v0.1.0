@@ -20,7 +20,9 @@ describe("clinical payload encryption", () => {
   it("rejects tampered ciphertext", () => {
     vi.stubEnv("SENSITIVE_DATA_ENCRYPTION_KEY", "b".repeat(64));
     const encrypted = encryptSensitiveValue({ note: "registro" });
-    const tampered = `${encrypted.slice(0, -1)}A`;
+    const parts = encrypted.split(".");
+    parts[2] = `${parts[2][0] === "A" ? "B" : "A"}${parts[2].slice(1)}`;
+    const tampered = parts.join(".");
     expect(() => decryptSensitiveValue(tampered)).toThrow(
       "Não foi possível abrir o registro clínico criptografado.",
     );

@@ -40,13 +40,13 @@ describe("agenda calendar model", () => {
 
   it("positions appointments by local wall-clock time with a minimum height", () => {
     expect(
-      appointmentGridPosition("2026-09-02T09:30:00", "2026-09-02T10:20:00"),
+      appointmentGridPosition("2026-09-02T09:30:00-03:00", "2026-09-02T10:20:00-03:00"),
     ).toEqual({
       top: 608,
       height: 53.333333333333336,
     });
     expect(
-      appointmentGridPosition("2026-09-02T09:00:00", "2026-09-02T09:10:00"),
+      appointmentGridPosition("2026-09-02T09:00:00-03:00", "2026-09-02T09:10:00-03:00"),
     ).toEqual({
       top: 576,
       height: 34,

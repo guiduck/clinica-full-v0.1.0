@@ -2,6 +2,9 @@
 
 import * as React from "react";
 import { useActionState } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { syncUpcomingAppointmentsAction } from "@/actions/integrations";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Ban,
@@ -19,6 +22,7 @@ import {
 } from "lucide-react";
 import {
   createAppointmentAction,
+  updateAppointmentAction,
   finishAppointmentSessionAction,
   startAppointmentSessionAction,
   type AppointmentActionState,
@@ -69,6 +73,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { maskBrazilianDate } from "@/utils/masks";
+import { brazilianAppointmentDateTime } from "@/utils/appointment-datetime";
 import {
   formatBrazilianDate,
   formatStatusLabel,
@@ -111,6 +116,7 @@ export function AgendaCalendar({
   initialOpen,
   defaultPatientId,
   whatsappConfigured = false,
+  googleCalendarConnected = false,
 }: {
   patients: PatientOption[];
   appointments: AppointmentView[];
@@ -119,6 +125,7 @@ export function AgendaCalendar({
   initialOpen?: string;
   defaultPatientId?: string;
   whatsappConfigured?: boolean;
+  googleCalendarConnected?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -128,11 +135,19 @@ export function AgendaCalendar({
     initialDate ? new Date(`${initialDate}T12:00:00`) : new Date(),
   );
   const [newOpen, setNewOpen] = React.useState(initialOpen === "1");
+  const [editing, setEditing] = React.useState<AppointmentView | null>(null);
   const [blockOpen, setBlockOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<AppointmentView | null>(
     () => appointments.find((item) => item.id === initialOpen) ?? null,
   );
   const [session, setSession] = React.useState<AppointmentView | null>(null);
+  const [syncPending, startSync] = React.useTransition();
+  const syncCalendar = () => startSync(async () => {
+    const result = await syncUpcomingAppointmentsAction();
+    if (!result.ok) { toast.error(result.message); return; }
+    toast.message(`${result.synced} consulta(s) sincronizada(s).${result.failed ? ` ${result.failed} falharam; confira a conexão.` : ""}`);
+    router.refresh();
+  });
   const updateAgendaQuery = React.useCallback((nextDate: Date, nextView: AgendaView) => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("view", nextView);
@@ -175,6 +190,12 @@ export function AgendaCalendar({
           </Button>
         </div>
       </header>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-sm">
+        <span>{googleCalendarConnected ? "Google Agenda conectado. Consultas novas são sincronizadas após o salvamento." : "Google Agenda não conectado. As consultas ficam salvas apenas aqui até você autorizar a integração."}</span>
+        {googleCalendarConnected
+          ? <Button variant="outline" size="sm" disabled={syncPending} onClick={syncCalendar}>{syncPending ? "Sincronizando..." : "Sincronizar consultas pendentes"}</Button>
+          : <Button asChild variant="outline" size="sm"><Link href="/configuracoes?tab=seguranca">Conectar Google Agenda</Link></Button>}
+      </div>
       <section className="overflow-hidden rounded-xl border bg-card shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
           <div className="flex items-center gap-2">
@@ -237,6 +258,16 @@ export function AgendaCalendar({
         defaultPatientId={defaultPatientId}
         whatsappConfigured={whatsappConfigured}
       />
+      {editing && (
+        <NewAppointmentDialog
+          key={editing.id}
+          open
+          onOpenChange={(value) => { if (!value) setEditing(null); }}
+          patients={patients}
+          editing={editing}
+          whatsappConfigured={whatsappConfigured}
+        />
+      )}
       <CapabilityNotice
         descriptor={unavailable}
         open={blockOpen}
@@ -248,6 +279,7 @@ export function AgendaCalendar({
           if (!value) setSelected(null);
         }}
         onStart={(appointment) => setSession(appointment)}
+        onEdit={(appointment) => { setSelected(null); setEditing(appointment); }}
       />
       <SessionDialog
         appointment={session}
@@ -420,25 +452,27 @@ function NewAppointmentDialog({
   onOpenChange,
   patients,
   defaultPatientId,
+  editing,
   whatsappConfigured,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patients: PatientOption[];
   defaultPatientId?: string;
+  editing?: AppointmentView;
   whatsappConfigured: boolean;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(
-    createAppointmentAction,
+    editing ? updateAppointmentAction : createAppointmentAction,
     initialAction,
   );
-  const [patientId, setPatientId] = React.useState(defaultPatientId ?? "");
-  const [date, setDate] = React.useState(formatBrazilianDate(new Date()));
-  const [start, setStart] = React.useState("09:00");
-  const [end, setEnd] = React.useState("09:50");
-  const [type, setType] = React.useState("Sessão individual");
-  const [videoUrl, setVideoUrl] = React.useState("");
+  const [patientId, setPatientId] = React.useState(editing?.patientId ?? defaultPatientId ?? "");
+  const [date, setDate] = React.useState(formatBrazilianDate(editing?.startsAt ?? new Date()));
+  const [start, setStart] = React.useState(editing ? formatTime24(editing.startsAt) : "09:00");
+  const [end, setEnd] = React.useState(editing ? formatTime24(editing.endsAt) : "09:50");
+  const [type, setType] = React.useState(editing?.type ?? "Sessão individual");
+  const [videoUrl, setVideoUrl] = React.useState(editing?.videoUrl ?? "");
   const [recurring, setRecurring] = React.useState(false);
   const selectStart = (value: string) => {
     setStart(value);
@@ -446,30 +480,31 @@ function NewAppointmentDialog({
   };
   React.useEffect(() => {
     if (state.ok) {
+      toast.message(state.message);
       onOpenChange(false);
       router.refresh();
     }
-  }, [onOpenChange, router, state.ok]);
-  const iso = (value: string, time: string) => {
-    const [day, month, year] = value.split("/");
-    return `${year}-${month}-${day}T${time}`;
-  };
-  const notificationMessage = whatsappConfigured
-    ? "Enviaremos uma confirmação por WhatsApp 48h antes da sessão. O paciente poderá confirmar, cancelar ou remarcar por lá."
-    : "WhatsApp não configurado: a consulta será criada normalmente, mas não terá confirmação nem lembretes automáticos.";
+  }, [onOpenChange, router, state.ok, state.message]);
+  let notificationMessage = "WhatsApp não configurado: a consulta será criada normalmente, mas não terá confirmação nem lembretes automáticos.";
+  if (whatsappConfigured) {
+    notificationMessage = editing
+      ? "Ao alterar o horário, avise o paciente manualmente. Esta edição não envia uma nova mensagem automática."
+      : "Tentaremos enviar a confirmação por WhatsApp após salvar a consulta. Confira o resultado.";
+  }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Novo agendamento</DialogTitle>
+          <DialogTitle>{editing ? "Editar agendamento" : "Novo agendamento"}</DialogTitle>
           <DialogDescription className="sr-only">
             Crie uma sessão para um paciente
           </DialogDescription>
         </DialogHeader>
         <form action={action} className="grid gap-4">
+          {editing && <input type="hidden" name="appointmentId" value={editing.id} />}
           <div>
             <Label htmlFor="appointment-patient">Paciente</Label>
-            <Select value={patientId} onValueChange={setPatientId}>
+            <Select value={patientId} onValueChange={setPatientId} disabled={Boolean(editing)}>
               <SelectTrigger id="appointment-patient" className="mt-1.5">
                 <SelectValue placeholder="Selecione o paciente" />
               </SelectTrigger>
@@ -531,8 +566,8 @@ function NewAppointmentDialog({
               minimumExclusive={start}
             />
           </div>
-          <input type="hidden" name="startsAt" value={iso(date, start)} />
-          <input type="hidden" name="endsAt" value={iso(date, end)} />
+          <input type="hidden" name="startsAt" value={brazilianAppointmentDateTime(date, start)} />
+          <input type="hidden" name="endsAt" value={brazilianAppointmentDateTime(date, end)} />
           <div>
             <Label htmlFor="appointment-video-url">
               Link da videochamada (opcional)
@@ -546,12 +581,13 @@ function NewAppointmentDialog({
               placeholder="https://meet.google.com/..."
             />
           </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <Checkbox
               checked={recurring}
               onCheckedChange={(value) => setRecurring(value === true)}
+              disabled
             />
-            Sessão recorrente semanal (horário fixo)
+            Sessão recorrente semanal (ainda não disponível)
           </label>
           <div
             className={cn(
@@ -582,7 +618,7 @@ function NewAppointmentDialog({
               Cancelar
             </Button>
             <Button type="submit" disabled={pending}>
-              Salvar
+              {editing ? "Salvar alterações" : "Salvar"}
             </Button>
           </DialogFooter>
         </form>
@@ -595,10 +631,12 @@ function AppointmentDetails({
   appointment,
   onOpenChange,
   onStart,
+  onEdit,
 }: {
   appointment: AppointmentView | null;
   onOpenChange: (open: boolean) => void;
   onStart: (item: AppointmentView) => void;
+  onEdit: (item: AppointmentView) => void;
 }) {
   const [pending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
@@ -671,28 +709,18 @@ function AppointmentDetails({
                   </Button>
                 }
               />
-              <CapabilityNotice
-                descriptor={unavailable}
-                trigger={
-                  <Button variant="outline">
-                    <CalendarIcon className="size-4" />
-                    Remarcar
-                  </Button>
-                }
-              />
+              <Button variant="outline" onClick={() => onEdit(appointment)} disabled={isFinished}>
+                <CalendarIcon className="size-4" />
+                Remarcar
+              </Button>
             </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="border-t pt-4">
               <div className="grid grid-cols-2 gap-2">
-                <CapabilityNotice
-                  descriptor={unavailable}
-                  trigger={
-                    <Button variant="outline">
-                      <Edit3 className="size-4" />
-                      Editar
-                    </Button>
-                  }
-                />
+                <Button variant="outline" onClick={() => onEdit(appointment)} disabled={isFinished}>
+                  <Edit3 className="size-4" />
+                  Editar
+                </Button>
                 <CapabilityNotice
                   descriptor={unavailable}
                   trigger={

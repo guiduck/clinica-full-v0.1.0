@@ -53,4 +53,13 @@ describe("appointment validation", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("rejects an ambiguous local timestamp without an offset", () => {
+    const result = appointmentSchema.safeParse({
+      patientId: "patient-1",
+      startsAt: "2026-06-10T09:00:00",
+      endsAt: "2026-06-10T09:50:00",
+    });
+    expect(result.success).toBe(false);
+  });
 });

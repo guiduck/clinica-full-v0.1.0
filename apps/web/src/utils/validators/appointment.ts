@@ -20,6 +20,14 @@ export const appointmentSchema = z
   .superRefine((value, ctx) => {
     const startsAt = new Date(value.startsAt);
     const endsAt = new Date(value.endsAt);
+    const explicitZone = /(?:Z|[+-]\d{2}:\d{2})$/i;
+
+    if (!explicitZone.test(value.startsAt)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o fuso horário da consulta.", path: ["startsAt"] });
+    }
+    if (!explicitZone.test(value.endsAt)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o fuso horário da consulta.", path: ["endsAt"] });
+    }
 
     if (Number.isNaN(startsAt.getTime())) {
       ctx.addIssue({

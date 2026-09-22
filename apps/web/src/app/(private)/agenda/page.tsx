@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { listAppointments } from "@/services/appointments/appointments";
 import { searchPatients } from "@/services/patients/patients";
 import { getWhatsAppConfig } from "@/services/notifications/whatsapp-config";
+import { getGoogleCalendarConnectionStatus } from "@/services/integrations/google-calendar";
 
 type Props = {
   searchParams?: Promise<{
@@ -15,9 +16,10 @@ type Props = {
 };
 export default async function AgendaPage({ searchParams }: Props) {
   const user = await requireUser();
-  const [patients, appointments] = await Promise.all([
+  const [patients, appointments, googleCalendar] = await Promise.all([
     searchPatients(user.id),
     listAppointments(user.id),
+    getGoogleCalendarConnectionStatus(user.id),
   ]);
 
   const patientOptions = patients.map((patient) => ({
@@ -49,6 +51,7 @@ export default async function AgendaPage({ searchParams }: Props) {
       initialOpen={query?.open ?? query?.new}
       defaultPatientId={query?.patientId}
       whatsappConfigured={Boolean(getWhatsAppConfig())}
+      googleCalendarConnected={googleCalendar.connected}
     />
   );
 }

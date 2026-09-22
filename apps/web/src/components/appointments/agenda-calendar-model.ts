@@ -1,3 +1,5 @@
+import { saoPauloAppointmentParts } from "@/utils/appointment-datetime";
+
 export type AgendaView = "dia" | "semana" | "mes";
 
 export const AGENDA_HOUR_HEIGHT = 64;
@@ -21,7 +23,9 @@ export function agendaDateKey(date: Date | string) {
 }
 
 export function isSameAgendaDay(left: Date | string, right: Date | string) {
-  return agendaDateKey(left) === agendaDateKey(right);
+  const leftDate = typeof left === "string" ? saoPauloAppointmentParts(left).date : agendaDateKey(left);
+  const rightDate = typeof right === "string" ? saoPauloAppointmentParts(right).date : agendaDateKey(right);
+  return leftDate === rightDate;
 }
 
 export function agendaVisibleDays(referenceDate: Date, view: AgendaView) {
@@ -65,14 +69,14 @@ export function agendaHeaderTitle(date: Date, view: AgendaView) {
 }
 
 export function appointmentGridPosition(startsAt: string, endsAt: string) {
-  const start = new Date(startsAt);
+  const start = saoPauloAppointmentParts(startsAt);
   const end = new Date(endsAt);
   return {
     top:
-      ((start.getHours() * 60 + start.getMinutes()) / 60) * AGENDA_HOUR_HEIGHT,
+      ((start.hour * 60 + start.minute) / 60) * AGENDA_HOUR_HEIGHT,
     height: Math.max(
       34,
-      ((end.getTime() - start.getTime()) / 3_600_000) * AGENDA_HOUR_HEIGHT,
+      ((end.getTime() - new Date(startsAt).getTime()) / 3_600_000) * AGENDA_HOUR_HEIGHT,
     ),
   };
 }

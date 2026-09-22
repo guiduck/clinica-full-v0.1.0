@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { maskBrazilianDate, maskBrl, maskCpf, maskPhone } from "@/utils/masks";
+import { maskBrazilianDate, maskBrl, maskCep, maskCpf, maskPhone } from "@/utils/masks";
 import { cn } from "@/lib/utils";
 
 type PatientDraft = {
@@ -46,6 +46,15 @@ type PatientDraft = {
   notes: string;
   whatsappConsent: boolean;
   emailConsent: boolean;
+  addressZipCode: string;
+  addressStreet: string;
+  addressNumber: string;
+  addressComplement: string;
+  addressCity: string;
+  addressState: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  emergencyContactRelationship: string;
 };
 const INITIAL: PatientDraft = {
   name: "",
@@ -57,6 +66,15 @@ const INITIAL: PatientDraft = {
   notes: "",
   whatsappConsent: true,
   emailConsent: true,
+  addressZipCode: "",
+  addressStreet: "",
+  addressNumber: "",
+  addressComplement: "",
+  addressCity: "",
+  addressState: "",
+  emergencyContactName: "",
+  emergencyContactPhone: "",
+  emergencyContactRelationship: "",
 };
 const toIsoDate = (date: string) => {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date);
@@ -100,6 +118,10 @@ export function PatientWizard({
     if (!draft.email.includes("@")) return "Informe um e-mail válido.";
     if (![10, 11].includes(draft.phone.replace(/\D/g, "").length))
       return "Informe um telefone válido.";
+    if (draft.addressZipCode && draft.addressZipCode.replace(/\D/g, "").length !== 8)
+      return "Informe um CEP válido com 8 dígitos.";
+    if (draft.emergencyContactPhone && ![10, 11].includes(draft.emergencyContactPhone.replace(/\D/g, "").length))
+      return "Informe um telefone de emergência válido.";
     return "";
   };
   const next = () => {
@@ -130,6 +152,9 @@ export function PatientWizard({
       patientData.set("email", draft.email);
       patientData.set("phone", draft.phone);
       patientData.set("notes", draft.notes);
+      for (const key of ["addressZipCode", "addressStreet", "addressNumber", "addressComplement", "addressCity", "addressState", "emergencyContactName", "emergencyContactPhone", "emergencyContactRelationship"] as const) {
+        patientData.set(key, draft[key]);
+      }
       if (draft.whatsappConsent) patientData.set("whatsappConsent", "on");
       if (draft.emailConsent) patientData.set("emailConsent", "on");
       patientData.set("preferredPaymentMethod", method);
@@ -271,8 +296,23 @@ export function PatientWizard({
                 <Disclosure
                   title="Endereço (opcional)"
                   subtitle="necessário para o preenchimento automático do contrato"
-                />
-                <Disclosure title="Contato de emergência (opcional)" />
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="CEP"><Input inputMode="numeric" value={draft.addressZipCode} onChange={(e) => update("addressZipCode", maskCep(e.target.value))} placeholder="00000-000" /></Field>
+                    <Field label="UF"><Input maxLength={2} value={draft.addressState} onChange={(e) => update("addressState", e.target.value.toUpperCase())} placeholder="SP" /></Field>
+                    <Field label="Logradouro"><Input value={draft.addressStreet} onChange={(e) => update("addressStreet", e.target.value)} /></Field>
+                    <Field label="Número"><Input value={draft.addressNumber} onChange={(e) => update("addressNumber", e.target.value)} /></Field>
+                    <Field label="Complemento"><Input value={draft.addressComplement} onChange={(e) => update("addressComplement", e.target.value)} /></Field>
+                    <Field label="Cidade"><Input value={draft.addressCity} onChange={(e) => update("addressCity", e.target.value)} /></Field>
+                  </div>
+                </Disclosure>
+                <Disclosure title="Contato de emergência (opcional)">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Nome"><Input value={draft.emergencyContactName} onChange={(e) => update("emergencyContactName", e.target.value)} /></Field>
+                    <Field label="Telefone"><Input inputMode="tel" value={draft.emergencyContactPhone} onChange={(e) => update("emergencyContactPhone", maskPhone(e.target.value))} /></Field>
+                    <Field label="Vínculo"><Input value={draft.emergencyContactRelationship} onChange={(e) => update("emergencyContactRelationship", e.target.value)} placeholder="Ex.: mãe, cônjuge" /></Field>
+                  </div>
+                </Disclosure>
                 <div>
                   <p className="mb-2 text-sm font-medium">
                     Consentimento de comunicação
@@ -553,21 +593,14 @@ function Field({
     </div>
   );
 }
-function Disclosure({ title, subtitle }: { title: string; subtitle?: string }) {
+function Disclosure({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <button
-      type="button"
-      className="flex min-h-12 w-full items-center rounded-lg border px-3 text-left text-sm font-medium"
-    >
-      <span className="flex-1">
-        {title}
-        {subtitle ? (
-          <span className="ml-2 font-normal text-muted-foreground">
-            — {subtitle}
-          </span>
-        ) : null}
-      </span>
-      <ChevronDown className="size-4" />
-    </button>
+    <details className="group rounded-lg border">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center px-3 text-left text-sm font-medium">
+        <span className="flex-1">{title}{subtitle && <span className="ml-2 font-normal text-muted-foreground"> — {subtitle}</span>}</span>
+        <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="border-t p-3">{children}</div>
+    </details>
   );
 }

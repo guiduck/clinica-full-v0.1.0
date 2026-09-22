@@ -8,6 +8,7 @@ import { sendAccountVerification } from "@/services/auth/email-flows";
 type RegisterUserInput = {
   name: string;
   email: string;
+  cpf: string;
   password: string;
 };
 
@@ -22,12 +23,18 @@ export async function registerUser(input: RegisterUserInput): Promise<APIRespons
   if (existingUser) {
     return createAPIError("Ja existe uma conta com este e-mail.", 409);
   }
+  const cpf = input.cpf.replace(/\D/g, "");
+  const existingCpf = await prisma.user.findUnique({ where: { cpf }, select: { id: true } });
+  if (existingCpf) {
+    return createAPIError("Já existe uma conta com este CPF.", 409);
+  }
 
   const requiresEmailVerification = isEmailVerificationRequired();
   const user = await prisma.user.create({
     data: {
       name: input.name,
       email,
+      cpf,
       passwordHash: hashPassword(input.password),
       emailVerifiedAt: requiresEmailVerification ? null : new Date(),
     }

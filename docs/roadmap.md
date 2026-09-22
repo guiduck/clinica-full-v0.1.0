@@ -1,5 +1,37 @@
 # Roadmap
 
+## Checkpoint corretivo de agenda e cadastro — 2026-09-19
+
+Status: `implementado e validado localmente; publicação e smoke na VPS pendentes`.
+
+- A Agenda passa a gravar datas/horários com offset explícito de São Paulo e a
+  posicionar consultas pelo mesmo fuso; registros antigos não são reescritos
+  automaticamente, pois uma correção em massa poderia mover consultas válidas.
+- Editar/remarcar uma consulta futura e não iniciada é uma mutação real: verifica
+  dono e conflito, atualiza a receita prevista vinculada com auditoria e tenta
+  atualizar o evento existente no Google Agenda. Consultas efetivadas mantêm a
+  data financeira de realização. Cancelar/excluir e horário fixo seguem fora.
+- A conexão do Google Agenda fica visível na Agenda; o profissional pode conectar
+  a conta e sincronizar até 25 consultas futuras pendentes por ação explícita.
+  Falhas do provider não desfazem a consulta e são comunicadas. Não há envio
+  automático novo por WhatsApp na remarcação; o profissional deve avisar o paciente.
+- CPF de novos profissionais passa a ser persistido. Nome, CPF, especialidade e
+  conselho são salvos em Configurações por Server Action; e-mail continua somente
+  leitura até haver verificação própria. A migration
+  `20260919000100_professional_profile` é necessária antes do novo app na VPS.
+- Endereço e contato de emergência opcionais do paciente agora abrem campos reais
+  e são persistidos com validação server-side de CEP, telefone e CPF.
+- O e-mail de recuperação direciona ao passo de código com o endereço pré-selecionado;
+  o tour recalcula o alvo após a animação do menu. Erro de chave clínica deixa de
+  expor detalhes internos, mas a chave válida ainda precisa ser configurada.
+- Gate local: `prisma generate`, lint, typecheck, 58 arquivos/172 testes Vitest,
+  build de produção com 29 rotas e `git diff --check` aprovados. Smoke em navegador
+  e inspeção dos logs da VPS não foram executados neste checkpoint.
+- Próximo passo: publicar com a migration, verificar a chave AES-256-GCM sem
+  substituí-la se já cifra dados, executar smoke de auth/agenda/Google/clínica e
+  diagnosticar o `ChunkLoadError` em logs e rede reais. Depois, especificar
+  documentos/recibos/assinatura com o brief atualizado.
+
 ## Checkpoint auth, e-mail, clínica e calendário — 2026-09-18
 
 - login Google real integrado à sessão própria do sistema, usando o callback
@@ -349,28 +381,11 @@ Possiveis frentes:
 - nivel de auditoria/versionamento do prontuario no primeiro corte
 
 ## Proxima acao recomendada
-Iniciar o próximo slice executando `/speckit.specify` com
-`docs/next-spec-clinical-persistence-encryption.md`. Esse slice transforma
-Anamnese, evolução/SOAP e finalização de sessão em registros clínicos reais,
-versionados e auditáveis sem reabrir o frontend já aceito.
-
-Services disponíveis agora: autenticação/sessão, criação e leitura de pacientes,
-perfil financeiro inicial, criação/leitura de agenda, preferências de UI,
-dashboard agregado e tentativa transacional de WhatsApp. O próximo conjunto de
-services será o clínico (Anamnese, evolução/SOAP e finalização de sessão), logo
-após especificar e esclarecer retenção, versionamento, autorização, auditoria e
-criptografia. Edição/arquivamento de paciente, financeiro operacional, documentos
-e mensagens permanecem slices posteriores e não devem ser misturados nesse gate.
-
-O ledger persistente está descrito em
-`docs/next-spec-financial-ledger-persistence.md`: uma consulta elegível gera
-receita prevista e o profissional pode efetivar, cancelar ou corrigir o
-lançamento. Ele vem depois do gate clínico, salvo repriorização explícita.
-
-O service de mensagens deve entrar em slice próprio depois desse gate clínico.
-Antes de implementá-lo, a spec deve congelar um catálogo tipado de variáveis
-dinâmicas, regras para dados ausentes, momento de resolução, preview idêntico ao
-envio, versionamento do template e snapshot auditável da mensagem renderizada.
+Concluir primeiro o gate de produção do checkpoint de 2026-09-19, incluindo
+migration, chave clínica, smoke manual e diagnóstico do carregamento de chunks.
+O próximo slice de produto é `docs/next-spec-documentos-recibos-assinatura.md`;
+usar `/speckit.specify` após estabilizar o ambiente. Mensageria de remarcação,
+horário fixo e cancelamento continuam decisões separadas, sem sucesso simulado.
 
 Checkpoint funcional de 2026-08-31:
 - rotas centrais do protótipo reconstruídas com shell, tour de 16 passos,

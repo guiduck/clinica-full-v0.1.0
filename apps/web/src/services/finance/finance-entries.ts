@@ -6,7 +6,7 @@ import type {
   ParsedFinanceEntryUpdateInput,
 } from "@/utils/validators/finance-entry";
 
-function snapshot(entry: FinanceEntry): Prisma.InputJsonObject {
+export function snapshot(entry: FinanceEntry): Prisma.InputJsonObject {
   return {
     id: entry.id,
     patientId: entry.patientId,

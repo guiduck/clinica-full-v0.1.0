@@ -21,7 +21,9 @@ export function findVisibleTargetRect(
 ): OnboardingTargetRect | null {
   const visibleRects = targetIds.flatMap((id) => {
     const rect = document.getElementById(id)?.getBoundingClientRect();
-    if (!rect || rect.width <= 0 || rect.height <= 0) return [];
+    if (!rect || rect.width <= 0 || rect.height <= 0 ||
+      rect.right <= 0 || rect.bottom <= 0 ||
+      rect.left >= window.innerWidth || rect.top >= window.innerHeight) return [];
     return [rect];
   });
 
