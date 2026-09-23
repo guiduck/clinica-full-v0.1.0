@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sendTransactionalEmail } from "@/services/email/email-sender";
+import { passwordResetEmail } from "@/emails/password-reset";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -7,6 +8,17 @@ afterEach(() => {
 });
 
 describe("transactional e-mail provider", () => {
+  it("centers the reset action and links directly to the code confirmation step", () => {
+    const email = passwordResetEmail(
+      "Ana",
+      "123456",
+      "https://clinica-full.gfig.space/recuperar-senha?email=ana%40example.com",
+    );
+    expect(email.html).toContain("text-align:center");
+    expect(email.html).toContain("Confirmar código e criar nova senha");
+    expect(email.html).toContain("recuperar-senha?email=ana%40example.com");
+  });
+
   it("sends through Resend with the configured verified sender", async () => {
     vi.stubEnv("EMAIL_PROVIDER", "resend");
     vi.stubEnv("EMAIL_FROM", "clinica-full <no-reply@mail.gfig.space>");

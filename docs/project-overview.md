@@ -1,5 +1,33 @@
 # Overview do Projeto e Plano de MVP
 
+## Acabamento operacional e fronteira de escala — 2026-09-22
+
+Agenda, clínica, Google Agenda e financeiro receberam o acabamento necessário
+para o piloto. O calendário agora projeta cards do período selecionado a partir
+de `view` e `date` da URL, com detalhe, remarcação e cancelamento reais. Cancelar
+uma consulta mantém a receita prevista vinculada consistente e tenta remover o
+evento do Google. Os eventos usam o nome do paciente como título, e a
+reconciliação manual atualiza também eventos antigos já sincronizados.
+
+Anamnese e evolução usam feedback simples de sucesso por toast. A interface não
+expõe a implementação de criptografia, embora o conteúdo continue protegido no
+servidor. O vínculo de evolução usa o rótulo `Sessão vinculada`. O fluxo de
+recuperação de senha ganhou CTA centralizado e retorno direto ao passo de código.
+
+Despesas manuais aceitam recorrência mensal de 2 a 60 ocorrências, persistidas
+atomicamente com grupo, posição e total. A migration
+`20260922000200_finance_expense_recurrence` é a oitava migration do repositório.
+
+O deploy atual continua sendo um modular monolith com um container Next.js e
+PostgreSQL, sem worker. Contas cadastradas quase inativas não definem capacidade;
+o risco real é a concorrência de mutações e a espera por provedores externos.
+Para o piloto, adota-se como envelope de planejamento — não SLA — até 10–20
+profissionais simultaneamente ativos em uma única instância modesta, podendo
+existir centenas ou milhares de contas de baixo uso. Antes de lembretes
+automáticos, mensagens agendadas ou picos maiores, deve entrar a outbox PostgreSQL
+com worker separado. O racional, gatilhos e plano de medição estão em
+`docs/async-capacity-guidance.md`.
+
 ## Agendamento reutilizável, recorrência e prontuário por consulta — 2026-09-22
 
 O frontend agora possui um compositor global de agendamento: Dashboard, Agenda,

@@ -31,9 +31,14 @@ export async function createFinanceEntryAction(
   const parsed = financeEntryCreateSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Revise o lançamento." };
   try {
-    await createManualFinanceEntry(user.id, parsed.data);
+    const result = await createManualFinanceEntry(user.id, parsed.data);
     revalidateFinance(parsed.data.patientId);
-    return { ok: true, message: "Lançamento salvo." };
+    return {
+      ok: true,
+      message: result.createdCount > 1
+        ? `${result.createdCount} despesas mensais criadas.`
+        : "Lançamento salvo.",
+    };
   } catch (error) {
     return { ok: false, message: getDomainErrorMessage(error, "Não foi possível salvar o lançamento.") };
   }

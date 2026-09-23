@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { getDomainErrorMessage } from "@/lib/errors/domain-errors";
 import { createAppointmentWithConfirmation } from "@/services/appointments/create-appointment-with-confirmation";
 import { updateAppointment } from "@/services/appointments/update-appointment";
+import { cancelAppointment } from "@/services/appointments/cancel-appointment";
 import {
   finishAppointmentSession,
   startAppointmentSession,
@@ -100,6 +101,29 @@ export async function updateAppointmentAction(
     return { ok: true, message: `Consulta atualizada.${notificationMessage}${calendarMessage}` };
   } catch (error) {
     return { ok: false, message: getDomainErrorMessage(error, "Não foi possível atualizar a consulta.") };
+  }
+}
+
+export async function cancelAppointmentAction(appointmentId: string) {
+  const user = await requireUser();
+  try {
+    const result = await cancelAppointment(user.id, appointmentId);
+    revalidatePath("/agenda");
+    revalidatePath("/dashboard");
+    revalidatePath("/financeiro");
+    revalidatePath("/financeiro/previsibilidade");
+    revalidatePath(`/pacientes/${result.appointment.patientId}`);
+    return {
+      ok: true as const,
+      message: result.calendarRemoved
+        ? "Consulta cancelada e removida do Google Agenda."
+        : "Consulta cancelada. Confira o Google Agenda se o evento ainda estiver visível.",
+    };
+  } catch (error) {
+    return {
+      ok: false as const,
+      message: getDomainErrorMessage(error, "Não foi possível cancelar a consulta."),
+    };
   }
 }
 

@@ -1,6 +1,6 @@
 # Próxima Spec: Fila Durável de Mensagens e Agendamentos
 
-> Brief preparado com `specify-prompt-engineer` em 2026-09-22 a partir do
+> Brief atualizado com `specify-prompt-engineer` em 2026-09-22 a partir do
 > roadmap, handoff, product spec, ADR e estado real do app. Está pronto para
 > `/speckit.specify` após o deploy e smoke do checkpoint atual.
 
@@ -24,7 +24,8 @@ e tenham estado operacional auditável sem expor conteúdo clínico.
 - canais e-mail e Twilio WhatsApp por adapters existentes, com templates
   versionados e payload mínimo referenciado por IDs;
 - tipos iniciais: boas-vindas, confirmação da primeira consulta, lembrete de
-  consulta e mensagem programada pelo profissional;
+  consulta, mensagem programada pelo profissional e sincronização assíncrona de
+  criar/atualizar/remover evento no Google Agenda;
 - `scheduledAt`, prioridade, tentativas, próximo retry, lock/heartbeat, sucesso,
   falha permanente, cancelamento e dead-letter;
 - chave de idempotência por evento/canal/destinatário/template e tratamento de
@@ -39,6 +40,20 @@ e tenham estado operacional auditável sem expor conteúdo clínico.
   fila, taxa de erro, tentativas e idade do job mais antigo;
 - testes de concorrência, reinício do worker, provider indisponível, retry,
   idempotência, cancelamento, autorização e isolamento entre usuários.
+
+## Contexto de capacidade
+
+- o app atual não possui worker; e-mail, Twilio e Google Agenda ainda participam
+  diretamente de requisições web ou de tentativas best-effort;
+- quantidade de contas cadastradas não é uma métrica suficiente: concorrência,
+  tamanho dos picos, latência externa e conexões do banco determinam capacidade;
+- o envelope conservador de piloto é 10–20 profissionais simultaneamente ativos
+  em uma instância modesta, sem SLA até haver teste de carga no hardware da VPS;
+- lembretes e mensagens agendadas exigem fila antes de serem habilitados, mesmo
+  com poucos usuários, porque confiabilidade e retomada após reinício são o
+  requisito principal;
+- o detalhamento e os gatilhos operacionais estão em
+  `docs/async-capacity-guidance.md`.
 
 ## Restrições
 
@@ -78,6 +93,10 @@ e tenham estado operacional auditável sem expor conteúdo clínico.
 - mensagens programadas respeitam data/hora e fuso configurados;
 - nenhum usuário lê, cancela ou reprocessa jobs de outro usuário;
 - testes e smoke comprovam criação, consumo, retry, idempotência e restart.
+- benchmark reproduz pelo menos 50 profissionais concorrentes criando/remarcando
+  consultas e um pico de 500 jobs vencendo na mesma janela, registrando p50,
+  p95, taxa de erro, throughput e idade máxima da fila sem prometer SLA antes da
+  medição em ambiente equivalente à VPS.
 
 ## Fora do escopo
 

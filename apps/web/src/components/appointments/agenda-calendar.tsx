@@ -23,12 +23,14 @@ import {
 } from "lucide-react";
 import {
   createAppointmentAction,
+  cancelAppointmentAction,
   updateAppointmentAction,
   finishAppointmentSessionAction,
   startAppointmentSessionAction,
   type AppointmentActionState,
 } from "@/actions/appointments";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
+import { AgendaPeriodCards } from "@/components/appointments/agenda-list";
 import { useAppointmentComposer } from "@/components/appointmentComposer";
 import { DatePickerInput } from "@/components/datePicker";
 import { keepOrAdvanceAppointmentEnd } from "@/components/appointments/appointment-time-options";
@@ -36,6 +38,7 @@ import {
   agendaDateKey,
   agendaHeaderTitle,
   agendaVisibleDays,
+  appointmentsForAgendaPeriod,
   appointmentGridPosition,
   isSameAgendaDay,
   shiftAgendaReferenceDate,
@@ -44,6 +47,16 @@ import {
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -148,6 +161,7 @@ export function AgendaCalendar({
     () => appointments.find((item) => item.id === initialOpen) ?? null,
   );
   const [session, setSession] = React.useState<AppointmentView | null>(null);
+  const [canceling, setCanceling] = React.useState<AppointmentView | null>(null);
   const [syncPending, startSync] = React.useTransition();
   React.useEffect(() => {
     if (initialOpen === "1") openAppointmentComposer({ patientId: defaultPatientId });
@@ -155,7 +169,7 @@ export function AgendaCalendar({
   const syncCalendar = () => startSync(async () => {
     const result = await syncUpcomingAppointmentsAction();
     if (!result.ok) { toast.error(result.message); return; }
-    toast.message(`${result.synced} consulta(s) sincronizada(s).${result.failed ? ` ${result.failed} falharam; confira a conexão.` : ""}`);
+    toast.message(`${result.synced} consulta(s) atualizada(s) no Google Agenda.${result.failed ? ` ${result.failed} falharam; confira a conexão.` : ""}`);
     router.refresh();
   });
   const updateAgendaQuery = React.useCallback((nextDate: Date, nextView: AgendaView) => {
@@ -180,6 +194,11 @@ export function AgendaCalendar({
     setView(nextView);
     updateAgendaQuery(referenceDate, nextView);
   };
+  const periodAppointments = appointmentsForAgendaPeriod(
+    appointments,
+    referenceDate,
+    view,
+  );
   return (
     <main className="app-page space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -203,7 +222,7 @@ export function AgendaCalendar({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 text-sm">
         <span>{googleCalendarConnected ? "Google Agenda conectado. Consultas novas são sincronizadas após o salvamento." : "Google Agenda não conectado. As consultas ficam salvas apenas aqui até você autorizar a integração."}</span>
         {googleCalendarConnected
-          ? <Button variant="outline" size="sm" disabled={syncPending} onClick={syncCalendar}>{syncPending ? "Sincronizando..." : "Sincronizar consultas pendentes"}</Button>
+          ? <Button variant="outline" size="sm" disabled={syncPending} onClick={syncCalendar}>{syncPending ? "Atualizando..." : "Atualizar Google Agenda"}</Button>
           : <Button asChild variant="outline" size="sm"><Link href="/configuracoes?tab=seguranca">Conectar Google Agenda</Link></Button>}
       </div>
       <section className="overflow-hidden rounded-xl border bg-card shadow-card">
@@ -261,6 +280,13 @@ export function AgendaCalendar({
           />
         )}
       </section>
+      <AgendaPeriodCards
+        appointments={periodAppointments}
+        view={view}
+        onSelect={setSelected}
+        onEdit={setEditing}
+        onCancel={setCanceling}
+      />
       {editing && (
         <NewAppointmentDialog
           key={editing.id}
@@ -283,6 +309,13 @@ export function AgendaCalendar({
         }}
         onStart={(appointment) => setSession(appointment)}
         onEdit={(appointment) => { setSelected(null); setEditing(appointment); }}
+        onCancel={(appointment) => { setSelected(null); setCanceling(appointment); }}
+      />
+      <CancelAppointmentDialog
+        appointment={canceling}
+        onOpenChange={(open) => {
+          if (!open) setCanceling(null);
+        }}
       />
       <SessionDialog
         appointment={session}
@@ -632,11 +665,13 @@ function AppointmentDetails({
   onOpenChange,
   onStart,
   onEdit,
+  onCancel,
 }: {
   appointment: AppointmentView | null;
   onOpenChange: (open: boolean) => void;
   onStart: (item: AppointmentView) => void;
   onEdit: (item: AppointmentView) => void;
+  onCancel: (item: AppointmentView) => void;
 }) {
   const [pending, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
@@ -721,21 +756,72 @@ function AppointmentDetails({
                   <Edit3 className="size-4" />
                   Editar
                 </Button>
-                <CapabilityNotice
-                  descriptor={unavailable}
-                  trigger={
-                    <Button variant="outline">
-                      <Trash2 className="size-4" />
-                      Excluir agendamento
-                    </Button>
-                  }
-                />
+                <Button
+                  variant="outline"
+                  className="text-destructive"
+                  onClick={() => onCancel(appointment)}
+                  disabled={isFinished}
+                >
+                  <Trash2 className="size-4" />
+                  Cancelar consulta
+                </Button>
               </div>
             </div>
           </div>
         ) : null}
       </SheetContent>
     </Sheet>
+  );
+}
+
+function CancelAppointmentDialog({
+  appointment,
+  onOpenChange,
+}: {
+  appointment: AppointmentView | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const confirm = () => {
+    if (!appointment) return;
+    startTransition(async () => {
+      const result = await cancelAppointmentAction(appointment.id);
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success(result.message);
+      onOpenChange(false);
+      router.refresh();
+    });
+  };
+  return (
+    <AlertDialog open={Boolean(appointment)} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cancelar esta consulta?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {appointment
+              ? `A consulta de ${appointment.patientName} em ${formatBrazilianDate(appointment.startsAt)} às ${formatTime24(appointment.startsAt)} será cancelada. A receita prevista vinculada também será cancelada.`
+              : ""}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={pending}>Manter consulta</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={pending}
+            onClick={(event) => {
+              event.preventDefault();
+              confirm();
+            }}
+          >
+            {pending ? "Cancelando..." : "Cancelar consulta"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

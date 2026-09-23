@@ -1,5 +1,37 @@
 # Roadmap
 
+## Checkpoint de acabamento operacional — 2026-09-22
+
+Status: `implementado e validado localmente; migration e smoke na VPS pendentes`.
+
+- O e-mail de recuperação centraliza o CTA e leva diretamente ao passo de código
+  e nova senha, preservando o e-mail informado na query string.
+- Anamnese e evolução confirmam o salvamento por toast, sem explicar detalhes de
+  criptografia ao usuário. O vínculo da evolução passou a se chamar `Sessão
+  vinculada` e o prontuário continua persistindo corretamente.
+- A Agenda ganhou uma lista de cards abaixo do calendário. Ela acompanha
+  `view` e `date` da URL, mostra exatamente o dia, semana ou mês selecionado em
+  ordem cronológica e oferece detalhes, remarcação e cancelamento real.
+- O cancelamento mantém agenda e financeiro consistentes, registra auditoria e
+  tenta remover o evento correspondente do Google Agenda depois do commit.
+- Eventos do Google Agenda usam o nome do paciente como título. A ação `Atualizar
+  Google Agenda` também reenvia eventos já sincronizados para corrigir títulos
+  antigos, até 100 consultas futuras por execução.
+- Despesas manuais podem repetir mensalmente por 2 a 60 meses. As ocorrências são
+  criadas em uma transação, preservam o dia quando possível e ajustam meses curtos.
+  A migration `20260922000200_finance_expense_recurrence` eleva o total do
+  repositório para oito.
+- Gate local aprovado: Prisma Client gerado, schema Prisma válido, lint,
+  typecheck, 61 arquivos/187 testes Vitest e build de produção com 29 rotas.
+  O smoke público confirmou o link direto para o passo de código. Permanecem
+  apenas os avisos conhecidos do Recharts em jsdom e de múltiplos lockfiles.
+- O app atual não possui worker: e-mail, WhatsApp e Google ainda são chamadas
+  síncronas/best-effort. Isso é aceitável para piloto e baixo volume, mas uma
+  fila durável é requisito de confiabilidade antes de ativar lembretes ou
+  mensagens programadas. Critérios e envelope provisório estão em
+  `docs/async-capacity-guidance.md`; o próximo brief continua em
+  `docs/next-spec-reliable-message-queue.md`.
+
 ## Checkpoint de agenda modular, recorrência e sessão clínica — 2026-09-22
 
 Status: `implementado e validado localmente; migration, configuração e smoke na VPS pendentes`.

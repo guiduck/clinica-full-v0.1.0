@@ -23,6 +23,9 @@ const entry = {
   userId: "user-1",
   patientId: "patient-1",
   appointmentId: null,
+  recurrenceGroupId: null,
+  recurrenceIndex: null,
+  recurrenceCount: null,
   type: "receita" as const,
   status: "previsto" as const,
   origin: "manual" as const,
@@ -60,11 +63,42 @@ describe("finance entry service", () => {
       date: entry.date,
       dueDate: entry.dueDate,
       status: "previsto",
+      recurrenceCount: 1,
     });
     expect(tx.financeEntry.create).toHaveBeenCalledOnce();
     expect(tx.financeEntryEvent.create).toHaveBeenCalledWith({
       data: expect.objectContaining({ type: "created", entryId: "entry-1" }),
     });
+  });
+
+  it("creates monthly expenses with calendar-safe dates in one transaction", async () => {
+    tx.financeEntry.create.mockImplementation(({ data }) =>
+      Promise.resolve({
+        ...entry,
+        ...data,
+        id: `entry-${data.recurrenceIndex}`,
+      }),
+    );
+    const result = await createManualFinanceEntry("user-1", {
+      type: "despesa",
+      description: "Aluguel",
+      category: "Aluguel",
+      paymentMethod: "pix",
+      valueCents: 150000,
+      date: new Date("2027-01-31T12:00:00.000Z"),
+      dueDate: new Date("2027-01-31T12:00:00.000Z"),
+      status: "efetivado",
+      recurrenceCount: 3,
+    });
+
+    expect(result.createdCount).toBe(3);
+    expect(tx.financeEntry.create).toHaveBeenCalledTimes(3);
+    expect(tx.financeEntry.create.mock.calls.map(([call]) =>
+      call.data.date.toISOString().slice(0, 10),
+    )).toEqual(["2027-01-31", "2027-02-28", "2027-03-31"]);
+    expect(tx.financeEntry.create.mock.calls.map(([call]) => call.data.status))
+      .toEqual(["efetivado", "previsto", "previsto"]);
+    expect(tx.financeEntryEvent.create).toHaveBeenCalledTimes(3);
   });
 
   it("creates exactly one appointment-linked source record", async () => {

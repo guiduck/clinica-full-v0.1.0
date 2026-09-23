@@ -1,5 +1,47 @@
 # Handoff
 
+## Atualização de 2026-09-22 — acabamento da agenda, Google e recorrência financeira
+
+Implementado neste workspace, ainda não publicado:
+
+- CTA centralizado no e-mail de redefinição e link direto para a etapa de código,
+  com o e-mail preservado;
+- feedback de Anamnese/evolução por toast, sem mensagem técnica de criptografia,
+  e rótulo `Sessão vinculada` no prontuário;
+- cards abaixo do calendário filtrados pela mesma `view`/`date` da URL, ordenados
+  cronologicamente e com detalhe, remarcação e cancelamento;
+- cancelamento server-side autorizado, com cancelamento da receita ainda
+  prevista, auditoria e remoção best-effort do evento Google;
+- título do Google Agenda igual ao nome do paciente e reconciliação de até 100
+  consultas futuras, inclusive as que já tinham ID externo;
+- despesas mensais recorrentes de 2 a 60 meses, com datas ajustadas para meses
+  curtos e criação/auditoria atômicas.
+
+Migration nova: `20260922000200_finance_expense_recurrence`. Após o deploy, o
+banco deve mostrar oito migrations aplicadas. Gate local aprovado: `prisma
+generate`, `prisma validate`, lint, typecheck, 61 arquivos/187 testes Vitest e
+build de produção com 29 rotas. O smoke Playwright público confirmou que
+`/recuperar-senha?email=...` abre diretamente código e nova senha. A Agenda
+autenticada não recebeu smoke real porque o Docker/PostgreSQL local estava
+desligado; não houve deploy nesta rodada.
+
+Capacidade e fila: o Compose de produção ainda executa somente `web`, `migrate`
+e `postgres`; não há worker. Operações comuns de banco são leves e o número de
+contas registradas, isoladamente, não é um limitador útil. Até existir benchmark
+da VPS, usar 10–20 profissionais simultaneamente ativos como envelope conservador
+de piloto, sem interpretar isso como limite garantido. Centenas ou milhares de
+contas de baixo uso podem caber, mas a capacidade real depende de CPU/RAM,
+conexões do PostgreSQL, latência e limites dos providers. Mesmo com um único
+usuário, lembretes automáticos exigem fila para sobreviver a reinícios e falhas.
+Detalhes e gatilhos estão em `docs/async-capacity-guidance.md`; o brief seguinte
+foi atualizado em `docs/next-spec-reliable-message-queue.md`.
+
+Google OAuth: para remover o aviso de app não verificado, manter somente redirects
+reais, publicar a tela de consentimento, verificar o domínio, disponibilizar
+homepage e política de privacidade públicas, justificar o escopo mínimo e enviar
+um vídeo de demonstração no Verification Center. O escopo da Calendar API não é
+uma URI de redirect.
+
 ## Atualização de 2026-09-22 — agenda modular, recorrência e clínica por consulta
 
 Implementado neste workspace, ainda não publicado:

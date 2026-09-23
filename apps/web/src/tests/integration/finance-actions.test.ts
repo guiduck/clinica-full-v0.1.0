@@ -29,6 +29,7 @@ function validForm() {
   formData.set("date", "14/09/2026");
   formData.set("dueDate", "14/09/2026");
   formData.set("status", "previsto");
+  formData.set("recurrenceCount", "1");
   return formData;
 }
 
@@ -36,9 +37,19 @@ describe("finance actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireUserMock.mockResolvedValue({ id: "user-1" });
-    createMock.mockResolvedValue({ id: "entry-1" });
+    createMock.mockResolvedValue({ entry: { id: "entry-1" }, entries: [{ id: "entry-1" }], createdCount: 1 });
     updateMock.mockResolvedValue({ id: "entry-1" });
     statusMock.mockResolvedValue({ id: "entry-1" });
+  });
+
+  it("reports how many monthly expenses were created", async () => {
+    const formData = validForm();
+    formData.set("type", "despesa");
+    formData.set("category", "Aluguel");
+    formData.set("recurrenceCount", "12");
+    createMock.mockResolvedValueOnce({ createdCount: 12 });
+    const result = await createFinanceEntryAction({ ok: false, message: "" }, formData);
+    expect(result).toEqual({ ok: true, message: "12 despesas mensais criadas." });
   });
 
   it("creates and revalidates all financial consumers", async () => {

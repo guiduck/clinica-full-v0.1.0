@@ -18,6 +18,24 @@ describe("finance entry validation", () => {
     });
     expect(parsed.valueCents).toBe(123456);
     expect(parsed.date.toISOString()).toContain("2026-09-14");
+    expect(parsed.recurrenceCount).toBe(1);
+  });
+
+  it("accepts monthly recurrence only for expenses", () => {
+    const input = {
+      type: "despesa",
+      description: "Aluguel do consultório",
+      category: "Aluguel",
+      paymentMethod: "pix",
+      valueCents: "1.500,00",
+      date: "31/01/2027",
+      dueDate: "31/01/2027",
+      status: "previsto",
+      recurrenceCount: "12",
+    };
+    expect(financeEntryCreateSchema.parse(input).recurrenceCount).toBe(12);
+    expect(financeEntryCreateSchema.safeParse({ ...input, type: "receita" }).success)
+      .toBe(false);
   });
 
   it("rejects invalid values, dates and transitions", () => {

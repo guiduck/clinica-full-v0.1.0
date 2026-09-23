@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AgendaCalendar } from "@/components/appointments/agenda-calendar";
 import { AppointmentComposerProvider } from "@/components/appointmentComposer";
 
 const navigationMocks = vi.hoisted(() => ({ refresh: vi.fn(), replace: vi.fn() }));
+const appointmentMocks = vi.hoisted(() => ({ cancel: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: navigationMocks.refresh, replace: navigationMocks.replace }),
@@ -16,6 +17,7 @@ vi.mock("@/actions/appointments", () => ({
   updateAppointmentAction: vi.fn(),
   startAppointmentSessionAction: vi.fn(),
   finishAppointmentSessionAction: vi.fn(),
+  cancelAppointmentAction: appointmentMocks.cancel,
 }));
 
 vi.mock("@/actions/integrations", () => ({ syncUpcomingAppointmentsAction: vi.fn() }));
@@ -78,6 +80,79 @@ describe("AgendaCalendar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Editar" }));
     expect(screen.getByRole("dialog", { name: "Editar agendamento" })).toBeInTheDocument();
     expect(screen.getByLabelText("Início")).toHaveTextContent("09:00");
+  });
+
+  it("shows only the month-filtered appointments in chronological cards", () => {
+    renderAgenda(
+      <AgendaCalendar
+        patients={[patient]}
+        initialView="mes"
+        initialDate="2026-09-22"
+        appointments={[
+          {
+            id: "appointment-october",
+            patientId: "patient-1",
+            patientName: "Fora do mês",
+            startsAt: "2026-10-01T09:00:00-03:00",
+            endsAt: "2026-10-01T09:50:00-03:00",
+            status: "agendada",
+            type: "Sessão individual",
+            videoUrl: null,
+            sessionStartedAt: null,
+            sessionEndedAt: null,
+          },
+          {
+            id: "appointment-september",
+            patientId: "patient-1",
+            patientName: "Ana Teste",
+            startsAt: "2026-09-26T09:00:00-03:00",
+            endsAt: "2026-09-26T09:50:00-03:00",
+            status: "agendada",
+            type: "Sessão individual",
+            videoUrl: null,
+            sessionStartedAt: null,
+            sessionEndedAt: null,
+          },
+        ]}
+      />,
+    );
+    const cards = screen.getByRole("heading", { name: "Consultas do mês" }).closest("section");
+    expect(cards).not.toBeNull();
+    const scoped = within(cards as HTMLElement);
+    expect(scoped.getByText("1 consulta encontrada no filtro atual.")).toBeInTheDocument();
+    expect(scoped.getByText("Ana Teste")).toBeInTheDocument();
+    expect(scoped.queryByText("Fora do mês")).not.toBeInTheDocument();
+  });
+
+  it("opens cancellation from a period card", async () => {
+    appointmentMocks.cancel.mockResolvedValue({
+      ok: true,
+      message: "Consulta cancelada.",
+    });
+    renderAgenda(
+      <AgendaCalendar
+        patients={[patient]}
+        initialView="dia"
+        initialDate="2026-09-26"
+        appointments={[{
+          id: "appointment-1",
+          patientId: "patient-1",
+          patientName: "Ana Teste",
+          startsAt: "2026-09-26T09:00:00-03:00",
+          endsAt: "2026-09-26T09:50:00-03:00",
+          status: "agendada",
+          type: "Sessão individual",
+          videoUrl: null,
+          sessionStartedAt: null,
+          sessionEndedAt: null,
+        }]}
+      />,
+    );
+    const cards = screen.getByRole("heading", { name: "Consultas do dia" }).closest("section");
+    fireEvent.click(within(cards as HTMLElement).getByRole("button", { name: "Cancelar" }));
+    const dialog = screen.getByRole("alertdialog", { name: "Cancelar esta consulta?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancelar consulta" }));
+    expect(appointmentMocks.cancel).toHaveBeenCalledWith("appointment-1");
   });
   it("opens the create dialog from canonical URL state with the patient selected", () => {
     renderAgenda(

@@ -20,6 +20,10 @@ const brazilianDate = z.string().trim().transform((value, ctx) => {
   }
   return date;
 });
+const recurrenceCount = z.preprocess(
+  (value) => value === undefined || value === null || value === "" ? 1 : Number(value),
+  z.number().int().min(1).max(60),
+);
 
 export const financeEntryCreateSchema = z.object({
   type: z.enum(["receita", "despesa"]),
@@ -31,15 +35,24 @@ export const financeEntryCreateSchema = z.object({
   date: brazilianDate,
   dueDate: brazilianDate,
   status: z.enum(["previsto", "efetivado"]).default("previsto"),
+  recurrenceCount,
+}).superRefine((value, ctx) => {
+  if (value.type === "receita" && value.recurrenceCount > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["recurrenceCount"],
+      message: "A recorrência mensal está disponível apenas para despesas.",
+    });
+  }
 });
 
-export const financeEntryUpdateSchema = financeEntryCreateSchema.pick({
-  description: true,
-  category: true,
-  paymentMethod: true,
-  valueCents: true,
-  date: true,
-  dueDate: true,
+export const financeEntryUpdateSchema = z.object({
+  description: z.string().trim().min(2, "Informe uma descrição.").max(160),
+  category: z.string().trim().min(1, "Escolha uma categoria.").max(80),
+  paymentMethod: paymentMethod.optional(),
+  valueCents: positiveCents,
+  date: brazilianDate,
+  dueDate: brazilianDate,
 });
 
 export const financeEntryStatusSchema = z.object({

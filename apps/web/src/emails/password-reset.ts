@@ -11,7 +11,7 @@ export function passwordResetEmail(name: string, code: string, url: string) {
       greeting: `Olá, ${name}.`,
       body: "Recebemos um pedido para criar uma nova senha. Digite o código abaixo na tela de recuperação.",
       highlight: code,
-      actionLabel: "Voltar à recuperação de senha",
+      actionLabel: "Confirmar código e criar nova senha",
       actionUrl: url,
       footer: "Este código expira em 15 minutos, aceita no máximo 5 tentativas e só pode ser usado uma vez. Se você não pediu a troca, ignore esta mensagem.",
     }),

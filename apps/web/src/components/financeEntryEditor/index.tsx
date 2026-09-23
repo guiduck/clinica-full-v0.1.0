@@ -10,6 +10,7 @@ import {
   type FinanceActionState,
 } from "@/actions/finance";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -63,6 +64,8 @@ export function FinanceEntryDialog({
   const [date, setDate] = React.useState(today);
   const [dueDate, setDueDate] = React.useState(today);
   const [status, setStatus] = React.useState<"previsto" | "efetivado">("previsto");
+  const [recurring, setRecurring] = React.useState(false);
+  const [recurrenceCount, setRecurrenceCount] = React.useState(12);
   const [result, setResult] = React.useState<FinanceActionState>({ ok: false, message: "" });
   const [isPending, startTransition] = React.useTransition();
 
@@ -78,6 +81,8 @@ export function FinanceEntryDialog({
     setDate(nextDate);
     setDueDate(entry ? dateBR(entry.dueDate) : nextDate);
     setStatus(entry?.status === "efetivado" ? "efetivado" : "previsto");
+    setRecurring(false);
+    setRecurrenceCount(12);
     setResult({ ok: false, message: "" });
   }, [defaultPatientId, entry, initialType, open, today]);
 
@@ -92,6 +97,10 @@ export function FinanceEntryDialog({
     formData.set("date", date);
     formData.set("dueDate", dueDate);
     formData.set("status", status);
+    formData.set(
+      "recurrenceCount",
+      !entry && type === "despesa" && recurring ? String(recurrenceCount) : "1",
+    );
     startTransition(async () => {
       const next = entry
         ? await updateFinanceEntryAction(entry.id, { ok: false, message: "" }, formData)
@@ -110,7 +119,7 @@ export function FinanceEntryDialog({
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
       <DialogHeader><DialogTitle>{entry ? "Editar lançamento" : "Registro financeiro"}</DialogTitle><DialogDescription>Preencha os dados do lançamento financeiro.</DialogDescription></DialogHeader>
-      <Tabs value={type} onValueChange={(next) => setType(next as typeof type)}><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="receita" disabled={Boolean(entry)}><TrendingUp className="mr-1 size-4" /> Receita</TabsTrigger><TabsTrigger value="despesa" disabled={Boolean(entry)}><TrendingDown className="mr-1 size-4" /> Despesa</TabsTrigger></TabsList></Tabs>
+      <Tabs value={type} onValueChange={(next) => { const nextType = next as typeof type; setType(nextType); if (nextType !== "despesa") setRecurring(false); }}><TabsList className="grid w-full grid-cols-2"><TabsTrigger value="receita" disabled={Boolean(entry)}><TrendingUp className="mr-1 size-4" /> Receita</TabsTrigger><TabsTrigger value="despesa" disabled={Boolean(entry)}><TrendingDown className="mr-1 size-4" /> Despesa</TabsTrigger></TabsList></Tabs>
       <div className="space-y-4">
         {type === "receita" ? <EditorField label="Paciente (opcional)"><Select value={patient} onValueChange={setPatient} disabled={Boolean(entry)}><SelectTrigger aria-label="Paciente"><SelectValue placeholder="Sem paciente vinculado" /></SelectTrigger><SelectContent>{patients.map((item) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent></Select></EditorField> : null}
         <EditorField label="Categoria *"><Select value={category} onValueChange={setCategory}><SelectTrigger aria-label="Categoria"><SelectValue placeholder="Selecionar categoria..." /></SelectTrigger><SelectContent>{categories.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></EditorField>
@@ -118,6 +127,7 @@ export function FinanceEntryDialog({
         <EditorField label="Método"><Select value={method} onValueChange={setMethod}><SelectTrigger aria-label="Método"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pix">PIX</SelectItem><SelectItem value="card">Cartão</SelectItem><SelectItem value="cash">Dinheiro</SelectItem><SelectItem value="insurance">Convênio</SelectItem></SelectContent></Select></EditorField>
         <div className="grid gap-3 sm:grid-cols-2"><EditorField label="Valor (R$) *"><Input aria-label="Valor" inputMode="decimal" value={value} onChange={(event) => setValue(event.target.value)} placeholder="0,00" /></EditorField><EditorField label="Data *"><Input aria-label="Data" inputMode="numeric" value={date} onChange={(event) => setDate(maskDate(event.target.value))} placeholder="dd/mm/aaaa" /></EditorField></div>
         <EditorField label="Vencimento *"><Input aria-label="Vencimento" inputMode="numeric" value={dueDate} onChange={(event) => setDueDate(maskDate(event.target.value))} placeholder="dd/mm/aaaa" /></EditorField>
+        {!entry && type === "despesa" ? <div className="rounded-lg border p-4"><label className="flex items-center gap-3 text-sm font-medium"><Checkbox checked={recurring} onCheckedChange={(checked) => setRecurring(checked === true)} />Repetir esta despesa mensalmente</label>{recurring ? <div className="mt-3 max-w-48"><EditorField label="Total de meses"><Input aria-label="Total de meses" type="number" min={2} max={60} value={recurrenceCount} onChange={(event) => setRecurrenceCount(Number(event.target.value))} /></EditorField><p className="mt-2 text-xs text-muted-foreground">Serão criados lançamentos mensais nas mesmas datas, com ajuste automático para o último dia em meses mais curtos.</p></div> : null}</div> : null}
         {!entry ? <EditorField label="Status"><Select value={status} onValueChange={(next) => setStatus(next as typeof status)}><SelectTrigger aria-label="Status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="previsto">Previsto</SelectItem><SelectItem value="efetivado">Efetivado</SelectItem></SelectContent></Select></EditorField> : null}
       </div>
       {result.message ? <p role="status" className={cn("text-sm", result.ok ? "text-success" : "text-destructive")}>{result.message}</p> : null}

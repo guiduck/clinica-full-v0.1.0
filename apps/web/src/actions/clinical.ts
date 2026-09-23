@@ -14,7 +14,7 @@ export async function saveAnamnesisAction(patientId: string, input: unknown) {
   try {
     await saveAnamnesis(user.id, patientId, parsed.data);
     revalidatePath(`/pacientes/${patientId}`);
-    return { ok: true as const, message: "Anamnese salva com criptografia." };
+    return { ok: true as const, message: "Anamnese salva com sucesso." };
   } catch (error) {
     return { ok: false as const, message: error instanceof DomainError && error.code === "CONFIGURATION"
       ? "O salvamento clínico está indisponível por uma configuração de segurança. Nenhum dado foi salvo. Avise o responsável técnico."
@@ -30,7 +30,7 @@ export async function saveEvolutionAction(patientId: string, input: unknown) {
     const data = await saveClinicalEvolution(user.id, patientId, parsed.data);
     revalidatePath(`/pacientes/${patientId}`);
     revalidatePath("/agenda");
-    return { ok: true as const, message: "Evolução salva com criptografia.", data };
+    return { ok: true as const, message: "Evolução salva com sucesso.", data };
   } catch (error) {
     return { ok: false as const, message: error instanceof DomainError && error.code === "CONFIGURATION"
       ? "O salvamento clínico está indisponível por uma configuração de segurança. Nenhum dado foi salvo. Avise o responsável técnico."

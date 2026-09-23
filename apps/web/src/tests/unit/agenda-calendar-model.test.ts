@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   agendaDateKey,
   agendaVisibleDays,
+  appointmentsForAgendaPeriod,
   appointmentGridPosition,
   shiftAgendaReferenceDate,
   startOfAgendaWeek,
@@ -23,6 +24,22 @@ describe("agenda calendar model", () => {
       "2026-09-05",
     ]);
     expect(agendaVisibleDays(reference, "mes")).toHaveLength(42);
+  });
+
+  it("filters and sorts cards by the exact URL period instead of month spillover days", () => {
+    const appointments = [
+      { id: "october", startsAt: "2026-10-01T09:00:00-03:00" },
+      { id: "late", startsAt: "2026-09-26T10:00:00-03:00" },
+      { id: "early", startsAt: "2026-09-02T08:00:00-03:00" },
+    ];
+    expect(
+      appointmentsForAgendaPeriod(appointments, new Date(2026, 8, 22, 12), "mes")
+        .map((item) => item.id),
+    ).toEqual(["early", "late"]);
+    expect(
+      appointmentsForAgendaPeriod(appointments, new Date(2026, 8, 26, 12), "dia")
+        .map((item) => item.id),
+    ).toEqual(["late"]);
   });
 
   it("navigates each view by its canonical period", () => {

@@ -75,8 +75,8 @@ export async function syncAppointmentToGoogleCalendar(userId: string, appointmen
     method: appointment.googleCalendarEventId ? "PATCH" : "POST",
     headers: { Authorization: `Bearer ${access.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      summary: `Consulta — ${appointment.patient.name}`,
-      description: appointment.videoUrl ? `Videochamada: ${appointment.videoUrl}` : "Consulta criada pela clinica-full.",
+      summary: appointment.patient.name,
+      description: appointment.videoUrl ? `Videochamada: ${appointment.videoUrl}` : appointment.type,
       start: { dateTime: appointment.startsAt.toISOString(), timeZone: "America/Sao_Paulo" },
       end: { dateTime: appointment.endsAt.toISOString(), timeZone: "America/Sao_Paulo" },
     }),
@@ -94,23 +94,46 @@ export async function syncUpcomingAppointmentsToGoogleCalendar(userId: string) {
     where: {
       userId,
       startsAt: { gte: new Date() },
-      googleCalendarEventId: null,
       status: { notIn: ["cancelada", "recusada"] },
     },
     select: { id: true },
     orderBy: { startsAt: "asc" },
-    take: 25,
+    take: 100,
   });
   let synced = 0;
   let failed = 0;
-  for (const appointment of appointments) {
-    try {
-      const result = await syncAppointmentToGoogleCalendar(userId, appointment.id);
-      if (result.synced) synced += 1;
+  for (let index = 0; index < appointments.length; index += 5) {
+    const batch = appointments.slice(index, index + 5);
+    const results = await Promise.allSettled(
+      batch.map((appointment) =>
+        syncAppointmentToGoogleCalendar(userId, appointment.id),
+      ),
+    );
+    for (const result of results) {
+      if (result.status === "fulfilled" && result.value.synced) synced += 1;
       else failed += 1;
-    } catch {
-      failed += 1;
     }
   }
   return { synced, failed, considered: appointments.length };
+}
+
+export async function removeAppointmentFromGoogleCalendar(
+  userId: string,
+  googleCalendarEventId: string | null,
+) {
+  if (!googleCalendarEventId) return { removed: true as const };
+  const access = await activeAccessToken(userId);
+  if (!access) return { removed: false as const };
+  const eventUrl = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(access.calendarId)}/events/${encodeURIComponent(googleCalendarEventId)}`;
+  const response = await fetch(eventUrl, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${access.token}` },
+  });
+  if (!response.ok && response.status !== 404 && response.status !== 410) {
+    throw new DomainError(
+      "PROVIDER_FAILURE",
+      "A consulta foi cancelada, mas o evento não pôde ser removido do Google Agenda.",
+    );
+  }
+  return { removed: true as const };
 }

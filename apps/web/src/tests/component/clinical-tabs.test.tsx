@@ -13,6 +13,12 @@ const actionMocks = vi.hoisted(() => ({
   finishSession: vi.fn(),
   getSessionContext: vi.fn(),
 }));
+const toastMocks = vi.hoisted(() => ({
+  success: vi.fn(),
+  error: vi.fn(),
+  message: vi.fn(),
+}));
+vi.mock("sonner", () => ({ toast: toastMocks }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
@@ -35,7 +41,7 @@ const clinicalAppointments = [{ id: "appointment-1", startsAt: "2026-09-01T09:00
 
 describe("clinical tabs", () => {
   it("updates anamnesis progress and persists the encrypted record", async () => {
-    actionMocks.saveAnamnesis.mockResolvedValue({ ok: true, message: "Anamnese salva com criptografia." });
+    actionMocks.saveAnamnesis.mockResolvedValue({ ok: true, message: "Anamnese salva com sucesso." });
     render(<PatientAnamneseTab patientId="patient-1" />);
     fireEvent.change(screen.getByLabelText("Descrição detalhada"), {
       target: { value: "Queixa" },
@@ -44,7 +50,8 @@ describe("clinical tabs", () => {
     expect(screen.getByText("5%")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(actionMocks.saveAnamnesis).toHaveBeenCalledWith("patient-1", expect.any(Object)));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Anamnese salva");
+    await waitFor(() => expect(toastMocks.success).toHaveBeenCalledWith("Anamnese salva com sucesso."));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("validates clinical drafts before opening the unavailable notice", () => {
@@ -65,13 +72,13 @@ describe("clinical tabs", () => {
   it("persists a clinical evolution", async () => {
     actionMocks.saveEvolution.mockResolvedValue({
       ok: true,
-      message: "Evolução salva com criptografia.",
+      message: "Evolução salva com sucesso.",
       data: { id: "evolution-1", appointmentId: "appointment-1", occurredAt: new Date().toISOString(), mood: 5, free: "Registro clínico", subjective: "", objective: "", assessment: "", plan: "" },
     });
     render(<PatientClinicalRecordTab patientId="patient-1" appointments={clinicalAppointments} />);
     fireEvent.click(screen.getByRole("button", { name: "Nova evolução" }));
     const appointmentSelect = screen.getByRole("combobox", {
-      name: "Consulta relacionada",
+      name: "Sessão vinculada",
     });
     appointmentSelect.focus();
     fireEvent.keyDown(appointmentSelect, { key: "ArrowDown" });

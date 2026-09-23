@@ -293,6 +293,9 @@ model FinanceEntry {
   userId        String
   patientId     String?
   appointmentId String?             @unique
+  recurrenceGroupId String?
+  recurrenceIndex   Int?
+  recurrenceCount   Int?
   type          FinanceEntryType
   status        FinanceEntryStatus  @default(previsto)
   origin        FinanceEntryOrigin
@@ -314,6 +317,7 @@ model FinanceEntry {
   @@index([userId, date])
   @@index([userId, type, status])
   @@index([patientId, date])
+  @@index([recurrenceGroupId])
 }
 
 model FinanceEntryEvent {

@@ -42,6 +42,36 @@ export function agendaVisibleDays(referenceDate: Date, view: AgendaView) {
   );
 }
 
+export function appointmentsForAgendaPeriod<T extends { startsAt: string }>(
+  appointments: T[],
+  referenceDate: Date,
+  view: AgendaView,
+) {
+  const referenceKey = agendaDateKey(referenceDate);
+  let matches: (appointment: T) => boolean;
+  if (view === "dia") {
+    matches = (appointment) =>
+      saoPauloAppointmentParts(appointment.startsAt).date === referenceKey;
+  } else if (view === "mes") {
+    const monthKey = referenceKey.slice(0, 7);
+    matches = (appointment) =>
+      saoPauloAppointmentParts(appointment.startsAt).date.startsWith(monthKey);
+  } else {
+    const startKey = agendaDateKey(startOfAgendaWeek(referenceDate));
+    const endKey = agendaDateKey(addAgendaDays(startOfAgendaWeek(referenceDate), 7));
+    matches = (appointment) => {
+      const dateKey = saoPauloAppointmentParts(appointment.startsAt).date;
+      return dateKey >= startKey && dateKey < endKey;
+    };
+  }
+  return appointments
+    .filter(matches)
+    .sort(
+      (left, right) =>
+        new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime(),
+    );
+}
+
 export function shiftAgendaReferenceDate(
   referenceDate: Date,
   view: AgendaView,

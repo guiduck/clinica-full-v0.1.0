@@ -3,10 +3,14 @@ import { DomainError } from "@/lib/errors/domain-errors";
 import { encryptSensitiveValue } from "@/lib/security/encryption";
 import type { SessionFinishDraft } from "@/utils/validators/clinical-drafts";
 
-export async function listAppointments(userId: string) {
+export async function listAppointments(
+  userId: string,
+  range?: { start: Date; end: Date },
+) {
   return prisma.appointment.findMany({
     where: {
-      userId
+      userId,
+      ...(range ? { startsAt: { gte: range.start, lt: range.end } } : {}),
     },
     orderBy: {
       startsAt: "asc"
@@ -20,7 +24,7 @@ export async function listAppointments(userId: string) {
         take: 1
       }
     },
-    take: 100
+    take: range ? 500 : 100
   });
 }
 
