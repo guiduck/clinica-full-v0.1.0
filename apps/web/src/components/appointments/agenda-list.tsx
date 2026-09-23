@@ -1,11 +1,10 @@
 import { CalendarClock, CalendarSync, Eye, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AppointmentStatusBadge } from "@/components/appointmentStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { AgendaView } from "@/components/appointments/agenda-calendar-model";
 import {
   formatBrazilianDate,
-  formatStatusLabel,
   formatTime24,
 } from "@/utils/formatters";
 
@@ -76,7 +75,7 @@ export function AgendaPeriodCards({
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">{appointment.type}</p>
                     </div>
-                    <Badge tone="neutral">{formatStatusLabel(appointment.status)}</Badge>
+                    <AppointmentStatusBadge status={appointment.status} />
                   </div>
                   <div className="mt-auto flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => onSelect(appointment)}>

@@ -8,7 +8,7 @@ import { createPatientWizard } from "@/services/patients/create-patient-wizard";
 import { createPatient } from "@/services/patients/patients";
 import { patientSchema, patientWizardPatientSchema } from "@/utils/validators/patient";
 import { patientFinancialProfileSchema } from "@/utils/validators/patient-financial-profile";
-import { sendPatientWelcomeEmail } from "@/services/patients/patient-welcome-email";
+import { schedulePatientWelcomeEmail } from "@/services/messages/schedule-message";
 
 export type PatientActionState = {
   ok: boolean;
@@ -49,10 +49,13 @@ export async function createPatientWizardAction(
         return { ok: true, patientId: patient.id, patientName: patient.name, welcomeMessage: "Paciente salvo, mas o e-mail não foi enviado porque falta endereço ou consentimento." };
       }
       try {
-        await sendPatientWelcomeEmail({ patientName: patient.name, patientEmail: patient.email, professionalName: user.name });
-        return { ok: true, patientId: patient.id, patientName: patient.name, welcomeMessage: "E-mail de boas-vindas enviado." };
+        await schedulePatientWelcomeEmail({
+          userId: user.id, patientId: patient.id, patientName: patient.name,
+          patientEmail: patient.email, professionalName: user.name,
+        });
+        return { ok: true, patientId: patient.id, patientName: patient.name, welcomeMessage: "E-mail de boas-vindas adicionado à fila." };
       } catch {
-        return { ok: true, patientId: patient.id, patientName: patient.name, welcomeMessage: "Paciente salvo, mas o provedor recusou o e-mail de boas-vindas. Confira a configuração de e-mail." };
+        return { ok: true, patientId: patient.id, patientName: patient.name, welcomeMessage: "Paciente salvo, mas não foi possível programar o e-mail. Confira a fila e a configuração do provedor." };
       }
     }
     return { ok: true, patientId: patient.id, patientName: patient.name };

@@ -15,15 +15,18 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "worker:messages": "tsx src/workers/message-worker.ts"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.0.1",
     "@prisma/client": "^5.22.0",
+    "bullmq": "^6.3.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "ioredis": "^6.0.0",
     "lucide-react": "^0.475.0",
     "next": "15.5.21",
     "radix-ui": "^1.6.7",
@@ -33,6 +36,7 @@
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.0.2",
+    "tsx": "^4.23.15",
     "zod": "^3.24.2",
     "zustand": "^5.0.15"
   },

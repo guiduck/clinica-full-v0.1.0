@@ -2,6 +2,7 @@ export type WhatsAppConfig = {
   accountSid: string;
   authToken: string;
   from: string;
+  statusCallbackUrl: string | null;
 };
 
 export function getWhatsAppConfig(env: NodeJS.ProcessEnv = process.env): WhatsAppConfig | null {
@@ -16,6 +17,9 @@ export function getWhatsAppConfig(env: NodeJS.ProcessEnv = process.env): WhatsAp
   return {
     accountSid,
     authToken,
-    from
+    from,
+    statusCallbackUrl:
+      env.TWILIO_STATUS_CALLBACK_URL?.trim() ||
+      (env.NEXT_PUBLIC_APP_URL ? `${env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/webhooks/twilio/whatsapp` : null),
   };
 }

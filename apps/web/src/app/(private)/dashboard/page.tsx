@@ -4,13 +4,15 @@ import { listAppointments } from "@/services/appointments/appointments";
 import { searchPatients } from "@/services/patients/patients";
 import { getUserUiPreference } from "@/services/ui-preferences/ui-preferences";
 import { buildAppointmentFinanceEntries } from "@/services/finance/finance-overview";
+import { getScheduledMessageSummary } from "@/services/messages/message-inbox";
 
 export default async function DashboardPage() {
   const user = await requireUser();
-  const [patients, appointments, preference] = await Promise.all([
+  const [patients, appointments, preference, scheduledMessages] = await Promise.all([
     searchPatients(user.id),
     listAppointments(user.id),
     getUserUiPreference(user.id),
+    getScheduledMessageSummary(user.id),
   ]);
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const financeEntries = buildAppointmentFinanceEntries(patients, appointments);
@@ -27,6 +29,14 @@ export default async function DashboardPage() {
         status: appointment.status,
       }))}
       financeEntries={financeEntries}
+      scheduledMessages={scheduledMessages.map((message) => ({
+        id: message.id,
+        patientName: message.patient.name,
+        channel: message.channel,
+        status: message.status,
+        body: message.bodyText,
+        scheduledFor: message.scheduledFor.toISOString(),
+      }))}
       initialOrder={preference.dashboardSectionOrder}
       initialFinancialHidden={preference.hideFinancialValues}
       showNews={!preference.dismissedNewsBannerAt}

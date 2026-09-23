@@ -31,6 +31,7 @@ import {
 } from "@/actions/appointments";
 import { AppointmentTimeSelect } from "@/components/appointments/appointment-time-select";
 import { AgendaPeriodCards } from "@/components/appointments/agenda-list";
+import { AppointmentStatusBadge } from "@/components/appointmentStatusBadge";
 import { useAppointmentComposer } from "@/components/appointmentComposer";
 import { DatePickerInput } from "@/components/datePicker";
 import { keepOrAdvanceAppointmentEnd } from "@/components/appointments/appointment-time-options";
@@ -46,7 +47,6 @@ import {
 } from "@/components/appointments/agenda-calendar-model";
 import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
-import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,11 +88,11 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { appointmentStatusStyle } from "@/constants/appointment-status";
 import { useDiscardConfirmation } from "@/hooks/use-discard-confirmation";
 import { brazilianAppointmentDateTime } from "@/utils/appointment-datetime";
 import {
   formatBrazilianDate,
-  formatStatusLabel,
   formatTime24,
 } from "@/utils/formatters";
 
@@ -405,7 +405,10 @@ function TimeGrid({
                       type="button"
                       key={item.id}
                       onClick={() => onSelect(item)}
-                      className="absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-2 border-primary bg-primary/15 px-2 py-1 text-left text-xs text-primary hover:bg-primary/25"
+                      className={cn(
+                        "absolute inset-x-1 z-10 overflow-hidden rounded-md border-l-2 px-2 py-1 text-left text-xs hover:opacity-85",
+                        appointmentStatusStyle(item.status),
+                      )}
                       style={{ top, height }}
                     >
                       <b className="block truncate text-foreground">
@@ -472,7 +475,10 @@ function MonthView({
                 type="button"
                 key={item.id}
                 onClick={() => onSelect(item)}
-                className="mb-1 block w-full truncate rounded bg-primary/15 px-1.5 py-1 text-left text-[11px] text-primary"
+                className={cn(
+                  "mb-1 block w-full truncate rounded border px-1.5 py-1 text-left text-[11px] hover:opacity-85",
+                  appointmentStatusStyle(item.status),
+                )}
               >
                 {formatTime24(item.startsAt)} {item.patientName}
               </button>
@@ -719,7 +725,7 @@ function AppointmentDetails({
               <Detail label="Tipo" value={appointment.type} />
               <div>
                 <p className="text-xs text-muted-foreground">Status</p>
-                <Badge>{formatStatusLabel(appointment.status)}</Badge>
+                <AppointmentStatusBadge status={appointment.status} />
               </div>
             </div>
             {appointment.videoUrl ? (

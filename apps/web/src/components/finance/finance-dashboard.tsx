@@ -430,7 +430,10 @@ export function FinanceDashboard({
           <XAxis dataKey="name" />
           <YAxis tickFormatter={(v) => `R$${Number(v) / 100}`} />
           <ChartTooltip formatter={(v) => money(Number(v))} />
-          <Bar dataKey="value" fill="var(--primary)" radius={[5, 5, 0, 0]} />
+          <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+            <Cell fill="var(--success)" />
+            <Cell fill="var(--destructive)" />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     );

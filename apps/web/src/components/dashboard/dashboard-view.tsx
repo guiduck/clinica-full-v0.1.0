@@ -16,7 +16,6 @@ import {
   Plus,
   Receipt,
   Sparkles,
-  Trash2,
   TrendingUp,
   Wallet,
   X,
@@ -40,9 +39,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { toast } from "sonner";
 import { updateUserUiPreferenceAction } from "@/actions/ui-preferences";
 import { useAppointmentComposer } from "@/components/appointmentComposer";
+import { useFinanceEntryComposer } from "@/components/financeEntryComposer";
+import { useMessageComposer } from "@/components/messageComposer";
+import { appointmentStatusStyle } from "@/constants/appointment-status";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -103,6 +104,8 @@ const dateLabel = (value: string) =>
     day: "2-digit",
     month: "short",
   }).format(new Date(value));
+const dateTimeLabel = (value: string) =>
+  new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
 const timeLabel = (value: string) =>
   new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
@@ -114,6 +117,7 @@ export function DashboardView({
   patients,
   appointments,
   financeEntries,
+  scheduledMessages = [],
   initialOrder,
   initialFinancialHidden,
   showNews,
@@ -122,12 +126,15 @@ export function DashboardView({
   patients: DashboardPatient[];
   appointments: DashboardAppointment[];
   financeEntries: FinanceEntryView[];
+  scheduledMessages?: Array<{ id: string; patientName: string; channel: string; status: string; body: string; scheduledFor: string }>;
   initialOrder: DashboardSectionKey[] | null;
   initialFinancialHidden: boolean;
   showNews: boolean;
 }>) {
   const router = useRouter();
   const { openAppointmentComposer } = useAppointmentComposer();
+  const { openFinanceEntryComposer } = useFinanceEntryComposer();
+  const { openMessageComposer } = useMessageComposer();
   const [order, setOrder] = React.useState<DashboardSectionKey[]>(
     initialOrder?.length ? initialOrder : DEFAULT_ORDER,
   );
@@ -135,7 +142,6 @@ export function DashboardView({
   const [period, setPeriod] = React.useState<Period>("6m");
   const [hidden, setHidden] = React.useState(initialFinancialHidden);
   const [newsVisible, setNewsVisible] = React.useState(showNews);
-  const [messageVisible, setMessageVisible] = React.useState(false);
   const dashboard = buildDashboardViewModel(patients, appointments);
   const finance = buildDashboardFinanceViewModel(financeEntries, period);
   const financeSummary = finance.summary;
@@ -214,7 +220,7 @@ export function DashboardView({
                     )}
                   >
                     <Link
-                      href={`/agenda?date=${item.startsAt.slice(0, 10)}&appointment=${item.id}`}
+                      href={`/agenda?date=${item.startsAt.slice(0, 10)}&open=${item.id}`}
                       className="flex items-center gap-3 rounded-md px-2 py-2 hover:bg-primary/5"
                     >
                       <Avatar className="size-9">
@@ -236,7 +242,7 @@ export function DashboardView({
                           Próxima
                         </span>
                       ) : null}
-                      <span className="rounded-full bg-primary/10 px-2 py-1 text-xs capitalize text-primary">
+                      <span className={cn("rounded-full border px-2 py-1 text-xs capitalize", appointmentStatusStyle(item.status))}>
                         {item.status}
                       </span>
                     </Link>
@@ -428,53 +434,24 @@ export function DashboardView({
     ),
     messages: (
       <Card className="p-5">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <MessageSquare className="size-4 text-primary" />
             <h3 className="font-semibold">Mensagens programadas</h3>
           </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/configuracoes?tab=mensagens">
-              Ver fila <ChevronRight className="size-4" />
-            </Link>
-          </Button>
+          <Button asChild variant="ghost" size="sm"><Link href="/mensagens?tab=programadas">Ver fila <ChevronRight className="size-4" /></Link></Button>
         </div>
-        {messageVisible ? (
-          <div className="flex items-center justify-between gap-3 border-t py-3">
-            <div>
-              <p className="text-sm font-medium">Boas-vindas — paciente</p>
-              <p className="text-xs text-muted-foreground">
-                WHATSAPP • aguardando confirmação
-              </p>
-            </div>
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  toast.info(
-                    "O envio será conectado quando o serviço de mensagens estiver disponível.",
-                  )
-                }
-              >
-                Revisar e enviar
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-destructive"
-                aria-label="Remover mensagem da fila"
-                onClick={() => setMessageVisible(false)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
+        {scheduledMessages.length ? (
+          <div className="divide-y">
+            {scheduledMessages.map((message) => (
+              <Link key={message.id} href="/mensagens?tab=programadas" className="flex items-center justify-between gap-3 py-3 hover:bg-muted/30">
+                <div className="min-w-0"><p className="truncate text-sm font-medium">{message.patientName}</p><p className="truncate text-xs text-muted-foreground">{message.channel.toUpperCase()} · {message.body}</p></div>
+                <div className="shrink-0 text-right"><p className="text-xs">{dateTimeLabel(message.scheduledFor)}</p><p className={cn("text-[11px]", message.status === "failed" ? "text-destructive" : "text-info")}>{message.status}</p></div>
+              </Link>
+            ))}
           </div>
-        ) : (
-          <p className="py-4 text-sm text-muted-foreground">
-            Nenhuma mensagem programada no momento.
-          </p>
-        )}
+        ) : <p className="py-4 text-sm text-muted-foreground">Nenhuma mensagem programada no momento.</p>}
+        <Button variant="outline" size="sm" className="mt-3" onClick={() => openMessageComposer()}><Plus className="size-4" /> Programar mensagem</Button>
       </Card>
     ),
     patients: (
@@ -598,15 +575,16 @@ export function DashboardView({
         >
           <CalendarDays className="size-4" /> Novo agendamento
         </button>
-        <Link
-          href="/financeiro?new=receita"
+        <button
+          type="button"
+          onClick={() => openFinanceEntryComposer({ initialType: "receita" })}
           className={cn(
             buttonVariants({ variant: "outline" }),
             "col-span-2 h-auto justify-start py-3 lg:col-span-1",
           )}
         >
           <Receipt className="size-4" /> Registro financeiro
-        </Link>
+        </button>
       </div>
       <div className="flex justify-end">
         <Button

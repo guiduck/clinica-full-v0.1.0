@@ -157,6 +157,8 @@ cd apps/web
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 ```
 
+Para a atualização que adiciona Redis, worker e Twilio, siga também docs/vps-twilio-queue-guide.md.
+
 ## 8. Corrigir a chave de criptografia clínica
 
 A chave aceita pelo app deve representar exatamente 32 bytes. O formato mais

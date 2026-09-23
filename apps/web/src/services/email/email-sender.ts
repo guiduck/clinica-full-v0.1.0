@@ -40,6 +40,14 @@ export async function sendTransactionalEmail(message: TransactionalEmail) {
   if (!response.ok) {
     throw new DomainError("PROVIDER_FAILURE", "O provedor de e-mail recusou o envio. Confira a chave e o domínio remetente.");
   }
+
+  if (config.provider === "resend") {
+    const responseBody = await response.text();
+    const data = responseBody ? (JSON.parse(responseBody) as { id?: string }) : {};
+    return data.id ?? `resend-${Date.now()}`;
+  }
+
+  return response.headers.get("x-message-id") ?? `sendgrid-${Date.now()}`;
 }
 
 function parseFrom(value: string) {

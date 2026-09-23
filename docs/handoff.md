@@ -1,5 +1,64 @@
 # Handoff
 
+## Atualização de 2026-09-23 — BullMQ/Redis, inbox e notificações
+
+Implementado neste workspace, ainda não publicado:
+
+- migration `20260923000100_reliable_message_queue` com `ScheduledMessage`, `ConversationMessage` e `AppNotification`;
+- BullMQ/Redis com PostgreSQL como fonte de verdade, recuperação periódica, cinco tentativas e backoff exponencial;
+- worker Docker separado no mesmo Compose/VPS; boas-vindas, confirmação, lembrete 24h e mensagens manuais saem do request web;
+- inbox `/mensagens`, cancelamento de pendentes, compositor global por E-mail/WhatsApp e webhook Twilio assinado para inbound/delivery status;
+- notificações persistentes de aniversário, atendimento, pagamento e mensagem, com leitura e deep links;
+- registro financeiro global no Dashboard, cores de status da agenda alinhadas ao protótipo (`realizada` azul) e despesa vermelha no gráfico de barras.
+
+Validação local aprovada: Prisma format/validate/generate, Compose de produção validado, lint, typecheck, 62 arquivos/190 testes e build de produção com 30 páginas/rotas. Avisos remanescentes: Recharts em jsdom e múltiplos lockfiles do workspace. A migration e os quatro serviços novos ainda precisam ser aplicados na VPS.
+
+Operação: adicionar `REDIS_PASSWORD`, variáveis Twilio e URLs de webhook ao `.env`, preservar a chave clínica existente, fazer backup, `git pull` e `docker compose ... up -d --build`. Guia completo em `docs/vps-twilio-queue-guide.md`.
+
+Limite Twilio: o Sandbox compartilhado é apenas para teste, exige `join`, tem restrições de throughput/sessão e mensagens livres dependem da janela de 24h. Produção requer sender registrado e templates aprovados. Para usar o número de cada profissional, seguir uma fase de onboarding de sender/Tech Provider e isolamento de credenciais; brief em `docs/next-spec-whatsapp-senders-per-professional.md`.
+
+## Atualização de 2026-09-23 — Agenda do paciente, tutorial e decisão de fila
+
+Implementado neste workspace, ainda não publicado:
+
+- removido da aba Agenda do paciente o cartão `Horário fixo`, porque ele
+  duplicava `Agendar sessão` sem persistir uma regra fixa;
+- as listas de próximas sessões e sessões anteriores agora ocupam a largura
+  disponível, com um único CTA e texto fiel à recorrência semanal finita;
+- blockers do tutorial passaram a cancelar `pointerdown`, clique e menu de
+  contexto fora do destaque, enquanto o alvo destacado permanece clicável;
+- testes de regressão cobrem a ausência da capacidade falsa e a barreira de
+  interação.
+
+Validação aprovada: lint, typecheck, 61 arquivos/187 testes Vitest e build de
+produção com 29 rotas. A primeira execução total concorrente teve um timeout no
+teste pesado do gráfico financeiro; ele passou isoladamente em 913 ms e a suíte
+completa repetida de forma sequencial passou limpa. Permanecem somente os avisos
+conhecidos do Recharts em jsdom e de múltiplos lockfiles. Não há migration neste
+checkpoint.
+
+Mensageria: o cadastro já envia o e-mail de boas-vindas real de forma síncrona.
+O próximo slice deve gravar esse envio na mesma outbox PostgreSQL do restante das
+mensagens, responder ao cadastro sem aguardar o provider e processar por um
+worker Node/TypeScript em container separado no mesmo Compose/VPS. Não é
+necessário outro servidor no piloto. Mensagens programadas devem escolher um
+único canal por envio (`E-mail` ou `WhatsApp`), revalidar consentimento e contato
+na entrega e permitir cancelamento enquanto pendentes.
+
+Não usar Redis como uma segunda fila paralela. Se as métricas futuras exigirem
+delayed jobs/throughput além do PostgreSQL, manter a outbox como fonte de verdade
+e trocar apenas o transporte por BullMQ/Redis. O brief atualizado está em
+`docs/next-spec-reliable-message-queue.md`.
+
+Produto futuro: recorrência semanal indeterminada deve ser uma série persistida
+com janela móvel, não criação infinita de consultas/receitas. O worker
+materializa somente as próximas ocorrências; encerrar a série cancela apenas as
+ocorrências futuras ainda previstas e preserva o histórico.
+
+Entregabilidade: a captura de teste mostra `via sendgrid.net` e a mensagem na
+pasta Spam. Antes de produção, usar remetente em domínio próprio autenticado no
+SendGrid, com SPF/DKIM e política DMARC, em vez de endereço `gmail.com`.
+
 ## Atualização de 2026-09-22 — acabamento da agenda, Google e recorrência financeira
 
 Implementado neste workspace, ainda não publicado:

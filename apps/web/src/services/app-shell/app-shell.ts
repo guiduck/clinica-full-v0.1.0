@@ -1,29 +1,30 @@
 import { prisma } from "@/lib/prisma";
+import { materializeOperationalNotifications } from "@/services/app-notifications/app-notifications";
 import type { AppShellView } from "@/types/app-shell";
-import { formatBrazilianDate, formatTime24 } from "@/utils/formatters";
-
-function notificationTitle(status: string) {
-  if (status === "enviado") return "Confirmação enviada";
-  if (status === "falhou") return "Falha no envio da confirmação";
-  return "Confirmação aguardando envio";
-}
 
 export async function getAppShellView(userId: string): Promise<AppShellView> {
-  const attempts = await prisma.notificationAttempt.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-    select: { id: true, status: true, createdAt: true, patient: { select: { name: true } }, appointment: { select: { id: true, startsAt: true } } }
-  });
+  await materializeOperationalNotifications(userId);
+  const [notifications, pendingMessageCount, unreadCount] = await Promise.all([
+    prisma.appNotification.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+    prisma.scheduledMessage.count({ where: { userId, status: { in: ["queued", "processing"] } } }),
+    prisma.appNotification.count({ where: { userId, readAt: null } }),
+  ]);
 
   return {
-    pendingMessageCount: attempts.filter((attempt) => attempt.status === "pendente").length,
-    notifications: attempts.map((attempt) => ({
-      id: attempt.id,
-      title: notificationTitle(attempt.status),
-      description: `${attempt.patient.name} · ${formatBrazilianDate(attempt.appointment.startsAt)} às ${formatTime24(attempt.appointment.startsAt)}`,
-      href: `/agenda?open=${encodeURIComponent(attempt.appointment.id)}`,
-      createdAt: attempt.createdAt.toISOString()
-    }))
+    pendingMessageCount,
+    unreadCount,
+    notifications: notifications.map((notification) => ({
+      id: notification.id,
+      type: notification.type,
+      title: notification.title,
+      description: notification.description,
+      href: notification.href,
+      readAt: notification.readAt?.toISOString() ?? null,
+      createdAt: notification.createdAt.toISOString(),
+    })),
   };
 }

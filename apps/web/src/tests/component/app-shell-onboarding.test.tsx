@@ -106,9 +106,13 @@ describe("app shell and guided onboarding", () => {
     expect(screen.queryByRole("link", { name: "WhatsApp" })).not.toBeInTheDocument();
   });
 
-  it("reads the legacy query, cuts a click-through spotlight and positions the card", async () => {
+  it("keeps the highlighted target clickable and blocks clicks outside it", async () => {
     const target = document.createElement("button");
+    const targetClick = vi.fn();
+    const outsideClick = vi.fn();
     target.id = "tour-user-menu";
+    target.addEventListener("click", targetClick);
+    document.body.addEventListener("click", outsideClick);
     document.body.appendChild(target);
     mockRect(target, { top: 48, left: 1270, width: 130, height: 44 });
     window.history.replaceState({}, "", "/dashboard?onboarding=8");
@@ -126,7 +130,15 @@ describe("app shell and guided onboarding", () => {
     expect(
       screen.getByTestId("onboarding-dim-layer").getAttribute("style"),
     ).toContain("clip-path");
+    const blockers = screen.getAllByTestId("onboarding-interaction-blocker");
+    expect(blockers).toHaveLength(4);
+    expect(fireEvent.click(blockers[0])).toBe(false);
+    expect(outsideClick).not.toHaveBeenCalled();
+
+    fireEvent.click(target);
+    expect(targetClick).toHaveBeenCalledOnce();
     expect(screen.getByRole("dialog")).toHaveAttribute("data-placement", "left");
+    document.body.removeEventListener("click", outsideClick);
     target.remove();
   });
 

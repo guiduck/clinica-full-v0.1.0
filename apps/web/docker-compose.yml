@@ -17,5 +17,16 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: clinica-agil-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    volumes:
+      - clinica_agil_redis:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
 volumes:
   clinica_agil_postgres:
+  clinica_agil_redis:

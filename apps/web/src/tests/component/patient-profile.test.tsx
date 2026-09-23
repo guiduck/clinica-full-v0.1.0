@@ -66,6 +66,8 @@ describe("PatientProfileView", () => {
 
     selectTab("Agenda");
     expect(screen.getByRole("button", { name: "Agendar sessão" })).toBeEnabled();
+    expect(screen.getByText("Agenda do paciente")).toBeInTheDocument();
+    expect(screen.queryByText("Horário fixo")).not.toBeInTheDocument();
 
     selectTab("Financeiro");
     expect(

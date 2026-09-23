@@ -4,11 +4,11 @@ import { createPatientWizardAction } from "@/actions/patients";
 const requireUserMock = vi.hoisted(() => vi.fn());
 const createPatientWizardMock = vi.hoisted(() => vi.fn());
 const revalidatePathMock = vi.hoisted(() => vi.fn());
-const sendWelcomeEmailMock = vi.hoisted(() => vi.fn());
+const scheduleWelcomeEmailMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/require-user", () => ({ requireUser: requireUserMock }));
 vi.mock("@/services/patients/create-patient-wizard", () => ({ createPatientWizard: createPatientWizardMock }));
-vi.mock("@/services/patients/patient-welcome-email", () => ({ sendPatientWelcomeEmail: sendWelcomeEmailMock }));
+vi.mock("@/services/messages/schedule-message", () => ({ schedulePatientWelcomeEmail: scheduleWelcomeEmailMock }));
 vi.mock("next/cache", () => ({ revalidatePath: revalidatePathMock }));
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }));
 
@@ -31,7 +31,7 @@ describe("createPatientWizardAction", () => {
     vi.clearAllMocks();
     requireUserMock.mockResolvedValue({ id: "user-1", name: "Dra. Joana" });
     createPatientWizardMock.mockResolvedValue({ patient: { id: "patient-1", name: "Maria Silva", email: "maria@example.com", emailConsent: true }, financialProfile: { id: "profile-1" } });
-    sendWelcomeEmailMock.mockResolvedValue(undefined);
+    scheduleWelcomeEmailMock.mockResolvedValue(undefined);
   });
 
   it("validates both steps before starting the transaction", async () => {
@@ -63,15 +63,17 @@ describe("createPatientWizardAction", () => {
 
     expect(result).toEqual(expect.objectContaining({
       ok: true,
-      welcomeMessage: "E-mail de boas-vindas enviado.",
+      welcomeMessage: "E-mail de boas-vindas adicionado à fila.",
     }));
-    expect(sendWelcomeEmailMock).toHaveBeenCalledWith({
+    expect(scheduleWelcomeEmailMock).toHaveBeenCalledWith({
+      userId: "user-1",
+      patientId: "patient-1",
       patientName: "Maria Silva",
       patientEmail: "maria@example.com",
       professionalName: "Dra. Joana",
     });
     expect(createPatientWizardMock.mock.invocationCallOrder[0]).toBeLessThan(
-      sendWelcomeEmailMock.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+      scheduleWelcomeEmailMock.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
     );
   });
 });

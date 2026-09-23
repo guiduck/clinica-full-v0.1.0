@@ -1,5 +1,44 @@
 # Roadmap
 
+## Checkpoint de fila, inbox e notificações persistentes — 2026-09-23
+
+Status: `implementado e validado localmente; migration, Twilio e smoke na VPS pendentes`.
+
+- PostgreSQL passou a ser a fonte durável de `ScheduledMessage`; BullMQ/Redis faz delayed jobs/retries e um worker em container separado consome fora do request web.
+- Boas-vindas por e-mail, confirmação e lembrete de consulta e mensagens manuais por E-mail/WhatsApp entram na fila. Consentimento, contato e paciente ativo são revalidados na entrega.
+- A nova inbox `/mensagens` reúne conversa e programadas; o webhook Twilio valida assinatura, grava respostas, atualiza `sent/delivered/read/failed` e abre notificação contextual.
+- Notificações de atendimento, receita vencida, aniversário e falha/resposta de mensagem são persistidas, têm ícone/cor próprios, estado lido e links acionáveis.
+- Dashboard usa fila real, `Registro financeiro` abre o compositor global, sessão `realizada` usa azul e o gráfico financeiro usa despesa vermelha.
+- Compose adiciona `redis` e `worker` na mesma VPS. A migration `20260923000100_reliable_message_queue` cria mensagens, conversa e notificações.
+- Gate local aprovado: Prisma format/validate/generate, Compose config, lint, typecheck, 62 arquivos/190 testes e build com 30 páginas/rotas.
+- Deploy/configuração: `docs/vps-twilio-queue-guide.md`. Sandbox é apenas teste; produção precisa sender real e templates aprovados para envios fora da janela de 24 horas.
+- Próximo brief: `docs/next-spec-whatsapp-senders-per-professional.md`.
+
+## Checkpoint de clareza da agenda e proteção do tutorial — 2026-09-23
+
+Status: `implementado e validado localmente; sem migration`.
+
+- A aba Agenda do paciente não exibe mais o cartão vazio `Horário fixo`.
+  Aquele botão apenas abria o mesmo compositor de agendamento e não persistia
+  uma regra recorrente, portanto sugeria uma capacidade inexistente.
+- O fluxo atual fica explícito: `Agendar sessão` cria uma consulta avulsa ou uma
+  sequência semanal limitada de 2 a 52 ocorrências.
+- O tutorial mantém o alvo destacado e o próprio cartão interativos, mas as
+  quatro regiões externas agora cancelam e interrompem cliques, incluindo
+  clique secundário e início de interação por ponteiro.
+- Gate completo aprovado: lint, typecheck, 61 arquivos/187 testes Vitest e
+  build de produção com 29 rotas. A regressão cobre a Agenda do paciente e o
+  bloqueio externo do tutorial; permanecem apenas os avisos conhecidos do
+  Recharts em jsdom e de múltiplos lockfiles.
+- O próximo slice continua sendo a fila durável PostgreSQL com worker no mesmo
+  Compose/VPS. Ele deve retirar boas-vindas, confirmações e mensagens
+  programadas do request web e permitir ao profissional escolher `E-mail` ou
+  `WhatsApp` em cada envio programado.
+- Recorrência semanal indeterminada não deve criar consultas nem receitas
+  infinitas. O desenho aprovado para uma spec posterior é uma regra de série
+  persistida, materializada em janela móvel pelo worker, com opção de encerrar a
+  série e cancelar somente ocorrências futuras ainda previstas.
+
 ## Checkpoint de acabamento operacional — 2026-09-22
 
 Status: `implementado e validado localmente; migration e smoke na VPS pendentes`.

@@ -11,6 +11,10 @@ export type WhatsAppSendResult =
     };
 
 export type WhatsAppSender = {
+  sendMessage?(input: {
+    to: string;
+    body: string;
+  }): Promise<WhatsAppSendResult>;
   sendAppointmentConfirmationMessage(input: {
     to: string;
     body: string;
@@ -19,6 +23,13 @@ export type WhatsAppSender = {
 
 export class TwilioWhatsAppSender implements WhatsAppSender {
   async sendAppointmentConfirmationMessage(input: {
+    to: string;
+    body: string;
+  }): Promise<WhatsAppSendResult> {
+    return this.sendMessage(input);
+  }
+
+  async sendMessage(input: {
     to: string;
     body: string;
   }): Promise<WhatsAppSendResult> {
@@ -42,7 +53,10 @@ export class TwilioWhatsAppSender implements WhatsAppSender {
         body: new URLSearchParams({
           From: config.from,
           To: input.to.startsWith("whatsapp:") ? input.to : `whatsapp:+${input.to}`,
-          Body: input.body
+          Body: input.body,
+          ...(config.statusCallbackUrl
+            ? { StatusCallback: config.statusCallbackUrl }
+            : {}),
         })
       }
     );

@@ -1,5 +1,39 @@
 # Overview do Projeto e Plano de MVP
 
+## Mensageria durável, inbox e operação assíncrona — 2026-09-23
+
+A aplicação usa PostgreSQL como registro durável e BullMQ/Redis como transporte de jobs agendados. O worker roda fora do processo web, recupera mensagens persistidas após reinícios, aplica retries e registra enviados/respostas em uma inbox. Boas-vindas, confirmações, lembretes e mensagens manuais podem usar E-mail ou WhatsApp conforme contato e consentimento.
+
+O webhook Twilio valida assinatura e persiste delivery status e respostas. Com o sender global, a resposta é associada ao último envio para aquele telefone; é adequado ao piloto, mas ambíguo quando o mesmo paciente conversa com profissionais diferentes. A evolução para sender próprio por profissional está isolada no próximo brief e não transforma o produto em conta multi-profissional.
+
+Notificações no app agora são registros persistentes, não projeções temporárias: aniversários, atendimentos do dia seguinte, receitas vencidas, respostas e falhas têm tipo, ícone, cor, estado lido e destino. A interface inclui `/mensagens`, fila real no Dashboard, compositor financeiro global, status realizado azul e despesas vermelhas no gráfico.
+
+A produção permanece em uma VPS: containers `web`, `worker`, `redis`, `postgres` e `migrate`. Outro servidor só é necessário por métricas de saturação ou isolamento. O runbook operacional está em `docs/vps-twilio-queue-guide.md`.
+
+## Agenda sem capacidade falsa e direção de mensageria — 2026-09-23
+
+A aba Agenda do paciente usa agora toda a largura para sessões futuras e
+anteriores. O antigo cartão `Horário fixo` foi removido porque seu botão abria o
+mesmo compositor de agendamento e não criava uma regra fixa. O comportamento
+real continua sendo consulta única ou sequência semanal finita de 2 a 52
+ocorrências. O tutorial preserva clique no alvo destacado e nos próprios
+controles, mas bloqueia explicitamente interações fora dessas áreas.
+
+O e-mail de boas-vindas já é real, respeita endereço e consentimento e atualmente
+é enviado dentro da Server Action após o cadastro. O próximo slice deve movê-lo
+para a outbox PostgreSQL junto com confirmações, lembretes e mensagens
+programadas. Cada mensagem programada terá um canal escolhido pelo profissional
+— `E-mail` ou `WhatsApp` — e o worker revalidará consentimento, contato e status
+do paciente no momento da entrega.
+
+Para esta VPS, a primeira implementação usa PostgreSQL como fila durável e um
+worker Node/TypeScript em container separado, mas no mesmo servidor e Compose.
+Redis sozinho não agrega uma segunda fonte de verdade; BullMQ/Redis só entra
+quando métricas de throughput ou contenção justificarem. Uma recorrência semanal
+indeterminada futura será uma regra de série, não milhares de consultas: o worker
+materializará apenas uma janela móvel de ocorrências, e somente consultas
+materializadas gerarão receitas previstas.
+
 ## Acabamento operacional e fronteira de escala — 2026-09-22
 
 Agenda, clínica, Google Agenda e financeiro receberam o acabamento necessário

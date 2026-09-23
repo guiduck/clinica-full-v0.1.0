@@ -2,87 +2,58 @@
 
 ## Resposta curta
 
-O sistema atual atende um piloto sem fila, desde que as automações programadas
-ainda não sejam habilitadas. O número de usuários cadastrados não determina a
-capacidade: uma conta parada quase não consome recursos. O que importa é quantos
-profissionais fazem mutações ao mesmo tempo e quantas chamadas de e-mail,
-WhatsApp e Google Agenda acontecem em picos.
+A fila agora existe. PostgreSQL guarda a mensagem e seu estado como fonte de verdade; BullMQ/Redis agenda e distribui; um worker Node/TypeScript separado envia e atualiza o histórico. `web`, `worker`, `redis` e `postgres` podem rodar na mesma VPS e no mesmo Compose durante o piloto. Não é necessário pagar outro servidor agora.
 
-Até existir benchmark no hardware real da VPS, o envelope conservador de
-planejamento é:
+O número de contas cadastradas não determina sozinho a capacidade. Até existir benchmark no hardware real, o envelope conservador continua sendo:
 
-- 10–20 profissionais simultaneamente ativos em uma instância web modesta;
-- dezenas a poucas centenas de profissionais ativos distribuídos ao longo do
-  dia, se o uso continuar leve;
-- centenas ou milhares de contas registradas de baixo uso podem caber, mas isso
-  não representa capacidade comprovada nem SLA.
+- 10–20 profissionais simultaneamente ativos numa instância web modesta;
+- dezenas a poucas centenas de profissionais ativos distribuídos ao longo do dia, se o uso for leve;
+- centenas ou milhares de contas de baixo uso podem caber, mas isso não é capacidade comprovada nem SLA.
 
-Esses números são limites de planejamento, não resultados de teste de carga. A
-VPS, o pool de conexões, o volume de dados e os providers podem antecipar ou
-ampliar o limite.
+A fila melhora principalmente confiabilidade e latência percebida; ela não transforma essa estimativa em benchmark.
 
-## Estado arquitetural atual
+## Arquitetura implementada
 
-O Compose de produção possui `web`, `migrate` e `postgres`. Não existe processo
-worker. E-mail, Twilio WhatsApp e Google Agenda são chamados pelo processo web;
-algumas falhas são tratadas como best-effort para não desfazer a mutação principal.
+- `ScheduledMessage` no PostgreSQL guarda destinatário, canal, finalidade, horário, tentativas, deduplicação e estado;
+- BullMQ usa Redis para delayed jobs, retry exponencial e concorrência;
+- o worker usa concorrência 5 por padrão, configurável por `MESSAGE_WORKER_CONCURRENCY`;
+- ao iniciar e a cada 15 segundos, o worker recupera do PostgreSQL mensagens ainda `queued`, portanto um job perdido no Redis volta à fila;
+- `ConversationMessage` registra enviados, entregues, lidos, falhos e recebidos;
+- webhook Twilio valida assinatura, atualiza delivery status e persiste respostas na inbox;
+- falha definitiva gera notificação persistente no app;
+- cadastro/agenda não aguardam o provider externo.
 
-Esse desenho tem duas consequências:
+PostgreSQL continua sendo a fonte durável; Redis pode ser reconstruído. Essa combinação evita que o transporte seja a única cópia da intenção de envio.
 
-1. A requisição do usuário pode ficar mais lenta quando o provider externo demora.
-2. Se o processo reiniciar ou o provider ficar indisponível depois do commit, o
-   efeito externo pode precisar de reconciliação manual.
+## Capacidade prática do worker
 
-Por isso, fila é primeiro uma decisão de confiabilidade e só depois de throughput.
-Um único profissional já precisa dela se depender de um lembrete automático que
-não pode ser perdido.
+A concorrência 5 significa no máximo cinco handlers em voo por réplica, não cinco mensagens por segundo garantidas. O limite real é o menor entre latência/restrição do provider, CPU, conexões e taxa autorizada do sender. O Sandbox da Twilio, por exemplo, é explicitamente limitado e não serve para teste de carga.
 
-## Quando a fila passa a ser obrigatória
+Adicionar uma segunda réplica do worker no mesmo Compose é possível depois de medir. Separar o worker em outro servidor passa a fazer sentido quando:
 
-Implementar a outbox/worker antes de liberar qualquer uma destas capacidades:
+- CPU/memória do worker interfere no p95 do web;
+- profundidade/idade da fila cresce mesmo aumentando concorrência com segurança;
+- conexões do PostgreSQL ou Redis ficam saturadas;
+- é necessário isolamento de falha/deploy;
+- há exigência operacional de alta disponibilidade.
 
-- lembretes automáticos ou mensagens para horário futuro;
-- reengajamento, campanhas ou envio em lote;
-- promessa de entrega/retry sem intervenção manual;
-- sincronização em massa do Google Agenda em segundo plano.
+## Métricas e gatilhos
 
-Mesmo sem essas features, antecipar a fila quando ocorrer qualquer sinal:
+Monitorar pelo menos:
 
-- mais de 20 profissionais fazendo operações simultâneas de agenda/comunicação;
-- p95 de mutações acima de 2 segundos por dependência externa;
-- mais de 1% de timeout/falha transitória de provider;
-- requisições frequentemente acima de 5 segundos;
-- rate limit do Google, Twilio ou e-mail;
-- necessidade recorrente de clicar em reconciliação manual;
-- deploy/restart causando efeitos externos perdidos.
+- quantidade `queued`, `processing` e `failed`;
+- idade da mensagem pendente mais antiga;
+- tempo e taxa de erro por provider;
+- retries e falhas definitivas;
+- CPU, memória e conexões de Postgres/Redis;
+- p95 das mutações web.
 
-Os limiares são alertas operacionais, não garantias de capacidade.
+Alertas iniciais sugeridos: job vencido há mais de 2 minutos, falha definitiva maior que 1%, fila crescendo por 10 minutos ou p95 web acima de 2 segundos.
 
-## Primeira arquitetura recomendada
+## Benchmark necessário
 
-Manter o modular monolith e adicionar:
-
-- outbox durável no PostgreSQL gravada na mesma transação do evento de domínio;
-- worker Node/TypeScript separado no Docker Compose;
-- consumo com lease e `FOR UPDATE SKIP LOCKED`;
-- processamento `at least once` com chave de idempotência;
-- retry exponencial com jitter, limite de tentativas e dead-letter;
-- payload mínimo por IDs, sem prontuário ou conteúdo clínico;
-- métricas de profundidade, idade do job mais antigo, p95 e taxa de falha;
-- réplicas adicionais do worker somente depois de medir saturação.
-
-Redis/BullMQ ou fila gerenciada não são necessários no primeiro corte. A outbox
-PostgreSQL resolve durabilidade e mantém uma migração futura possível.
-
-## Benchmark necessário para transformar estimativa em capacidade
-
-Executar em ambiente equivalente à VPS:
-
-1. Medir agenda e financeiro sem providers com 10, 25 e 50 profissionais
-   concorrentes.
-2. Medir criação e remarcação com providers simulando 100 ms, 1 s e timeout.
-3. Após o worker, disparar 500 jobs na mesma janela e medir throughput, p50, p95,
-   falhas, retries e idade máxima da fila.
-4. Monitorar CPU, memória, conexões PostgreSQL, event loop e respostas 5xx.
-5. Definir capacidade comercial somente a partir desses resultados e com margem
-   para pico e falha de provider.
+1. Medir agenda/financeiro com 10, 25 e 50 profissionais concorrentes.
+2. Simular providers com 100 ms, 1 s, rate limit e timeout.
+3. Disparar 500 jobs na mesma janela e medir throughput, p50, p95, erro e idade máxima.
+4. Repetir com worker reiniciado e Redis vazio para comprovar recuperação pelo PostgreSQL.
+5. Definir capacidade comercial somente a partir dos resultados e com margem de pico.

@@ -1,6 +1,35 @@
 "use client";
 
+import type { CSSProperties, SyntheticEvent } from "react";
 import { useOnboardingTourContext } from "./onboarding-tour-context";
+
+function stopOutsideInteraction(event: SyntheticEvent<HTMLDivElement>) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function OnboardingTourInteractionBlocker({
+  className,
+  position,
+  style,
+}: {
+  className: string;
+  position: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      data-position={position}
+      data-testid="onboarding-interaction-blocker"
+      className={className}
+      style={style}
+      onClick={stopOutsideInteraction}
+      onContextMenu={stopOutsideInteraction}
+      onPointerDown={stopOutsideInteraction}
+    />
+  );
+}
 
 function OnboardingTourBackdropBlockers() {
   const { view } = useOnboardingTourContext();
@@ -8,8 +37,8 @@ function OnboardingTourBackdropBlockers() {
 
   if (!target) {
     return (
-      <div
-        aria-hidden="true"
+      <OnboardingTourInteractionBlocker
+        position="viewport"
         className="pointer-events-auto fixed inset-0 z-[105]"
       />
     );
@@ -21,23 +50,23 @@ function OnboardingTourBackdropBlockers() {
 
   return (
     <>
-      <div
-        aria-hidden="true"
+      <OnboardingTourInteractionBlocker
+        position="top"
         className="pointer-events-auto fixed left-0 right-0 top-0 z-[105]"
         style={{ height: top }}
       />
-      <div
-        aria-hidden="true"
+      <OnboardingTourInteractionBlocker
+        position="bottom"
         className="pointer-events-auto fixed bottom-0 left-0 right-0 z-[105]"
         style={{ top: bottom }}
       />
-      <div
-        aria-hidden="true"
+      <OnboardingTourInteractionBlocker
+        position="left"
         className="pointer-events-auto fixed left-0 z-[105]"
         style={{ top, width: Math.max(0, target.left), height: blockerHeight }}
       />
-      <div
-        aria-hidden="true"
+      <OnboardingTourInteractionBlocker
+        position="right"
         className="pointer-events-auto fixed right-0 z-[105]"
         style={{
           top,

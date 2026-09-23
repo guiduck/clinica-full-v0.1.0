@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
-  CalendarPlus,
   CheckCircle2,
   Edit3,
   FileText,
@@ -26,6 +25,7 @@ import { CapabilityNotice } from "@/components/feedback/capability-notice";
 import { DiscardConfirmation } from "@/components/feedback/discard-confirmation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { AppointmentStatusBadge } from "@/components/appointmentStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,9 +130,19 @@ function AgendaTab({ patient }: { patient: PatientView }) {
   const now = new Date();
   const upcoming = patient.appointments.filter((item) => new Date(item.startsAt) >= now);
   const past = patient.appointments.filter((item) => new Date(item.startsAt) < now);
-  return <div className="grid gap-6 lg:grid-cols-[1fr_2fr]"><Card className="p-6"><h2 className="font-semibold">Horário fixo</h2><p className="mt-1 text-sm text-muted-foreground">Configure a recorrência semanal deste paciente.</p><Button className="mt-5 w-full" variant="outline" onClick={() => openAppointmentComposer({ patientId: patient.id })}><CalendarPlus className="size-4" />Configurar horário fixo</Button></Card><div className="space-y-6"><AppointmentList title="Próximas sessões" items={upcoming} empty="Nenhuma sessão futura." /><AppointmentList title="Sessões anteriores" items={past} empty="Nenhuma sessão anterior." /><Button onClick={() => openAppointmentComposer({ patientId: patient.id })}><Plus className="size-4" />Agendar sessão</Button></div></div>;
+  return <section className="space-y-6" aria-labelledby="patient-agenda-heading">
+    <header className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 id="patient-agenda-heading" className="font-semibold">Agenda do paciente</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Agende uma sessão única ou uma sequência semanal com quantidade definida.</p>
+      </div>
+      <Button onClick={() => openAppointmentComposer({ patientId: patient.id })}><Plus className="size-4" />Agendar sessão</Button>
+    </header>
+    <AppointmentList title="Próximas sessões" items={upcoming} empty="Nenhuma sessão futura." />
+    <AppointmentList title="Sessões anteriores" items={past} empty="Nenhuma sessão anterior." />
+  </section>;
 }
-function AppointmentList({ title, items, empty }: { title: string; items: AppointmentView[]; empty: string }) { return <Card className="p-6"><h2 className="mb-4 font-semibold">{title}</h2>{items.length ? <ul className="divide-y">{items.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 py-3"><div><p className="font-medium">{formatBrazilianDate(item.startsAt)} · {formatTime24(item.startsAt)}–{formatTime24(item.endsAt)}</p><p className="text-xs text-muted-foreground">{item.type}</p></div><Badge>{formatStatusLabel(item.status)}</Badge></li>)}</ul> : <p className="py-6 text-sm text-muted-foreground">{empty}</p>}</Card>; }
+function AppointmentList({ title, items, empty }: { title: string; items: AppointmentView[]; empty: string }) { return <Card className="p-6"><h2 className="mb-4 font-semibold">{title}</h2>{items.length ? <ul className="divide-y">{items.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 py-3"><div><p className="font-medium">{formatBrazilianDate(item.startsAt)} · {formatTime24(item.startsAt)}–{formatTime24(item.endsAt)}</p><p className="text-xs text-muted-foreground">{item.type}</p></div><AppointmentStatusBadge status={item.status} /></li>)}</ul> : <p className="py-6 text-sm text-muted-foreground">{empty}</p>}</Card>; }
 
 function FinanceTab({ patient }: { patient: PatientView }) {
   const value = patient.defaultSessionPriceCents ? (patient.defaultSessionPriceCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "R$ 0,00";

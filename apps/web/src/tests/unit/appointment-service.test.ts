@@ -11,7 +11,8 @@ const prismaMock = vi.hoisted(() => ({
 const financialReadyMock = vi.hoisted(() => vi.fn());
 const whatsappConfigMock = vi.hoisted(() => vi.fn());
 const overlapMock = vi.hoisted(() => vi.fn());
-const sendConfirmationMock = vi.hoisted(() => vi.fn());
+const createScheduledMessageMock = vi.hoisted(() => vi.fn());
+const enqueueCommittedMessagesMock = vi.hoisted(() => vi.fn());
 const appointmentCreateMock = vi.hoisted(() => vi.fn());
 const notificationCreateMock = vi.hoisted(() => vi.fn());
 const financeEntryCreateMock = vi.hoisted(() => vi.fn());
@@ -31,8 +32,9 @@ vi.mock("@/services/notifications/whatsapp-config", () => ({
   getWhatsAppConfig: whatsappConfigMock,
 }));
 
-vi.mock("@/services/notifications/notification-attempts", () => ({
-  sendAppointmentConfirmation: sendConfirmationMock,
+vi.mock("@/services/messages/scheduled-messages", () => ({
+  createScheduledMessage: createScheduledMessageMock,
+  enqueueCommittedMessages: enqueueCommittedMessagesMock,
 }));
 
 vi.mock("@/services/appointments/appointments", () => ({
@@ -54,6 +56,8 @@ describe("appointment service", () => {
       id: "patient-1",
       name: "Ana",
       normalizedPhone: "5511999999999",
+      whatsappConsent: true,
+      user: { name: "Dra. Joana" },
     });
     financialReadyMock.mockResolvedValue({
       id: "profile-1",
@@ -67,7 +71,8 @@ describe("appointment service", () => {
       from: "whatsapp:+14155238886",
     });
     overlapMock.mockResolvedValue(false);
-    sendConfirmationMock.mockResolvedValue({ id: "notification-1" });
+    createScheduledMessageMock.mockImplementation(async (_tx, input) => ({ id: input.dedupeKey, scheduledFor: input.scheduledFor }));
+    enqueueCommittedMessagesMock.mockResolvedValue(1);
     appointmentCreateMock.mockResolvedValue({ id: "appointment-1" });
     notificationCreateMock.mockResolvedValue({ id: "notification-1" });
     financeEntryCreateMock.mockResolvedValue({ id: "finance-1" });
@@ -105,10 +110,11 @@ describe("appointment service", () => {
         valueCents: 15000,
       }),
     );
-    expect(sendConfirmationMock).toHaveBeenCalledWith(
-      "user-1",
-      "appointment-1",
+    expect(createScheduledMessageMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ purpose: "appointment_confirmation", appointmentId: "appointment-1" }),
     );
+    expect(enqueueCommittedMessagesMock).toHaveBeenCalledOnce();
   });
 
   it("creates every weekly occurrence and its finance entry atomically", async () => {
@@ -143,7 +149,8 @@ describe("appointment service", () => {
       }),
     );
     expect(notificationCreateMock).toHaveBeenCalledOnce();
-    expect(sendConfirmationMock).toHaveBeenCalledOnce();
+    expect(createScheduledMessageMock).toHaveBeenCalledTimes(4);
+    expect(enqueueCommittedMessagesMock).toHaveBeenCalledOnce();
   });
 
   it("blocks inactive or foreign patients", async () => {
@@ -200,7 +207,7 @@ describe("appointment service", () => {
       createdCount: 1,
     }));
     expect(notificationCreateMock).not.toHaveBeenCalled();
-    expect(sendConfirmationMock).not.toHaveBeenCalled();
+    expect(createScheduledMessageMock).not.toHaveBeenCalled();
   });
 
   it("blocks overlapping appointments", async () => {

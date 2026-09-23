@@ -8,29 +8,32 @@ datasource db {
 }
 
 model User {
-  id                 String                    @id @default(cuid())
-  name               String
-  email              String                    @unique
-  cpf                String?                   @unique
-  specialty          String?
-  council            String?
-  passwordHash       String?
-  emailVerifiedAt    DateTime?
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
-  patients           Patient[]
-  financialProfiles  PatientFinancialProfile[]
-  appointments       Appointment[]
-  notifications      NotificationAttempt[]
-  sessions           Session[]
-  uiPreference       UserUiPreference?
-  financeEntries     FinanceEntry[]
-  financeEntryEvents FinanceEntryEvent[]
-  authTokens         AuthToken[]
-  oauthAccounts      OAuthAccount[]
-  clinicalAnamneses  ClinicalAnamnesis[]
-  clinicalEvolutions ClinicalEvolution[]
-  googleCalendar     GoogleCalendarConnection?
+  id                   String                    @id @default(cuid())
+  name                 String
+  email                String                    @unique
+  cpf                  String?                   @unique
+  specialty            String?
+  council              String?
+  passwordHash         String?
+  emailVerifiedAt      DateTime?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  patients             Patient[]
+  financialProfiles    PatientFinancialProfile[]
+  appointments         Appointment[]
+  notifications        NotificationAttempt[]
+  scheduledMessages    ScheduledMessage[]
+  conversationMessages ConversationMessage[]
+  appNotifications     AppNotification[]
+  sessions             Session[]
+  uiPreference         UserUiPreference?
+  financeEntries       FinanceEntry[]
+  financeEntryEvents   FinanceEntryEvent[]
+  authTokens           AuthToken[]
+  oauthAccounts        OAuthAccount[]
+  clinicalAnamneses    ClinicalAnamnesis[]
+  clinicalEvolutions   ClinicalEvolution[]
+  googleCalendar       GoogleCalendarConnection?
 }
 
 model AuthToken {
@@ -123,6 +126,48 @@ enum NotificationStatus {
   falhou
 }
 
+enum MessageChannel {
+  email
+  whatsapp
+}
+
+enum MessagePurpose {
+  appointment_confirmation
+  appointment_reminder
+  patient_welcome
+  custom
+}
+
+enum ScheduledMessageStatus {
+  queued
+  processing
+  sent
+  failed
+  canceled
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+}
+
+enum ConversationMessageStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+  received
+}
+
+enum AppNotificationType {
+  appointment
+  payment
+  birthday
+  message
+  document
+}
+
 model Patient {
   id                           String                   @id @default(cuid())
   userId                       String
@@ -153,6 +198,9 @@ model Patient {
   financialProfile             PatientFinancialProfile?
   appointments                 Appointment[]
   notifications                NotificationAttempt[]
+  scheduledMessages            ScheduledMessage[]
+  conversationMessages         ConversationMessage[]
+  appNotifications             AppNotification[]
   financeEntries               FinanceEntry[]
   clinicalAnamnesis            ClinicalAnamnesis?
   clinicalEvolutions           ClinicalEvolution[]
@@ -211,6 +259,7 @@ model Appointment {
   user                  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   patient               Patient               @relation(fields: [patientId], references: [id], onDelete: Restrict)
   notifications         NotificationAttempt[]
+  scheduledMessages     ScheduledMessage[]
   financeEntry          FinanceEntry?
   clinicalEvolution     ClinicalEvolution?
 
@@ -289,30 +338,30 @@ enum FinanceEntryEventType {
 }
 
 model FinanceEntry {
-  id            String              @id @default(cuid())
-  userId        String
-  patientId     String?
-  appointmentId String?             @unique
+  id                String              @id @default(cuid())
+  userId            String
+  patientId         String?
+  appointmentId     String?             @unique
   recurrenceGroupId String?
   recurrenceIndex   Int?
   recurrenceCount   Int?
-  type          FinanceEntryType
-  status        FinanceEntryStatus  @default(previsto)
-  origin        FinanceEntryOrigin
-  description   String
-  category      String
-  paymentMethod PaymentMethod?
-  valueCents    Int
-  date          DateTime
-  dueDate       DateTime
-  effectiveAt   DateTime?
-  canceledAt    DateTime?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patient       Patient?            @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  appointment   Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
-  events        FinanceEntryEvent[]
+  type              FinanceEntryType
+  status            FinanceEntryStatus  @default(previsto)
+  origin            FinanceEntryOrigin
+  description       String
+  category          String
+  paymentMethod     PaymentMethod?
+  valueCents        Int
+  date              DateTime
+  dueDate           DateTime
+  effectiveAt       DateTime?
+  canceledAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient           Patient?            @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  appointment       Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: Restrict)
+  events            FinanceEntryEvent[]
 
   @@index([userId, date])
   @@index([userId, type, status])
@@ -352,8 +401,88 @@ model NotificationAttempt {
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   patient           Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
   appointment       Appointment         @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  scheduledMessage  ScheduledMessage?
 
   @@index([userId, createdAt])
   @@index([appointmentId])
   @@index([patientId])
+}
+
+model ScheduledMessage {
+  id                    String                 @id @default(cuid())
+  userId                String
+  patientId             String
+  appointmentId         String?
+  notificationAttemptId String?                @unique
+  channel               MessageChannel
+  purpose               MessagePurpose
+  status                ScheduledMessageStatus @default(queued)
+  recipientAddress      String
+  subject               String?
+  bodyText              String
+  bodyHtml              String?
+  scheduledFor          DateTime
+  provider              String
+  providerMessageId     String?                @unique
+  attempts              Int                    @default(0)
+  lastError             String?
+  lockedAt              DateTime?
+  sentAt                DateTime?
+  canceledAt            DateTime?
+  dedupeKey             String                 @unique
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient               Patient                @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment           Appointment?           @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  notificationAttempt   NotificationAttempt?   @relation(fields: [notificationAttemptId], references: [id], onDelete: SetNull)
+  conversationMessage   ConversationMessage?
+
+  @@index([status, scheduledFor])
+  @@index([userId, createdAt])
+  @@index([patientId, createdAt])
+  @@index([appointmentId])
+}
+
+model ConversationMessage {
+  id                 String                    @id @default(cuid())
+  userId             String
+  patientId          String
+  scheduledMessageId String?                   @unique
+  channel            MessageChannel
+  direction          MessageDirection
+  status             ConversationMessageStatus
+  fromAddress        String
+  toAddress          String
+  body               String
+  providerMessageId  String?                   @unique
+  occurredAt         DateTime                  @default(now())
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  user               User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient            Patient                   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scheduledMessage   ScheduledMessage?         @relation(fields: [scheduledMessageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, occurredAt])
+  @@index([userId, patientId, occurredAt])
+  @@index([fromAddress, toAddress, occurredAt])
+}
+
+model AppNotification {
+  id          String              @id @default(cuid())
+  userId      String
+  patientId   String?
+  type        AppNotificationType
+  title       String
+  description String
+  href        String
+  dedupeKey   String              @unique
+  readAt      DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient     Patient?            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([patientId, createdAt])
 }

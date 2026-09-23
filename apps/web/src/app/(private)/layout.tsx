@@ -17,16 +17,24 @@ export default async function PrivateLayout({
     searchPatients(user.id),
   ]);
 
-  return <AppShell
-    userName={user.name}
-    shell={shell}
-    appointmentPatients={patients.map((patient) => ({
-      id: patient.id,
-      name: patient.name,
-      hasCompleteFinancialProfile: Boolean(patient.financialProfile?.isComplete),
-    }))}
-    whatsappConfigured={Boolean(getWhatsAppConfig())}
-    initialStep={preference.onboardingStep}
-    initiallyOpen={!preference.onboardingCompletedAt && !preference.onboardingSkippedAt}
-  >{children}</AppShell>;
+  return (
+    <AppShell
+      userName={user.name}
+      shell={shell}
+      appointmentPatients={patients.map((patient) => ({
+        id: patient.id,
+        name: patient.name,
+        hasCompleteFinancialProfile: Boolean(patient.financialProfile?.isComplete),
+        email: patient.email,
+        phone: patient.phone,
+        emailConsent: patient.emailConsent,
+        whatsappConsent: patient.whatsappConsent,
+      }))}
+      whatsappConfigured={Boolean(getWhatsAppConfig())}
+      initialStep={preference.onboardingStep}
+      initiallyOpen={!preference.onboardingCompletedAt && !preference.onboardingSkippedAt}
+    >
+      {children}
+    </AppShell>
+  );
 }

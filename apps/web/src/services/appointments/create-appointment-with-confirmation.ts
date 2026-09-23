@@ -3,7 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { DomainError } from "@/lib/errors/domain-errors";
 import { assertPatientFinancialReady } from "@/services/patient-financial-profiles/patient-financial-profiles";
 import { getWhatsAppConfig } from "@/services/notifications/whatsapp-config";
-import { sendAppointmentConfirmation } from "@/services/notifications/notification-attempts";
+import { buildAppointmentConfirmationMessage } from "@/services/notifications/appointment-confirmation-message";
+import { buildAppointmentReminderMessage } from "@/services/notifications/appointment-reminder-message";
+import {
+  createScheduledMessage,
+  enqueueCommittedMessages,
+} from "@/services/messages/scheduled-messages";
 import type { ParsedAppointmentInput } from "@/utils/validators/appointment";
 import { createAppointmentFinanceEntry } from "@/services/finance/finance-entries";
 import { hasAppointmentOverlap } from "./appointments";
@@ -43,6 +48,7 @@ export async function createAppointmentWithConfirmation(
       userId,
       status: "ativo",
     },
+    include: { user: { select: { name: true } } },
   });
 
   if (!patient) {
@@ -51,7 +57,8 @@ export async function createAppointmentWithConfirmation(
 
   const financialProfile = await assertPatientFinancialReady(userId, patient.id);
 
-  const notificationScheduled = Boolean(getWhatsAppConfig());
+  const notificationScheduled =
+    Boolean(getWhatsAppConfig()) && patient.whatsappConsent;
 
   for (const occurrence of occurrences) {
     if (await hasAppointmentOverlap(userId, occurrence.startsAt, occurrence.endsAt)) {
@@ -62,8 +69,9 @@ export async function createAppointmentWithConfirmation(
     }
   }
 
-  const appointments = await prisma.$transaction(async (tx) => {
+  const transactionResult = await prisma.$transaction(async (tx) => {
     const created = [];
+    const queued: Array<{ id: string; scheduledFor: Date }> = [];
     for (const occurrence of occurrences) {
       const createdAppointment = await tx.appointment.create({
         data: {
@@ -89,26 +97,67 @@ export async function createAppointmentWithConfirmation(
         date: occurrence.startsAt,
       });
       created.push(createdAppointment);
-    }
-    if (notificationScheduled && created[0]) {
-      await tx.notificationAttempt.create({
-        data: {
+
+      if (notificationScheduled && occurrence.index === 0) {
+        const attempt = await tx.notificationAttempt.create({
+          data: {
+            userId,
+            patientId: patient.id,
+            appointmentId: createdAppointment.id,
+            recipientPhone: patient.normalizedPhone,
+            status: "pendente",
+          },
+        });
+        const confirmation = await createScheduledMessage(tx, {
           userId,
           patientId: patient.id,
-          appointmentId: created[0].id,
-          recipientPhone: patient.normalizedPhone,
-          status: "pendente",
-        },
-      });
+          appointmentId: createdAppointment.id,
+          notificationAttemptId: attempt.id,
+          channel: "whatsapp",
+          purpose: "appointment_confirmation",
+          recipientAddress: patient.normalizedPhone,
+          bodyText: buildAppointmentConfirmationMessage({
+            patientName: patient.name,
+            therapistName: patient.user.name,
+            startsAt: occurrence.startsAt,
+          }),
+          scheduledFor: now,
+          provider: "twilio",
+          dedupeKey: `appointment-confirmation:${createdAppointment.id}`,
+        });
+        queued.push(confirmation);
+      }
+
+      const reminderAt = new Date(
+        occurrence.startsAt.getTime() - 24 * 60 * 60 * 1000,
+      );
+      if (notificationScheduled && reminderAt > now) {
+        const reminder = await createScheduledMessage(tx, {
+          userId,
+          patientId: patient.id,
+          appointmentId: createdAppointment.id,
+          channel: "whatsapp",
+          purpose: "appointment_reminder",
+          recipientAddress: patient.normalizedPhone,
+          bodyText: buildAppointmentReminderMessage({
+            patientName: patient.name,
+            therapistName: patient.user.name,
+            startsAt: occurrence.startsAt,
+          }),
+          scheduledFor: reminderAt,
+          provider: "twilio",
+          dedupeKey: `appointment-reminder:${createdAppointment.id}`,
+        });
+        queued.push(reminder);
+      }
     }
-    return created;
+    return { appointments: created, scheduledMessages: queued };
   });
 
+  const appointments = transactionResult.appointments;
   const firstAppointment = appointments[0];
   if (!firstAppointment) throw new DomainError("VALIDATION", "Nenhuma consulta foi criada.");
-  if (notificationScheduled) {
-    await sendAppointmentConfirmation(userId, firstAppointment.id);
-  }
+  await enqueueCommittedMessages(transactionResult.scheduledMessages);
 
   let calendarSyncedCount = 0;
   for (let index = 0; index < appointments.length; index += 5) {
